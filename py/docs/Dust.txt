@@ -1,0 +1,97 @@
+
+Dust: A Censorship-Resistant Internet Transport Protocol
+Brandon Wiley
+The Arcadia Project
+
+Introduction
+Dust is an Internet protocol designed to resist a number of attacks currently in active use to censor Internet communication. While adherence to the theoretical maxims of cryptographic security are observed where possible, the focus of Dust is on real solutions to real attacks.
+
+Packet Filtering Techniques
+The packet filtering techniques currently in use attempt to keep as little state as possible in order to be scalable. Filtering can happen either at the individual packet level (drop banned packets) or at the stream level (block or throttle streams containing banned packets). For stream level filtering it is common to sample only the initial packets of the stream, or to do random statistical sampling of packets. Filters do not keep persistent state about streams other than whether they have been marked as banned. Technique for defeating filtering can therefore concentrate on not sending packets which will be marked as banned.
+
+There are two general classificiations of techniques for determining of a whether a packet is banned. Shallow packet inspection (SPI) uses just the headers of the packet. This is less expensive because the headers need to be examined anyway in order to route the packet. Deep packet inspection (DPI) simply refers to examining the packet contents as well as the headers. DPI used to be considered too expensive to be practical, but is now in widespread use by some filters.
+
+SPI techniques in active use for marking packets are as follows: source IP and port, destination IP and port, and packet length.
+DPI techniques in active use for marking packets are as follows: examing packet for connection headers and handshakes of known protocols, examining packet contents for banned static strings, and examining packet contents for banned string patterns.
+
+How Dust Circumvents Filters
+
+Dust is an Internet protocol used to send packets which defeat the various filtering techniques currently in use.
+
+IP and port blacklists - This is outside of the scope of the protocol. Communication over the Internet requires a destination IP and port which has not been blacklisted by the filter. For the source IP and port, packet spoofing could be used. For more information on how to circumvent IP blacklists, see the Arcadia paper.
+
+Packet length - Dust packets have randomized lengths.
+
+Connection headers and handshakes - Unlike SSH and SSL (both now filtered but some filters), Dust contains no plaintext handshake.
+Static strings and string patterns - Dust packets are encrypted, so the contents cannot be examined.
+
+In a sense, each Dust packet is unique in that the contents are entirely encrypted using a random initialization vector and the length is randomized as well. Dust packets can therefore not be classified by techniques that examines static characteristics of a packet.
+
+Mechanics
+The Key Exchange
+
+Protocols such as SSL and SSH initiate a public key exchange using a plaintext handshake. They are therefore susceptible to protocol fingerprinting and filtering. Dust also requires a public key exchange, but not utilize a plaintext handshake. Instead, Dust uses a novel half in-band, half out-of-band key exchange protocol..
+
+In order to accept a connection from an unknown host, a Dust server must first complete a key exchange with the client. The Dust server first creates an id-secret pair, which is stored securely on the server. The server then creates an invite, which contains the server's IP, port, public key, and the id-secret pair. The invite can be optionally encrypted using a password.
+
+The server operator then distributes the invite and optional password to the client out-of-band. This constitutes the first half of the public key exchange.
+
+The client uses the IP and port information from the invite to send an intro packet to the server. The intro packet is encrypted with the secret from the invite and contains the public key of the client. The id portion of the id-secret pair is prepended unencrypted to the encrypted packet. The server retrieves the id and uses it to lookup the associated secret. It uses the secret to decrypt the packet and retrieves the public key of the client. It adds the public key to its list of known hosts, associated with the IP and port from which the intro packet was sent. This completes the second phase of the public key exchange.
+
+Sending Data
+Once the key exchange has taken place, data packets can be sent. To send a data packet, the client generates an ephemeral key using its public key and the public key of the server. The client also generates a random initialization vector. This ephemeral key and the initialization vector are used to encrypt the data packet. The intialization vector is prepended, unencrypted, to the encrypted data packet. A random number of random bytes are appended to the encrypted data packet in order to give it a random length.
+
+When the server receives a packet, it looks at the source IP address and port to determine the identity of the client. It then looks to see if it has a public key stored for that IP address and port. If so, it assumes the packet to be a data packet and decodes it. Otherwise, it assumes it to be an intro packet and decodes it as specified in the Key Exchange section. To decode a data packet, an ephemeral key is generated using the server's public key and the client's public key. The initialization vector is taken from the front of the packet. The remaining packet is decrypted. The extra random bytes that were added by the client are discarded. The result is the original unecrypted data.
+
+Randomness
+
+A key consideration in the Dust protocol is that the only information in a Dust packet should always be effectively random to an observer. There are only two types of information in a Dust packet: encrypted (should appear random) and single-use random bytes (actually is random). The apparent randomness is essential to the protocol's ability to avoid detection. Therefore, care should be taken to use a good random number generator and to never reuse random bytes. For instance, the id from an invite id-secret pair, which is sent in an intro packet is intended for a single use and should never be reused. Similarly, the initialization vector used in data packets should always be randomly generated and never reused between data packets.
+
+Packet Format
+There are two types of Dust packets: intro packets, and data packets.
+
+Intro Packets
+An intro packet has the following format:
+
+introPacket = identifier dataPacket(secret, sender-pubkey)
+
+identifier is the first part of the identifier-secret pair from an invite
+data(secret, sender-pubkey) is a Data packet, using secret as the encryption key and sender-pubkey as the data
+secret is the second part of the identifier-secret pair from an invite
+sender-pubkey is the public key of the sender
+
+Data Packet
+A data packet has the following format:
+
+dataPacket = iv encrypt(key, iv, payload) padding
+payload = mac(body) body filler
+body = timestamp length(data) data
+
+iv is the initialization vector, random bytes used in the encryption to ensure that encrypting the same payload twice will yield a different packet
+encrypt(key, iv, payload) encrypts the payload with the key and iv
+padding is random bytes used to randomize the length of the packet
+mac(body) is the message authentication code (MAC) of the body, used to ensure that the body is not tampered with or corrupted
+filler is zero bytes added to make the payload the right length for encryption (a multiple of the encryption block size)
+timestamp is a timestamp used to ensure that old packets are not replayed later by an attacker
+length(data) is the length of the data, used to distinguish the actual data from filler or padding
+data is the actual data of the packet
+
+Invite Format
+Invites are not sent as packets like Intro and Data packets. They are sent out-of-band and so are in an ASCII-compatible format for ease of use in email, IM, or for printing. An invite is generally in the form of an invite package which can contain several invites. An invite package is a yaml file containing a map of proxy identifiers to id-secret mappings. An invite package looks like this:
+
+{"pubkey/[IP6address]:port": {id: secret, id: secret}, "pubkey/[IP6address]:port": {id: secret, id: secret}}
+
+pubkey is the hex-encoded public key of the server
+IP6address is the IPv6 IP of the server
+port is the port that the server is listening on
+id is a hex-encoded id that can be sent in an intro packet
+secret is the corresponding hex-encoded encryption key to use to encrypt an intro packet with a given id
+
+If a password is used to encrypt the invite package then the invite packet will be the hex-encoded encrypted yaml string.
+
+Algorithms
+The mechanics and format of Dust are presented in a general manner such that any suitable public key cryptography system and cipher could be used. However, actual implementation requires specific choices and choices for implementation of Dust have been made which are small, fast, and have libraries for which it is easy to create bindings.
+
+The public key system used is eliptical curve25519. The cipher used is the threefish implementation in skein. The hash used is skein256.
+Other important information: block size is 32 bytes, key size is 32 bytes, mac size is 32 bytes, iv size is 16 bytes. The cipher is used in CBC mode.
+

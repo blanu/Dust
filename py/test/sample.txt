@@ -1,0 +1,7 @@
+ectester@blanu.net
+ectest@blanu.net
+EC Test Message
+This is a test of the elliptical curve encryption delivery of a RFC2822 test
+message. Hopefully it will not be filtered and will be delivered successfully,
+proving that the mail daemon works properly.
+.

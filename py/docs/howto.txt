@@ -1,0 +1,28 @@
+What do I need to run this?
+
+Python3.0 (required for PySkein)
+PySkein (skein bindings for python)
+curve25519 module (included for athlon, you'll need to recompile otherwise)
+
+How do I run a proxy?
+
+Generate your keypair: crypto/gen.py
+Generate some invites: invite/make-invite.py
+Alternatively, encrypt invites with a password: invite/make-invite.py password
+
+Send out invites (out of band)
+
+Configure server/services.py to enable desired services (for example, the mail relay)
+Edit config/emailServer.py or other relevant config files to configure enabled services
+Run server/packet-router.py
+
+How do I use the network to proxy information?
+
+Generate your keypair: crypto/gen.py
+Obtain an invite (out of band)
+Obtain the password for the invite if it's password protected
+Merge the invite file into your personal invite database: invite/process-invite.py
+Alternatively, if it's password protected: invite/process-invite.py password
+
+Send a mail message: test/intro-mmail-send.py (it will prompt for headers and email body)
+
