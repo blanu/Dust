@@ -31,3 +31,14 @@ def getPublicIP():
 
 def getAddress(port):
   return encodeAddress((getPublicIP(), port))
+
+def splitFields(msg, fields):
+  try:
+    values=[]
+    for field in fields:
+      value=msg[:field]
+      msg=msg[field:]
+      values.append(value)
+    return values
+  except:
+    return None

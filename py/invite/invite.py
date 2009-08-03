@@ -4,7 +4,7 @@ import random
 import binascii
 
 from crypto.keys import KeyManager
-from core.util import getAddress, encode, decode, encodeAddress, decodeAddress
+from core.util import getPublicIP, encode, decode, encodeAddress, decodeAddress
 from core.ec_packet import makeIV, encrypt
 from skein import skein256
 
@@ -56,10 +56,10 @@ class InvitePackage:
     
   def addInvite(self, invite):
     try:
-      map=self.invites[encode(invite.pubkey)+'/'+invite.address]
+      map=self.invites[encode(invite.pubkey.bytes)+'/'+invite.address]
     except:
       map={}
-      self.invites[encode(invite.pubkey)+'/'+encodeAddress(invite.address)]=map
+      self.invites[encode(invite.pubkey.bytes)+'/'+encodeAddress(invite.address)]=map
     map[invite.identifier]=invite
     
   def removeInvite(self, address, id):
@@ -105,38 +105,31 @@ class InvitePackage:
     f.close()
     
   def serialize(self):
-    ser={}
+    ser=[]
     for address in self.invites:
-      sermap={}
-      ser[address]=sermap
       map=self.invites[address]
       for id in map:
         invite=map[id]
-        sermap[encode(id)]=encode(invite.secret)
+        ser.append(invite.serialize())
     return ser
     
   def unserialize(self, ser):
     print('ser:', ser)
-    for addressKey in ser:
-      pubkey, address=addressKey.split('/')
-      pubkey=decode(pubkey)
-      address=decodeAddress(address)
-      sermap=ser[addressKey]
-      for id in sermap:
-        secret=sermap[id]
-        invite=Invite()
-        invite.unserialize(pubkey, address, id, secret)
-        self.addInvite(invite)
+    for serl in ser:
+      invite=Invite()
+      invite.unserialize(serl)
+      self.addInvite(invite)
 
 class Invite:
   def __init__(self):
+    self.pubkey=None
     self.address=None
     self.identifier=None
     self.secret=None
     
   def generate(self, pubkey, port):
     self.pubkey=pubkey
-    self.address=getAddress(port)
+    self.address=(getPublicIP(), port)
     print('address:', self.address)
     self.identifier=self.makeIdentifier()
     self.secret = self.makeSecret()
@@ -148,14 +141,13 @@ class Invite:
     return bytes(random.randint(0, 255) for _ in range(16))
       
   def serialize(self):
-    ser={encode(self.identifier): encode(self.secret)}
-    return ser
+    return [encode(self.pubkey.bytes), encodeAddress(self.address), encode(self.identifier), encode(self.secret)]
     
-  def unserialize(self, pubkey, address, id, secret):
-    self.pubkey=pubkey
-    self.address=address
-    self.identifier=decode(id)
-    self.secret=decode(secret)
+  def unserialize(self, serl):
+    self.pubkey=Key(decode(serl[0]), False)
+    self.address=decodeAddress(serl[1])
+    self.identifier=decode(serl[2])
+    self.secret=decode(serl[3])
     
 if __name__=='__main__':
   keys=KeyManager()
