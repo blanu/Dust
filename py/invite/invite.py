@@ -65,10 +65,10 @@ class InvitePackage:
   def removeInvite(self, address, id):
     del self.invites[address][id]
     
-  def generate(self, pubkey, port, number):
+  def generate(self, pubkey, v6, tcp, port, number):
     for x in range(number+1):
       i=Invite()
-      i.generate(pubkey, port)
+      i.generate(pubkey, v6, tcp, port)
       self.addInvite(i)
       
   def load(self, filename, password=None):
@@ -127,8 +127,10 @@ class Invite:
     self.identifier=None
     self.secret=None
     
-  def generate(self, pubkey, port):
+  def generate(self, pubkey, v6, tcp, port):
     self.pubkey=pubkey
+    self.v6=v6
+    self.tcp=tcp
     self.address=(getPublicIP(), port)
     print('address:', self.address)
     self.identifier=self.makeIdentifier()
