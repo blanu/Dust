@@ -2,6 +2,8 @@ What do I need to run this?
 
 Python3.0 (required for PySkein)
 PySkein (skein bindings for python)
+PyYAML (YAML implementation for python)
+python-bitstring (make sure to get the Python 3.x version)
 curve25519 module (included for athlon and Win32, you'll need to recompile otherwise)
 
 How do I run a proxy?
