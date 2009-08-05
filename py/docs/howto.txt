@@ -2,7 +2,7 @@ What do I need to run this?
 
 Python3.0 (required for PySkein)
 PySkein (skein bindings for python)
-curve25519 module (included for athlon, you'll need to recompile otherwise)
+curve25519 module (included for athlon and Win32, you'll need to recompile otherwise)
 
 How do I run a proxy?
 

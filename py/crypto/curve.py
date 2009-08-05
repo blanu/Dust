@@ -1,9 +1,19 @@
+import os
 import struct
 import random
 import binascii
 from ctypes import *
 
-ec=cdll.LoadLibrary('./crypto/curve25519.so')
+if os.name=='nt':
+  module='curve25519-donna.dll'
+  funcname='curve25519_donna'
+else:
+  module='curve25519.so'
+  funcname='curve25519_athlon'
+
+filename=os.path.join(os.path.dirname(__file__), module)
+ec=cdll.LoadLibrary(filename)
+curve25519=getattr(ec, funcname)
 
 def createKeypair():
   secret=Key(createSecret(), False)
@@ -73,7 +83,7 @@ def createPublicKey(secret):
   pubkey=create_string_buffer(32)
 
   # Compute public key from private key
-  ec.curve25519_athlon(pubkey, secret, bps)
+  curve25519(pubkey, secret, bps)
   
   return pubkey
 
@@ -81,7 +91,7 @@ def createShared(secret, pubkey2):
   shared=create_string_buffer(32)
 
   # Compute shared key
-  ec.curve25519_athlon(shared, secret, pubkey2)
+  curve25519(shared, secret, pubkey2)
   
   return shared
 
