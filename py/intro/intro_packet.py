@@ -4,7 +4,7 @@ import random
 import binascii
 
 from core.ec_packet import DataPacket
-from invite.invite import Invite, InvitePackage
+from invite.invite import InvitePackage
 from core.util import getAddress
 from crypto.curve import Key, Keypair
 

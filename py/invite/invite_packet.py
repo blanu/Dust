@@ -59,7 +59,6 @@ class InviteMessage:
     id=self.id
     secret=self.secret
 
-    print(pubkey, flags, ip, port, id, secret)
     self.message=pubkey+flags+ip+port+id+secret
     
   def makeIdentifier(self):
@@ -89,11 +88,9 @@ class InviteMessage:
     secret=self.secret
     
     self.message=pubkey+flags+ip+port+id+secret
-    print('message:', binascii.hexlify(self.message))
     
   def decodeInviteMessage(self, message):
     self.message=message
-    print('message:', binascii.hexlify(self.message))
     
     pubkey, flags, ip, port, id, secret=splitFields(self.message, [PUBKEY_LENGTH, FLAGS_LENGTH, IP_LENGTH, PORT_LENGTH, ID_LENGTH, SECRET_LENGTH])
     self.pubkey=Key(pubkey, False)

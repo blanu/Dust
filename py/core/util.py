@@ -45,7 +45,6 @@ def splitFields(msg, fields):
     return None
     
 def decodeFlags(flagsByte):
-  print('decodeFlags: ', flagsByte)
   bits=BitString(data=flagsByte)
   bools=[]
   for x in range(bits.length):
@@ -53,7 +52,6 @@ def decodeFlags(flagsByte):
   return bools
   
 def encodeFlags(bools):
-  print('encodeFlags: ', bools)
   bits=BitString()
   for bool in bools:
     if bool:

@@ -35,7 +35,7 @@ class InvitePackage:
     return s
 
   def getInviteForHost(self, tcp, address):
-    for invite in invites:
+    for invite in self.invites:
       if invite.tcp==tcp and invite.ip==address[0] and invite.port==address[1]:
         return invite
     return None
@@ -75,7 +75,10 @@ class InvitePackage:
       data=decode(line.strip())
       packet=InvitePacket()
       packet.decodeInvitePacket(password, data)
-      self.addInvite(packet.invite)
+      if packet.checkMac():
+        self.addInvite(packet.invite)
+      else:
+        print('Mac check failed, possible a wrong password?')
 
     f.close()
       
