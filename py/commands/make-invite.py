@@ -1,4 +1,7 @@
+import os
 import sys
+# python sucks
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
 from invite.invite import createInvitePackage
 from crypto.keys import KeyManager
