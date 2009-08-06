@@ -17,11 +17,11 @@ class intro_socket:
     if socket:
       self.sock=socket
     else:
-      self.sock=socket(AF_INET6, SOCK_DGRAM)
+      self.sock=None
     
   def bind(self, address):
     print('binding', address)
-    self.sock.bind(address)
+    self.address=address
     
   def iconnect(self, invite):
     self.invite=invite
@@ -30,8 +30,19 @@ class intro_socket:
     if not self.invite:
       print('No invite')
       return      
-    print('invite address:', self.invite.address)
+    
+    if not self.sock:
+      if invite.v6:
+        self.sock=socket(AF_INET6, SOCK_DGRAM)
+      else:
+        self.sock=socket(AF_INET, SOCK_DGRAM)
+        
+    if self.address:
+      self.sock.bind(address)      
+      
     packet=IntroPacket()
-    packet.createIntroPacket(self.invite.secret, self.invite.identifier, self.pubkey)
-    self.sock.sendto(packet.packet, 0, self.invite.address)
+    packet.createIntroPacket(self.invite.secret, self.invite.id, self.pubkey)
+    addr=(self.invite.ip, self.invite.port)
+    self.sock.sendto(packet.packet, 0, addr)
     self.invite=None # Invites are single use only
+    

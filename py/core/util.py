@@ -61,3 +61,8 @@ def encodeFlags(bools):
     else:
       bits.append(BitString('0b0'))
   return bits.data
+
+def fill(bytes, size):
+  while len(bytes)<size:
+    bytes=bytes+'\x00'
+  return bytes
