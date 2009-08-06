@@ -3,7 +3,11 @@ import struct
 import random
 import binascii
 
-from socket import inet_pton, inet_ntop, AF_INET, AF_INET6
+from socket import AF_INET, AF_INET6
+try:
+    from socket import inet_pton, inet_ntop
+except ImportError:
+    from invite.win32_inet_pton import inet_pton, inet_ntop
 
 from skein import skein256
 
