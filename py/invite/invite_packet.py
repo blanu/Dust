@@ -9,7 +9,7 @@ try:
 except ImportError:
     from invite.win32_inet_pton import inet_pton, inet_ntop
 
-from skein import skein256
+from skein import skein512
 
 from core.ec_packet import DataPacket
 from core.util import getAddress, getPublicIP, splitFields, encodeFlags, decodeFlags, fill
@@ -115,11 +115,11 @@ class InvitePacket(DataPacket):
   def createInvitePacket(self, password, invite):
     self.invite=invite
     
-    sk=skein256(password.encode('ascii')).digest()
+    sk=skein512(password.encode('ascii'), digest_bits=256).digest()
     self.createDataPacket(sk, self.invite.message)
   
   def decodeInvitePacket(self, password, packet):
-    sk=skein256(password.encode('ascii')).digest()
+    sk=skein512(password.encode('ascii'), digest_bits=256).digest()
     
     self.decodeDataPacket(sk, packet)
     self.invite=InviteMessage()

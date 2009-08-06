@@ -2,7 +2,7 @@ import time
 import struct
 import random
 
-from skein import threefish, skein256
+from skein import threefish, skein512
 from crypto.curve import *
 
 IV_SIZE = 16
@@ -22,7 +22,7 @@ def makeLength(data):
 
 # 32 bytes
 def makeMac(k, data):
-  result=skein256(data, mac=k).digest()
+  result=skein512(data, digest_bits=256, mac=k).digest()
   return result
 
 # From 0 to size bytes

@@ -4,10 +4,17 @@ from crypto.keys import KeyManager
 from invite.invite import loadInvitePackage
 from core.util import getPublicIP
 
+ipv=sys.argv[1]
+if ipv=='4':
+  v6=False
+else:
+  v6=True  
+
+host=getPublicIP(v6)
+dest=getPublicIP(v6)
+  
 buffsize=102400
-host = '::'
 inport=8001
-dest=getPublicIP()
 outport=7000
 nodeName='A'
 
