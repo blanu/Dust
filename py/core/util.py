@@ -22,13 +22,21 @@ def decodeAddress(s):
   print('m:', m)
   return (m.group(1), int(m.group(2)))
   
-def getPublicIP():
-#  text=urlopen("http://ip6.me/").read()
-#match=re.search(b"\+3>([^<]+)<", text)
-  text=urlopen("http://whatismyv6ip.com/").read()
-  match=re.search(b"<h2>Your global IP address is: ([^<]+)<", text)
-  ip=match.group(1)
-  return ip.decode('ascii')
+def getPublicIP(v6=True):
+  if v6:
+    text=urlopen("http://ipv6.ip6.me/").read()
+    match=re.search(b"\+3>([^<]+)<", text)
+    #  text=urlopen("http://whatismyv6ip.com/").read()
+    #  match=re.search(b"<h2>Your global IP address is: ([^<]+)<", text)
+    ip=match.group(1)
+    return ip.decode('ascii')
+  else:
+    text=urlopen("http://ip4.me/").read()
+    match=re.search(b"\+3>([^<]+)<", text)
+    #  text=urlopen("http://whatismyip.com/").read()
+    #  match=re.search(b"<h2>Your global IP address is: ([^<]+)<", text)
+    ip=match.group(1)
+    return ip.decode('ascii')
 
 def getAddress(port):
   return encodeAddress((getPublicIP(), port))
