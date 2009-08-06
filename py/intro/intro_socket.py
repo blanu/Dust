@@ -32,13 +32,13 @@ class intro_socket:
       return      
     
     if not self.sock:
-      if invite.v6:
+      if self.invite.v6:
         self.sock=socket(AF_INET6, SOCK_DGRAM)
       else:
         self.sock=socket(AF_INET, SOCK_DGRAM)
         
     if self.address:
-      self.sock.bind(address)      
+      self.sock.bind(self.address)      
       
     packet=IntroPacket()
     packet.createIntroPacket(self.invite.secret, self.invite.id, self.pubkey)

@@ -53,7 +53,6 @@ def decodeFlags(flagsByte):
   return bools
   
 def encodeFlags(bools):
-  print('encodeFlags: ', bools)
   bits=BitString()
   for bool in bools:
     if bool:
