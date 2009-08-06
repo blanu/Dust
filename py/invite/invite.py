@@ -16,9 +16,9 @@ def createInvitePackage(pubkey, v6, tcp, port, number):
   ip.generate(pubkey, v6, tcp, port, number)
   return ip
 
-def loadInvitePackage(filename):
+def loadInvitePackage(filename, password):
   ip=InvitePackage()
-  ip.load(filename)
+  ip.load(filename, password)
   return ip
 
 class InvitePackage:
