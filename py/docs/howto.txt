@@ -8,9 +8,8 @@ curve25519 module (included for athlon and Win32, you'll need to recompile other
 
 How do I run a proxy?
 
-Generate your keypair: crypto/gen.py
-Generate some invites: invite/make-invite.py
-Alternatively, encrypt invites with a password: invite/make-invite.py password
+Generate your keypair: commands/gen.py
+Generate some invites: commands/make-invite.py password
 
 Send out invites (out of band)
 
@@ -20,11 +19,10 @@ Run server/packet-router.py
 
 How do I use the network to proxy information?
 
-Generate your keypair: crypto/gen.py
+Generate your keypair: commands/gen.py
 Obtain an invite (out of band)
-Obtain the password for the invite if it's password protected
-Merge the invite file into your personal invite database: invite/process-invite.py
-Alternatively, if it's password protected: invite/process-invite.py password
+Obtain the password for the invite
+Merge the invite file into your personal invite database: commands/process-invite.py invitePassword passwordForYourInviteDb
 
 Send a mail message: test/intro-mmail-send.py (it will prompt for headers and email body)
 
