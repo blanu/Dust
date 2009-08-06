@@ -1,4 +1,3 @@
-import sys
 from crypto.curve import createKeypair
 from crypto.keys import KeyManager
 
