@@ -22,7 +22,6 @@ def decodeAddress(s):
   print('m:', m)
   return (m.group(1), int(m.group(2)))
   
-<<<<<<< HEAD:py/core/util.py
 def getPublicIP(v6=True):
   if v6:
     text=urlopen("http://ipv6.ip6.me/").read()
