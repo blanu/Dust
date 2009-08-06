@@ -75,7 +75,10 @@ class InvitePackage:
       data=decode(line.strip())
       packet=InvitePacket()
       packet.decodeInvitePacket(password, data)
-      self.addInvite(packet.invite)
+      if packet.checkMac():
+        self.addInvite(packet.invite)
+      else:
+        print('Mac check failed, possible a wrong password?')
 
     f.close()
       

@@ -22,10 +22,7 @@ def makeLength(data):
 
 # 32 bytes
 def makeMac(k, data):
-  print('makeMac()', len(k), ',', len(data))
-  print('makeMac()', k, ',', data)
   result=skein256(data, mac=k).digest()
-  print('mac result:', len(result))
   return result
 
 # From 0 to size bytes
@@ -45,7 +42,6 @@ def makeIV():
 
 # len(payload) bytes
 def encrypt(k, iv, payload):
-  print('encrypt', len(k), ',', len(iv), ',', len(payload))
   cipher = threefish(k, iv)
   encrypted=bytearray(len(payload))
 
@@ -66,7 +62,6 @@ def decrypt(k, iv, payload):
   start=0
   while start<len(payload):
     end=start+BLOCK_SIZE
-    print('decrypting', start, end, len(payload))
     decrypted[start:end] = cipher.decrypt_block(payload[start:end])
     cipher.tweak = payload[start:start+16]  # cipher block chaining with first 16 bytes 
     start=end
@@ -98,27 +93,22 @@ class DataPacket:
     self.packet=None
     
   def createDataPacket(self, sk, data):
-    print('cdp:', len(sk), '-', len(makeFiller(KEY_SIZE, sk)))
-    print('cdp:', sk, '-', makeFiller(KEY_SIZE, sk))
     self.sk=sk+makeFiller(KEY_SIZE, sk)
     self.data=data
     
     self.timestamp=makeTimestamp()
     self.length=makeLength(self.data)
     self.body=self.timestamp+self.length+self.data
-    print('packing body', len(self.timestamp), len(self.length), len(self.data), '=', len(self.body))
     
     self.mac=makeMac(self.sk, self.body)
     self.filler=makeFiller(BLOCK_SIZE, self.mac+self.body)
     self.payload=self.mac+self.body+self.filler
-    print('payload:', len(self.mac), len(self.body), len(self.filler), '=', len(self.payload))
   
     self.iv=makeIV()
     self.encrypted=encrypt(self.sk, self.iv, self.payload)
     self.padding=makePadding(BLOCK_SIZE)
   
     self.packet=self.iv+self.encrypted+self.padding
-    print('packing packet', len(self.iv), len(self.encrypted), len(self.padding), '=', len(self.packet))
   
   def decodeDataPacket(self, sk, packet):
     self.sk=sk+makeFiller(KEY_SIZE, sk)
@@ -130,7 +120,6 @@ class DataPacket:
     tail=l%BLOCK_SIZE
     if l>BLOCK_SIZE and tail!=0:
       self.encrypted=self.encrypted[:-tail]
-    print('decrypted', len(self.iv), len(self.encrypted), tail, '=', len(self.iv)+len(self.encrypted)+tail)
     self.payload=decrypt(self.sk, self.iv, self.encrypted)
 
     self.mac=self.payload[:MAC_SIZE]
@@ -144,21 +133,16 @@ class DataPacket:
     self.data=self.body[8:]
     
   def checkMac(self):
-    print('checking mac', self.mac, '---', makeMac(self.sk, self.body), ':', self.sk, '/', self.body)
     return self.mac and self.mac==makeMac(self.sk, self.body)
     
   def checkTimestamp(self):
     now=int(round(time.time()))
     delta=now-self.timestampValue
-    print('time:', now, self.timestampValue)
-    print('delta:', delta)
     return delta<10
     
 if __name__=='__main__':
   sender=createKeypair()
   receiver=createKeypair()
-  
-  print('mf', makeFiller(10, 'aaaa'))
   
   psk=sender.createSession(receiver.public).bytes
   l=len(psk)
@@ -167,7 +151,6 @@ if __name__=='__main__':
   else:    
     padding=b"\x00"*(l%16)
   psk=psk+padding
-  print(psk)
   
   packet=DataPacket()
   packet.createDataPacket(psk, b"Hello")
