@@ -7,7 +7,6 @@ import yaml
 
 from crypto.curve import *
 from intro.intro_packet import IntroPacket
-from invite.invite import loadInvitePackage
 from core.util import encodeAddress
 
 class intro_socket:
@@ -38,7 +37,13 @@ class intro_socket:
         self.sock=socket(AF_INET, SOCK_DGRAM)
         
     if self.address:
-      self.sock.bind(self.address)      
+      try:
+        self.sock.bind(self.address)      
+      except:
+        if self.invite.v6:
+          self.sock.bind(('::',self.address[1]))
+        else:
+          self.sock.bind(('',self.address[1]))
       
     packet=IntroPacket()
     packet.createIntroPacket(self.invite.secret, self.invite.id, self.pubkey)

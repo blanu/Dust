@@ -8,15 +8,19 @@ from crypto.keys import KeyManager
 
 password=sys.argv[1]
 
+v6=True # defaults to IPv6
 if len(sys.argv)>2:
-  ipv=sys.argv[2]
-else:
-  ipv=True # defaults to IPv6
+  if sys.argv[2]=='6':
+    v6=True
+  elif sys.argv[2]=='4':
+    v6=False
+  else:
+    print('Unknown IP version:', sys.argv[2])
 
 keys=KeyManager()
 keys.loadKeypair('config/id.yaml')
 keypair=keys.getKeypair()
 pubkey=keypair.public
 
-ip=createInvitePackage(pubkey, ipv, False, 7000, 5)
-ip.save('config/invites.ip', password)
+ip=createInvitePackage(pubkey, v6, False, 7000, 5)
+ip.save('config/incoming_invites.ip', password)

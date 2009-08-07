@@ -1,10 +1,10 @@
 import sys
 from intro.intro_socket import *
 from crypto.keys import KeyManager
-from invite.invite import loadInvitePackage
 from core.util import getPublicIP
 
-ipv=sys.argv[1]
+passwd=sys.argv[1]
+ipv=sys.argv[2]
 if ipv=='4':
   v6=False
 else:
@@ -22,8 +22,9 @@ keys=KeyManager()
 keys.loadKeypair('config/id.yaml')
 keypair=keys.getKeypair()
 
-invites=loadInvitePackage('config/myinvites.ip', 'test')
-invite=invites.getInviteForHost(False, (dest, outport))
+keys.setInvitePassword(passwd)
+keys.loadOutgoingInvites('config/outgoing_invites.ip')
+invite=keys.outgoingInvites.getInviteForHost(False, (dest, outport))
 
 isock=intro_socket(keys)
 isock.bind((host, inport))

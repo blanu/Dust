@@ -9,11 +9,15 @@ import yaml
 from crypto.curve import *
 from core.ec_packet import DataPacket
 from core.util import encode, decode, encodeAddress
+from invite.invite import loadInvitePackage
 
 class KeyManager:
   def __init__(self):
     self.knownHosts=None
     self.keypair=None
+    self.incomingInvites=None
+    self.outgoingInvites=None
+    self.invitePassword=None
       
   def loadKeypair(self, filename):
     f=open(filename, 'r')
@@ -79,4 +83,39 @@ class KeyManager:
     print('pubkey:', pubkey)
     sessionKey=self.keypair.createSession(pubkey).bytes
     return sessionKey
+
+  def setInvitePassword(self, passwd):
+    self.invitePassword=passwd
     
+  def loadIncomingInvites(self, filename, passwd=None):
+    if not passwd:
+      passwd=self.invitePassword
+    if passwd:
+      self.incomingInvites=loadInvitePackage(filename, self.invitePassword)
+    else:
+      print('No invite password')
+    
+  def saveIncomingInvites(self, filename, passwd=None):
+    if not passwd:
+      passwd=self.invitePassword
+    if passwd and self.incomingInvites:
+      self.incomingInvites.save(filename, self.invitePassword)
+    else:
+      print('No invite password or no invites')
+      
+  def loadOutgoingInvites(self, filename, passwd=None):
+    if not passwd:
+      passwd=self.invitePassword
+    if passwd:
+      self.outgoingInvites=loadInvitePackage(filename, self.invitePassword)
+    else:
+      print('No invite password')
+    
+  def saveOutgoingInvites(self, filename, passwd=None):
+    if not passwd:
+      passwd=self.invitePassword
+    if passwd and self.outgoingInvites:
+      self.outgoingInvites.save(filename, self.invitePassword)
+    else:
+      print('No invite password or no invites')
+      

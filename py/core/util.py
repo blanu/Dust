@@ -70,5 +70,5 @@ def encodeFlags(bools):
 
 def fill(bytes, size):
   while len(bytes)<size:
-    bytes=bytes+'\x00'
+    bytes=bytes+b'\x00'
   return bytes

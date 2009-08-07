@@ -1,13 +1,6 @@
 import sys
-import yaml
-import random
-import binascii
 
-from skein import skein256
-
-from crypto.keys import KeyManager
-from core.util import getPublicIP, encode, decode, encodeAddress, decodeAddress
-from core.ec_packet import makeIV, encrypt
+from core.util import encode, decode
 
 from invite.invite_packet import InviteMessage, InvitePacket
 
@@ -92,21 +85,4 @@ class InvitePackage:
       f.write(data)
       f.write("\n")
       
-    f.close()
-      
-if __name__=='__main__':
-  keys=KeyManager()
-  keys.loadKeypair('config/id.yaml')
-  keypair=keys.getKeypair()
-  print('keypair:', keypair)
-  pubkey=keypair.public
-  
-  ip=InvitePackage()
-  ip.generate(pubkey, True, False, 2001, 5)
-  ip.save('test.ip', 'test')
-  
-  print('ip:', ip)
-  
-  ip2=InvitePackage()
-  ip2.load('test.ip', 'test')
-  print('ip2:', ip2)
+    f.close()     

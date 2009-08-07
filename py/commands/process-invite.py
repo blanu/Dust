@@ -1,11 +1,15 @@
 import sys
 
-from invite.invite import loadInvitePackage
+from crypto.keys import KeyManager
 
 passwd=sys.argv[1]
 mypasswd=sys.argv[2]
 
-myip=loadInvitePackage('config/myinvites.ip', mypasswd)
-ip=loadInvitePackage('config/invites.ip', passwd)
-myip.merge(ip)
-myip.save('config/myinvites.ip', mypasswd)
+keys=KeyManager()
+keys.setInvitePassword(mypasswd)
+keys.loadOutgoingInvites('config/outgoing_invites.ip')
+
+keys.loadIncomingInvites('config/incoming_invites.ip', passwd)
+keys.outgoingInvites.merge(keys.incomingInvites)
+
+keys.saveOutgoingInvites('config/outgoing_invites.ip', mypasswd)

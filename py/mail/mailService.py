@@ -6,7 +6,7 @@ from core.util import encodeAddress
 
 class MailHandler:
   def __init__(self):
-    f=open('emailServer.yaml', 'r')
+    f=open('config/emailServer.yaml', 'r')
     self.config=yaml.load(f.read())
     f.close()
 

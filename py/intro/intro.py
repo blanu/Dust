@@ -8,14 +8,12 @@ class Introducer:
   def __init__(self, keys, myaddrKey):
     self.keys=keys
     self.myaddrKey=myaddrKey
-    self.invites=loadInvitePackage('invites.ip')
-    print('invites:', self.invites.invites)
 
   def acceptIntroduction(self, data, addr):
     print('Introducing', addr)
 
     print('myaddrkey:', self.myaddrKey)
-    choices=self.invites.getInvitesForAddress(self.myaddrKey)
+    choices=self.keys.incomingInvites.getInvitesForAddress(self.myaddrKey)
     
     intro=IntroPacket()
     intro.decodeIntroPacket(choices, data)
@@ -24,7 +22,7 @@ class Introducer:
     
   def makeIntroduction(self, addr, sock):
     print('Introducing', addr)
-    invite=self.invites.getInviteForHost(addr)
+    invite=self.keys.outgoingInvites.getInviteForHost(addr)
     if not invite:
       print('Can\'t find invite for', addr, ', invite failed.')
       return None

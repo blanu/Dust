@@ -12,9 +12,8 @@ except ImportError:
 from skein import skein512
 
 from core.ec_packet import DataPacket
-from core.util import getAddress, getPublicIP, splitFields, encodeFlags, decodeFlags, fill
-from crypto.curve import Key, Keypair
-from crypto.keys import KeyManager
+from core.util import getPublicIP, splitFields, encodeFlags, decodeFlags, fill
+from crypto.curve import Key
 
 PUBKEY_LENGTH=32
 FLAGS_LENGTH=1
@@ -43,7 +42,7 @@ class InviteMessage:
     self.pubkey=pubkey
     self.v6=v6
     self.tcp=tcp
-    self.ip=getPublicIP()
+    self.ip=getPublicIP(v6)
     self.port=port
     self.id=self.makeIdentifier()
     self.secret = self.makeSecret()
@@ -53,7 +52,9 @@ class InviteMessage:
     if self.v6:
       ip=inet_pton(AF_INET6, self.ip)
     else:
+      print('v4:', self.ip)
       ip=inet_pton(AF_INET, self.ip)
+      print('ip:', ip)
       ip=fill(ip, IP_LENGTH)
     port=struct.pack('H', self.port)
     id=self.id
@@ -125,49 +126,4 @@ class InvitePacket(DataPacket):
     self.invite=InviteMessage()
     self.invite.decodeInviteMessage(self.data)
     return self.invite
-    
-if __name__=='__main__':
-  password="test"
-
-  v6=True
-  tcp=False
-  ip=getPublicIP()
-  port=7000
-  
-  keys=KeyManager()
-  keys.loadKeypair('config/id.yaml')
-  keypair=keys.getKeypair()
-  print('keypair:', keypair)
-  pubkey=keypair.public
-  
-  invite=InviteMessage()
-  invite.generate(pubkey, v6, tcp, port)
-  
-  print('invite:', invite)
-  print('invite id:', invite.id)
-  print('invite secret:', invite.secret)
-  
-#  ip2=InvitePackage()
-#  ip2.load('test.ip')
-#  print('ip2:', ip2)
-  
-  packet=InvitePacket()
-  packet.createInvitePacket(password, invite)
-  print('packetData:', binascii.hexlify(packet.packet))
-  print('packet length:', len(packet.packet))
-  
-  print('------------------------')
-  
-  p2=InvitePacket()
-  p2.decodeInvitePacket(password, packet.packet)
-  print('checkMac:', p2.checkMac())
-  print('checkTimestamp:', p2.checkTimestamp())
-  print('invite:', p2.invite)
-  print('invite pubkey:', p2.invite.pubkey)
-  print('invite ip:', p2.invite.ip)
-  print('invite port:', p2.invite.port)
-  print('invite id:', p2.invite.id)
-  print('invite secret:', p2.invite.secret)
-  print('invite v6:', p2.invite.v6)
-  print('invite tcp:', p2.invite.tcp)
-  
+      

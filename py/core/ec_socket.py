@@ -26,7 +26,7 @@ class ec_socket:
   def bind(self, address):
     self.sock.bind(address)
     myaddrKey=encodeAddress(address)
-    self.introducer=Introducer(self.keys, myaddrKey)    
+    self.introducer=Introducer(self.keys, myaddrKey, self.passwd)    
     
   def connect(self, address):
     if address==self.connectDest:
