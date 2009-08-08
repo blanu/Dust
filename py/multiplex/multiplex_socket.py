@@ -1,9 +1,9 @@
 from multiplex.multiplex_packet import MultiplexMessage
-from core.ec_socket import ec_socket
+from core.dust_socket import dust_socket
 
-class multiplex_socket(ec_socket):
+class multiplex_socket(dust_socket):
   def __init__(self, keys):
-    ec_socket.__init__(self, keys)
+    dust_socket.__init__(self, keys)
     
     self.connectService=None
     
@@ -16,19 +16,19 @@ class multiplex_socket(ec_socket):
       service=self.connectService
     multiplex=MultiplexMessage()
     multiplex.createMultiplexMessage(service, data)
-    ec_socket.send(self, multiplex.message)
+    dust_socket.send(self, multiplex.message)
     
   def msendto(self, data, addr, service=None):
     if not service:
       service=self.connectService
     multiplex=MultiplexMessage()
     multiplex.createMultiplexMessage(service, data)
-    ec_socket.sendto(self, multiplex.message, addr)    
+    dust_socket.sendto(self, multiplex.message, addr)    
     
   def mrecv(self, bufsize, service=None):
     if not service:
       service=self.connectService
-    data=ec_socket.recv(self, bufsize)
+    data=dust_socket.recv(self, bufsize)
     if not data:
       return None
     multiplex=MultiplexMessage()
@@ -41,7 +41,7 @@ class multiplex_socket(ec_socket):
   def mrecvfrom(self, bufsize, service=None):
     if not service:
       service=self.connectService
-    data, addr=ec_socket.recvfrom(self, bufsize)
+    data, addr=dust_socket.recvfrom(self, bufsize)
     if not data:
       print('No data')
       return None, None, None

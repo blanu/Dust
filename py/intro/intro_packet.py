@@ -1,4 +1,4 @@
-from core.ec_packet import DataPacket
+from core.data_packet import DataPacket
 from invite.invite import InvitePackage
 from core.util import getAddress, encode
 from crypto.curve import Key, Keypair

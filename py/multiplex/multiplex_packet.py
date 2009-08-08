@@ -1,4 +1,4 @@
-from core.ec_packet import DataPacket
+from core.data_packet import DataPacket
 
 # 1 byte
 def makeByteLength(data):

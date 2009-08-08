@@ -8,7 +8,7 @@ import yaml
 
 import crypto.curve
 from crypto.curve import *
-from core.ec_packet import DataPacket
+from core.data_packet import DataPacket
 from core.util import encode, decode, encodeAddress
 from invite.invite import loadInvitePackage
 from crypto.skeinUtil import SkeinPRNG

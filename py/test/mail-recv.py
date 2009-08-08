@@ -4,7 +4,7 @@ import yaml
 import email
 import smtplib
 
-from core.ec_socket import *
+from core.dust_socket import *
 from crypto.curve import loadKeypair
 
 f=open('emailServer.yaml', 'r')
@@ -19,7 +19,7 @@ nodeName='A'
 
 keypair=loadKeypair(nodeName+'-priv.txt', nodeName+'-pub.txt')
 
-ecsock=ec_socket(keypair)
+ecsock=dust_socket(keypair)
 ecsock.bind(('', inport))
 #ecsock.connect((host, outport))
 

@@ -6,11 +6,11 @@ from socket import *
 import yaml
 
 from crypto.curve import *
-from core.ec_packet import DataPacket
+from core.data_packet import DataPacket
 from core.util import encodeAddress
 from intro.intro import Introducer
 
-class ec_socket:
+class dust_socket:
   def __init__(self, keys):
     self.keys=keys
     self.keypair=keys.getKeypair()

@@ -1,6 +1,6 @@
 import sys
 import time
-from core.ec_socket import *
+from core.dust_socket import *
 from crypto.curve import loadKeypair
 
 from email.mime.text import MIMEText
@@ -13,7 +13,7 @@ nodeName='A'
 
 keypair=loadKeypair(nodeName+'-priv.txt', nodeName+'-pub.txt')
 
-ecsock=ec_socket(keypair)
+ecsock=dust_socket(keypair)
 ecsock.bind((host, inport))
 ecsock.connect((host, outport))
 

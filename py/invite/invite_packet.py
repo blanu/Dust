@@ -10,7 +10,7 @@ except ImportError:
 
 from skein import skein512
 
-from core.ec_packet import DataPacket
+from core.data_packet import DataPacket
 from core.util import getPublicIP, splitFields, encodeFlags, decodeFlags, fill
 from crypto.curve import Key
 
