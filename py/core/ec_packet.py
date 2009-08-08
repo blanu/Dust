@@ -1,6 +1,5 @@
 import time
 import struct
-import random
 
 from skein import threefish, skein512
 from crypto.curve import *
@@ -37,8 +36,8 @@ def makeFiller(size, data):
   return b"\x00"*padl    
 
 # 16 bytes
-def makeIV():
-  return bytes(random.randint(0, 255) for _ in range(16))
+def makeIV(entropy):
+  return entropy.getBytes(IV_SIZE)
 
 # len(payload) bytes
 def encrypt(k, iv, payload):
@@ -69,8 +68,9 @@ def decrypt(k, iv, payload):
   return bytes(decrypted)
 
 # Random number of bytes 0-size
-def makePadding(size):
-  return bytes(random.randint(0, 255) for _ in range(random.randint(0, size-1)))
+def makePadding(entropy, size):
+  num=entropy.getInt(size-1)
+  return entropy.getBytes(num)
       
 class DataPacket:
   def __init__(self):
@@ -92,7 +92,7 @@ class DataPacket:
     
     self.packet=None
     
-  def createDataPacket(self, sk, data):
+  def createDataPacket(self, sk, data, entropy):
     self.sk=sk+makeFiller(KEY_SIZE, sk)
     self.data=data
     
@@ -104,9 +104,9 @@ class DataPacket:
     self.filler=makeFiller(BLOCK_SIZE, self.mac+self.body)
     self.payload=self.mac+self.body+self.filler
   
-    self.iv=makeIV()
+    self.iv=makeIV(entropy)
     self.encrypted=encrypt(self.sk, self.iv, self.payload)
-    self.padding=makePadding(BLOCK_SIZE)
+    self.padding=makePadding(entropy, BLOCK_SIZE)
   
     self.packet=self.iv+self.encrypted+self.padding
   

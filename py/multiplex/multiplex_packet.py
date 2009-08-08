@@ -1,7 +1,3 @@
-import time
-import struct
-import random
-
 from core.ec_packet import DataPacket
 
 # 1 byte

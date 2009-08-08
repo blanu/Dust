@@ -1,6 +1,5 @@
 import time
 import struct
-import random
 import binascii
 
 from socket import AF_INET, AF_INET6
@@ -38,14 +37,14 @@ class InviteMessage:
   def __str__(self):
     return "<InviteMessage(%s,%s,%s,%s,%s,%s,%s)" % (self.pubkey, self.v6, self.tcp, self.ip, self.port, self.id, self.secret)
 
-  def generate(self, pubkey, v6, tcp, port):
+  def generate(self, pubkey, v6, tcp, port, entropy):
     self.pubkey=pubkey
     self.v6=v6
     self.tcp=tcp
     self.ip=getPublicIP(v6)
     self.port=port
-    self.id=self.makeIdentifier()
-    self.secret = self.makeSecret()
+    self.id=self.makeIdentifier(entropy)
+    self.secret = self.makeSecret(entropy)
         
     pubkey=self.pubkey.bytes
     flags=encodeFlags((self.v6, self.tcp, False, False, False, False, False, False))
@@ -62,11 +61,11 @@ class InviteMessage:
 
     self.message=pubkey+flags+ip+port+id+secret
     
-  def makeIdentifier(self):
-    return bytes(random.randint(0, 255) for _ in range(16))
+  def makeIdentifier(self, entropy):
+    return entropy.getBytes(ID_LENGTH)
       
-  def makeSecret(self):
-    return bytes(random.randint(0, 255) for _ in range(16))
+  def makeSecret(self, entropy):
+    return entropy.getBytes(SECRET_LENGTH)
     
   def createInviteMessage(self, pubkey, v6, tcp, ip, port, id, secret):
     self.pubkey=pubkey
@@ -113,11 +112,11 @@ class InvitePacket(DataPacket):
 
     self.invite=None
     
-  def createInvitePacket(self, password, invite):
+  def createInvitePacket(self, password, invite, entropy):
     self.invite=invite
     
     sk=skein512(password.encode('ascii'), digest_bits=256).digest()
-    self.createDataPacket(sk, self.invite.message)
+    self.createDataPacket(sk, self.invite.message, entropy)
   
   def decodeInvitePacket(self, password, packet):
     sk=skein512(password.encode('ascii'), digest_bits=256).digest()

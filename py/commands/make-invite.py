@@ -3,7 +3,7 @@ import sys
 # python sucks
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
-from invite.invite import createInvitePackage
+from invite.invite import InvitePackage
 from crypto.keys import KeyManager
 
 password=sys.argv[1]
@@ -22,5 +22,6 @@ keys.loadKeypair('config/id.yaml')
 keypair=keys.getKeypair()
 pubkey=keypair.public
 
-ip=createInvitePackage(pubkey, v6, False, 7000, 5)
-ip.save('config/incoming_invites.ip', password)
+ip=InvitePackage()
+ip.generate(pubkey, v6, False, 7000, 5, keys.entropy)
+ip.save('config/incoming_invites.ip', password, keys.entropy)

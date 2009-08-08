@@ -46,7 +46,7 @@ class intro_socket:
           self.sock.bind(('',self.address[1]))
       
     packet=IntroPacket()
-    packet.createIntroPacket(self.invite.secret, self.invite.id, self.pubkey)
+    packet.createIntroPacket(self.invite.secret, self.invite.id, self.pubkey, self.keys.entropy)
     addr=(self.invite.ip, self.invite.port)
     self.sock.sendto(packet.packet, 0, addr)
     self.invite=None # Invites are single use only

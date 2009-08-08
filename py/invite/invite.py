@@ -51,10 +51,10 @@ class InvitePackage:
   def removeInvite(self, invite):
     self.invites.remove(invite)
     
-  def generate(self, pubkey, v6, tcp, port, number):
+  def generate(self, pubkey, v6, tcp, port, number, entropy):
     for x in range(number+1):
       i=InviteMessage()
-      i.generate(pubkey, v6, tcp, port)
+      i.generate(pubkey, v6, tcp, port, entropy)
       self.addInvite(i)
       
   def load(self, filename, password):
@@ -75,12 +75,12 @@ class InvitePackage:
 
     f.close()
       
-  def save(self, filename, password):
+  def save(self, filename, password, entropy):
     f=open(filename, 'w')
 
     for invite in self.invites:
       packet=InvitePacket()
-      packet.createInvitePacket(password, invite)
+      packet.createInvitePacket(password, invite, entropy)
       data=encode(packet.packet)
       f.write(data)
       f.write("\n")

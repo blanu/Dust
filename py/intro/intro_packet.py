@@ -1,11 +1,6 @@
-import time
-import struct
-import random
-import binascii
-
 from core.ec_packet import DataPacket
 from invite.invite import InvitePackage
-from core.util import getAddress
+from core.util import getAddress, encode
 from crypto.curve import Key, Keypair
 
 ID_LENGTH=16
@@ -27,11 +22,9 @@ class IntroMessage:
     self.pubkey=pubkey
     publicKey=self.pubkey.bytes
     self.message=publicKey
-    print('message:', binascii.hexlify(self.message))
     
   def decodeIntroMessage(self, message):
     self.message=message
-    print('message:', binascii.hexlify(self.message))
     publicKey=self.message
     self.pubkey=Key(publicKey, False)
 
@@ -42,12 +35,12 @@ class IntroPacket(DataPacket):
     self.identifier=None
     self.intro=None
     
-  def createIntroPacket(self, sk, id, pubkey):
+  def createIntroPacket(self, sk, id, pubkey, entropy):
     self.identifier=id
     self.intro=IntroMessage()
     self.intro.createIntroMessage(pubkey)
     
-    self.createDataPacket(sk, self.intro.message)
+    self.createDataPacket(sk, self.intro.message, entropy)
     self.packet=self.identifier+self.packet
   
   def decodeIntroPacket(self, choices, packet):
@@ -55,7 +48,7 @@ class IntroPacket(DataPacket):
     packet=packet[ID_LENGTH:]
     print('choices:', choices)
     if not self.identifier in choices:
-      print('Unknown invite id', binascii.hexlify(self.identifier))
+      print('Unknown invite id', encode(self.identifier))
       print(choices)
       return
     sk=choices[self.identifier].secret
@@ -85,7 +78,7 @@ if __name__=='__main__':
   packet=IntroPacket()
   packet.createIntroPacket(i.secret, i.identifier, sender.public)
 #  print('packet:', packet)
-  print('packetData:', binascii.hexlify(packet.packet))
+  print('packetData:', encode(packet.packet))
 #  print('length', packet.length)
 #  print('checkMac:', packet.checkMac())
   print('packet length:', len(packet.packet))

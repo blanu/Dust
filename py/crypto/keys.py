@@ -6,10 +6,12 @@ from socket import *
 
 import yaml
 
+import crypto.curve
 from crypto.curve import *
 from core.ec_packet import DataPacket
 from core.util import encode, decode, encodeAddress
 from invite.invite import loadInvitePackage
+from crypto.skeinUtil import SkeinPRNG
 
 class KeyManager:
   def __init__(self):
@@ -18,7 +20,8 @@ class KeyManager:
     self.incomingInvites=None
     self.outgoingInvites=None
     self.invitePassword=None
-      
+    self.entropy=SkeinPRNG()
+
   def loadKeypair(self, filename):
     f=open(filename, 'r')
     pair=yaml.load(f.read())
@@ -26,6 +29,9 @@ class KeyManager:
     pubkey=decode(pair[0])
     privkey=decode(pair[1])
     self.keypair=Keypair(Key(privkey, False), Key(pubkey, False))
+    
+  def createKeypair(self):
+    self.keypair=crypto.curve.createKeypair(self.entropy)
     
   def saveKeypair(self, filename):
     pubkey=encode(self.keypair.public.bytes)
@@ -99,7 +105,7 @@ class KeyManager:
     if not passwd:
       passwd=self.invitePassword
     if passwd and self.incomingInvites:
-      self.incomingInvites.save(filename, self.invitePassword)
+      self.incomingInvites.save(filename, self.invitePassword, self.entropy)
     else:
       print('No invite password or no invites')
       
@@ -115,7 +121,7 @@ class KeyManager:
     if not passwd:
       passwd=self.invitePassword
     if passwd and self.outgoingInvites:
-      self.outgoingInvites.save(filename, self.invitePassword)
+      self.outgoingInvites.save(filename, self.invitePassword, self.entropy)
     else:
       print('No invite password or no invites')
       
