@@ -11,7 +11,7 @@ except ImportError:
 from skein import skein512
 
 from core.data_packet import DataPacket
-from core.util import getPublicIP, splitFields, encodeFlags, decodeFlags, fill
+from core.util import getPublicIP, splitFields, encodeFlags, decodeFlags, fill, encode
 from crypto.curve import Key
 
 PUBKEY_LENGTH=32
@@ -35,7 +35,16 @@ class InviteMessage:
     self.secret=None
     
   def __str__(self):
-    return "<InviteMessage(%s,%s,%s,%s,%s,%s,%s)" % (self.pubkey, self.v6, self.tcp, self.ip, self.port, self.id, self.secret)
+    s="[\n"
+    s=s+'  pubkey: '+encode(self.pubkey.bytes)+"\n"
+    s=s+'  v6:     '+str(self.v6)+"\n"
+    s=s+'  tcp:    '+str(self.tcp)+"\n"
+    s=s+'  ip:     '+self.ip+"\n"
+    s=s+'  port:   '+str(self.port)+"\n"
+    s=s+'  id:     '+encode(self.id)+"\n"
+    s=s+'  secret: '+encode(self.secret)+"\n"
+    s=s+"]\n"
+    return s
 
   def generate(self, pubkey, v6, tcp, port, entropy):
     self.pubkey=pubkey

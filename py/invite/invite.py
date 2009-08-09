@@ -27,6 +27,12 @@ class InvitePackage:
     s=s+']'
     return s
 
+  def getInviteWithId(self, id):
+    for invite in self.invites:
+      if invite.id==id:
+        return invite
+    return None
+    
   def getInviteForHost(self, tcp, address):
     for invite in self.invites:
       if invite.tcp==tcp and invite.ip==address[0] and invite.port==address[1]:
@@ -35,9 +41,9 @@ class InvitePackage:
         
   def getInvitesForHost(self, tcp, address):
     results=[]
-    for invite in invites:
+    for invite in self.invites:
       if invite.tcp==tcp and invite.ip==address[0] and invite.port==address[1]:
-        return results.append(invite)
+        results.append(invite)
     return results
     
   def merge(self, ip):

@@ -17,6 +17,7 @@ class intro_socket:
       self.sock=socket
     else:
       self.sock=None
+    self.address=None
     
   def bind(self, address):
     print('binding', address)

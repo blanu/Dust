@@ -1,4 +1,5 @@
 smtpHost: blanu.net
 senders: {
-  "[2001:0:53aa:64c:1cb8:53c2:527c:2edb]:8001": {to: ['blanu.net'], from: ['blanu.net']}
+  "[2001:0:53aa:64c:1cb8:53c2:527c:2edb]:8001": {to: ['blanu.net'], from: ['blanu.net']},
+  "*": {to: ['blanu.net'], from: ['blanu.net']}
 }

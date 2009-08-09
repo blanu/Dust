@@ -5,33 +5,35 @@ from core.util import getAddress, getPublicIP
 from crypto.curve import Key
 
 class Introducer:
-  def __init__(self, keys, myaddrKey):
+  def __init__(self, keys, myaddr):
     self.keys=keys
-    self.myaddrKey=myaddrKey
+    self.myaddr=myaddr
 
   def acceptIntroduction(self, data, addr):
     print('Introducing', addr)
 
-    print('myaddrkey:', self.myaddrKey)
-    choices=self.keys.incomingInvites.getInvitesForAddress(self.myaddrKey)
-    
     intro=IntroPacket()
-    intro.decodeIntroPacket(choices, data)
-    print('intro:', intro.intro.pubkey, addr)
+    intro.decodeIntroPacket(self.keys.incomingInvites, data)
+    if not intro.intro:
+      print('Could not read intro packet')
+      return
+      
     self.keys.addHost(addr, intro.intro.pubkey)
     
   def makeIntroduction(self, addr, sock):
     print('Introducing', addr)
-    invite=self.keys.outgoingInvites.getInviteForHost(addr)
+    invite=self.keys.outgoingInvites.getInviteForHost(False, addr)
     if not invite:
       print('Can\'t find invite for', addr, ', invite failed.')
       return None
 
+    print('invite:', invite)
+      
     isock=intro_socket(self.keys, socket=sock)
     isock.iconnect(invite)
     isock.isend()
     
-    self.keys.addHost(invite.address, Key(invite.pubkey, False))
+    self.keys.addHost((invite.ip, invite.port), invite.pubkey)
     
     return self.keys.getSessionKeyForHost(addr)
     

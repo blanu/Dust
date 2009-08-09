@@ -8,10 +8,11 @@ v6=sys.argv[2]
 passwd=sys.argv[3]
 
 keys=KeyManager()
+keys.setInvitePassword(passwd)
 keys.loadKeypair('config/id.yaml')
 keys.loadKnownHosts('config/knownhosts.yaml')
 keys.loadIncomingInvites('config/incoming_invites.ip')
-keys.loadOutgoingInviteS('config/outgoing_invites.ip')
+keys.loadOutgoingInvites('config/outgoing_invites.ip')
 
 PacketRouter(v6, inport, keys, passwd)
 

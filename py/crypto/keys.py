@@ -72,6 +72,7 @@ class KeyManager:
     return self.knownHosts[address]
 
   def addHost(self, address, pubkey):
+    print('addHost:', address, pubkey)
     addressKey=encodeAddress(address)
     self.knownHosts[addressKey]=pubkey
     print('knownHosts:', self.knownHosts)    

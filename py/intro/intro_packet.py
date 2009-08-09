@@ -43,15 +43,15 @@ class IntroPacket(DataPacket):
     self.createDataPacket(sk, self.intro.message, entropy)
     self.packet=self.identifier+self.packet
   
-  def decodeIntroPacket(self, choices, packet):
+  def decodeIntroPacket(self, invites, packet):
     self.identifier=packet[:ID_LENGTH]
     packet=packet[ID_LENGTH:]
-    print('choices:', choices)
-    if not self.identifier in choices:
+    invite=invites.getInviteWithId(self.identifier)
+    if not invite:
       print('Unknown invite id', encode(self.identifier))
-      print(choices)
+      print(invites)
       return
-    sk=choices[self.identifier].secret
+    sk=invite.secret
     
     self.decodeDataPacket(sk, packet)
     self.intro=IntroMessage()

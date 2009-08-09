@@ -6,15 +6,24 @@ from core.util import getPublicIP
 
 from email.mime.text import MIMEText
 
-buffsize=102400
-host = '::'
-inport=8001
-dest=getPublicIP()
-outport=7000
+passwd=sys.argv[1]
+ipv=sys.argv[2]
+if ipv=='4':
+  v6=False
+else:
+  v6=True
+inport=int(sys.argv[3])
+outport=int(sys.argv[4])
+
+host=getPublicIP(v6)
+dest=host
 
 keys=KeyManager()
+keys.setInvitePassword(passwd)
 keys.loadKnownHosts('config/knownhosts.yaml')
 keys.loadKeypair('config/id.yaml')
+keys.loadIncomingInvites('config/incoming_invites.ip')
+keys.loadOutgoingInvites('config/outgoing_invites.ip')
 
 msock=multiplex_socket(keys)
 msock.bind((host, inport))

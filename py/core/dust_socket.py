@@ -14,19 +14,20 @@ class dust_socket:
   def __init__(self, keys):
     self.keys=keys
     self.keypair=keys.getKeypair()
-    self.sock=socket(AF_INET6, SOCK_DGRAM)
+    
     self.dest=None
     self.connectDest=None
     self.connectSessionKey=None
     self.sessionKeys={}    
         
-  def setblocking(self, mode):
-    self.sock.setblocking(mode)
-    
   def bind(self, address):
+    ip=address[0]
+    if ':' in ip:
+      self.sock=socket(AF_INET6, SOCK_DGRAM)
+    else:
+      self.sock=socket(AF_INET, SOCK_DGRAM)
     self.sock.bind(address)
-    myaddrKey=encodeAddress(address)
-    self.introducer=Introducer(self.keys, myaddrKey, self.passwd)    
+    self.introducer=Introducer(self.keys, address)    
     
   def connect(self, address):
     if address==self.connectDest:
@@ -118,7 +119,7 @@ class dust_socket:
         return
     print('send to', addr)
     packet=DataPacket()
-    packet.createDataPacket(sessionKey, data)
+    packet.createDataPacket(sessionKey, data, self.keys.entropy)
     self.sock.sendto(packet.packet, 0, addr)    
 
   def sendtoraw(self, data, addr):
