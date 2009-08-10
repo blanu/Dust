@@ -48,9 +48,15 @@ def splitFields(msg, fields):
       value=msg[:field]
       msg=msg[field:]
       values.append(value)
+    if len(msg)>0:
+      values.append(msg)
+    print('split:', values)
     return values
   except:
     return None
+    
+def splitField(msg, field):
+  return msg[:field], msg[field:]
     
 def decodeFlags(flagsByte):
   bits=BitString(data=flagsByte)

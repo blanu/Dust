@@ -4,29 +4,42 @@ import struct
 from skein import threefish, skein512
 from crypto.curve import *
 
+from core.util import splitField, splitFields, encode
+
 IV_SIZE = 16
 KEY_SIZE = 32
 BLOCK_SIZE = 32
 MAC_SIZE = 32
+TIMESTAMP_SIZE=4
+DATA_LENGTH_SIZE=2
+EXTRA_LENGTH_SIZE=1
 
 # 4 bytes
-def makeTimestamp():
+def getTime():
   t=int(round(time.time()))
+  return t
+
+def makeTimestamp(t):
   return struct.pack("I", t)
 
 # 4 bytes
-def makeLength(data):
-  l=len(data)
-  return struct.pack("I", l)
+def makeLength(l, size):
+  if size==2:
+    return struct.pack("H", l)
+  elif size==1:
+    return struct.pack("B", l)
+  else:
+    print('Unsupported length size:', size)
+    return
 
 # 32 bytes
 def makeMac(k, data):
+  print('makeMac', encode(k), encode(data))
   result=skein512(data, digest_bits=256, mac=k).digest()
   return result
 
 # From 0 to size bytes
-def makeFiller(size, data):
-  l=len(data)
+def makeFiller(size, l):
   if l<size:
     padl=size-l
   elif l%size==0:
@@ -55,6 +68,7 @@ def encrypt(k, iv, payload):
 
 # len(payload) bytes
 def decrypt(k, iv, payload):
+  print('decrypting', len(payload), len(payload) % BLOCK_SIZE)
   cipher = threefish(k, iv)
   decrypted=bytearray(len(payload))
   
@@ -92,84 +106,89 @@ class DataPacket:
     
     self.packet=None
     
-  def createDataPacket(self, sk, data, entropy):
-    self.sk=sk+makeFiller(KEY_SIZE, sk)
-    self.data=data
+  def __str__(self):
+    s="[\n"
+    s=s+'  IV:          '+encode(self.iv)+"\n"
     
-    self.timestamp=makeTimestamp()
-    self.length=makeLength(self.data)
-    self.body=self.timestamp+self.length+self.data
+    if self.checkMac():
+      s=s+'  MAC:         '+encode(self.mac)+" OK\n"
+    else:
+      s=s+'  MAC:         '+encode(self.mac)+" Failed\n"
+      
+    if self.checkTimestamp():
+      s=s+'  timestamp:   '+str(self.timestamp)+" OK\n"
+    else:
+      s=s+'  timestamp:   '+str(self.timestamp)+" Failed\n"
+      
+    s=s+'  dataLength:  '+str(self.dataLength)+"\n"
+    s=s+'  extraLength: '+str(self.extraLength)+"\n"
+    s=s+'  data:        '+str(self.data)+"\n"
+    if self.filler:
+      s=s+'  filler:      '+str(len(self.filler))+"\n"
+    else:
+      s=s+"  filler:      None\n"
+    if self.padding:
+      s=s+'  padding:     '+encode(self.padding)+"\n"
+    else:
+      s=s+"  padding:     None\n"
+    s=s+"]\n"
+    return s
+    
+  def createDataPacket(self, sk, data, entropy):
+    self.sk=sk
+    self.data=data
+
+    self.padding=makePadding(entropy, BLOCK_SIZE)    
+    bodyLength=TIMESTAMP_SIZE+DATA_LENGTH_SIZE+EXTRA_LENGTH_SIZE+len(self.data)
+    self.filler=makeFiller(BLOCK_SIZE, MAC_SIZE+bodyLength)
+    
+    self.timestamp=getTime()
+    timestamp=makeTimestamp(self.timestamp)
+    self.dataLength=len(self.data)
+    dataLength=makeLength(self.dataLength, DATA_LENGTH_SIZE)
+    self.extraLength=len(self.filler)+len(self.padding)
+    extraLength=makeLength(self.extraLength, EXTRA_LENGTH_SIZE)
+    self.body=timestamp+dataLength+extraLength+self.data
     
     self.mac=makeMac(self.sk, self.body)
-    self.filler=makeFiller(BLOCK_SIZE, self.mac+self.body)
     self.payload=self.mac+self.body+self.filler
   
     self.iv=makeIV(entropy)
     self.encrypted=encrypt(self.sk, self.iv, self.payload)
-    self.padding=makePadding(entropy, BLOCK_SIZE)
   
     self.packet=self.iv+self.encrypted+self.padding
   
   def decodeDataPacket(self, sk, packet):
-    self.sk=sk+makeFiller(KEY_SIZE, sk)
+    print('decode', len(packet))
+    self.sk=sk
     self.packet=packet
-    
-    self.iv=self.packet[:IV_SIZE]
-    self.encrypted=self.packet[IV_SIZE:]
-    l=len(self.encrypted)
-    tail=l%BLOCK_SIZE
-    if l>BLOCK_SIZE and tail!=0:
-      self.encrypted=self.encrypted[:-tail]
+
+    self.iv, self.encrypted=splitField(self.packet, IV_SIZE)
+    print('encrypted', len(self.encrypted))
+    r=len(self.encrypted) % BLOCK_SIZE
+    if r>0:
+      self.encrypted=self.encrypted[:-r]
+    print('encrypted', len(self.encrypted))
     self.payload=decrypt(self.sk, self.iv, self.encrypted)
 
-    self.mac=self.payload[:MAC_SIZE]
-    self.body=self.payload[MAC_SIZE:]
-  
-    self.timestamp=self.body[:4]
-    self.timestampValue=struct.unpack("I", self.timestamp)[0]
-    self.length=self.body[4:8]
-    self.lengthValue=struct.unpack("I", self.length)[0]
-    self.body=self.body[:8+self.lengthValue]
-    self.data=self.body[8:]
+    self.mac, self.body=splitField(self.payload, MAC_SIZE)
+
+    self.timestamp, self.dataLength, self.extraLength, self.data=splitFields(self.body, [TIMESTAMP_SIZE, DATA_LENGTH_SIZE, EXTRA_LENGTH_SIZE])
+    self.timestamp=struct.unpack("I", self.timestamp)[0]
+    print('timestamp: ', self.timestamp)
+    self.dataLength=struct.unpack("H", self.dataLength)[0]
+    self.extraLength=struct.unpack("B", self.extraLength)[0]
+    
+    self.data, extra=splitField(self.data, self.dataLength)
+    
+    bodyLength=TIMESTAMP_SIZE+DATA_LENGTH_SIZE+EXTRA_LENGTH_SIZE+len(self.data)
+    self.body=self.body[:bodyLength]
     
   def checkMac(self):
     return self.mac and self.mac==makeMac(self.sk, self.body)
     
   def checkTimestamp(self):
     now=int(round(time.time()))
-    delta=now-self.timestampValue
+    delta=now-self.timestamp
     return delta<10
-    
-if __name__=='__main__':
-  sender=createKeypair()
-  receiver=createKeypair()
-  
-  psk=sender.createSession(receiver.public).bytes
-  l=len(psk)
-  if l<16:
-    padding=b"\x00"*(16-l)
-  else:    
-    padding=b"\x00"*(l%16)
-  psk=psk+padding
-  
-  packet=DataPacket()
-  packet.createDataPacket(psk, b"Hello")
-  print('packet:', packet)
-  print('packetData:', packet.packet)
-  print('length', packet.length)
-  print('checkMac:', packet.checkMac())
-  print('packet length:', len(packet.packet))
-  
-  print('------------------------')
-  
-  p2=DataPacket()
-  p2.decodeDataPacket(psk, packet.packet)
-  print('packet:', p2)
-  print('packet.data:', p2.data)
-  print('length', p2.length)
-  print('checkMac:', p2.checkMac())
-  print('checkTimestamp:', p2.checkTimestamp())
-  time.sleep(1)
-  print('checkTimestamp:', p2.checkTimestamp())
-  time.sleep(10)
-  print('checkTimestamp:', p2.checkTimestamp())
+        
