@@ -8,10 +8,10 @@ try:
 except ImportError:
     from invite.win32_inet_pton import inet_pton, inet_ntop
 
-from skein import skein512
+from crypto.skeinUtil import pbkdf
 
 from core.data_packet import DataPacket
-from core.util import getPublicIP, splitFields, encodeFlags, decodeFlags, fill, encode
+from core.util import getPublicIP, splitFields, splitField, encodeFlags, decodeFlags, fill, encode
 from crypto.curve import Key
 
 PUBKEY_LENGTH=32
@@ -20,8 +20,11 @@ IP_LENGTH=16
 PORT_LENGTH=2
 ID_LENGTH=16
 SECRET_LENGTH=16
+SALT_LENGTH=32
 
 IPV4_LENGTH=4
+
+PBKDF_ITERATIONS=13000
 
 class InviteMessage:
   def __init__(self):
@@ -54,7 +57,7 @@ class InviteMessage:
     self.port=port
     self.id=self.makeIdentifier(entropy)
     self.secret = self.makeSecret(entropy)
-        
+    
     pubkey=self.pubkey.bytes
     flags=encodeFlags((self.v6, self.tcp, False, False, False, False, False, False))
     if self.v6:
@@ -119,16 +122,23 @@ class InvitePacket(DataPacket):
   def __init__(self):
     DataPacket.__init__(self)
 
+    self.salt=None        
     self.invite=None
+    
+  def makeSalt(self, entropy):
+    return entropy.getBytes(SALT_LENGTH)
     
   def createInvitePacket(self, password, invite, entropy):
     self.invite=invite
     
-    sk=skein512(password.encode('ascii'), digest_bits=256).digest()
+    self.salt=self.makeSalt(entropy)        
+    sk=pbkdf(password, self.salt, PBKDF_ITERATIONS)
     self.createDataPacket(sk, self.invite.message, entropy)
+    self.packet=self.salt+self.packet
   
   def decodeInvitePacket(self, password, packet):
-    sk=skein512(password.encode('ascii'), digest_bits=256).digest()
+    self.salt, packet=splitField(packet, SALT_LENGTH)
+    sk=pbkdf(password, self.salt, PBKDF_ITERATIONS)
     
     self.decodeDataPacket(sk, packet)
     self.invite=InviteMessage()

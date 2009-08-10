@@ -34,7 +34,6 @@ def makeLength(l, size):
 
 # 32 bytes
 def makeMac(k, data):
-  print('makeMac', encode(k), encode(data))
   result=skein512(data, digest_bits=256, mac=k).digest()
   return result
 
@@ -68,7 +67,6 @@ def encrypt(k, iv, payload):
 
 # len(payload) bytes
 def decrypt(k, iv, payload):
-  print('decrypting', len(payload), len(payload) % BLOCK_SIZE)
   cipher = threefish(k, iv)
   decrypted=bytearray(len(payload))
   
@@ -159,23 +157,19 @@ class DataPacket:
     self.packet=self.iv+self.encrypted+self.padding
   
   def decodeDataPacket(self, sk, packet):
-    print('decode', len(packet))
     self.sk=sk
     self.packet=packet
 
     self.iv, self.encrypted=splitField(self.packet, IV_SIZE)
-    print('encrypted', len(self.encrypted))
     r=len(self.encrypted) % BLOCK_SIZE
     if r>0:
       self.encrypted=self.encrypted[:-r]
-    print('encrypted', len(self.encrypted))
     self.payload=decrypt(self.sk, self.iv, self.encrypted)
 
     self.mac, self.body=splitField(self.payload, MAC_SIZE)
 
     self.timestamp, self.dataLength, self.extraLength, self.data=splitFields(self.body, [TIMESTAMP_SIZE, DATA_LENGTH_SIZE, EXTRA_LENGTH_SIZE])
     self.timestamp=struct.unpack("I", self.timestamp)[0]
-    print('timestamp: ', self.timestamp)
     self.dataLength=struct.unpack("H", self.dataLength)[0]
     self.extraLength=struct.unpack("B", self.extraLength)[0]
     

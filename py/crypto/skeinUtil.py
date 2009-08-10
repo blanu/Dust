@@ -32,4 +32,6 @@ class SkeinPRNG:
     else:
       return i
       
-      
+def pbkdf(pb, salt, i, digest_bits=256):
+  data=(pb.encode('ascii')+salt)*i
+  return skein512(data, digest_bits=digest_bits).digest()

@@ -17,9 +17,7 @@ def encodeAddress(addr):
   return '['+ip+']:'+str(port)
   
 def decodeAddress(s):
-  print('decodeAddress:', s)
   m=re.match('\[([0-9a-f:]+)\]:([0-9]+)', s)
-  print('m:', m)
   return (m.group(1), int(m.group(2)))
   
 def getPublicIP(v6=True):
@@ -50,7 +48,6 @@ def splitFields(msg, fields):
       values.append(value)
     if len(msg)>0:
       values.append(msg)
-    print('split:', values)
     return values
   except:
     return None
