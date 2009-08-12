@@ -2,6 +2,7 @@ import sys
 import time
 import struct
 from socket import *
+from Queue import Queue
 
 import yaml
 
@@ -19,7 +20,9 @@ class dust_socket:
     self.connectDest=None
     self.connectSessionKey=None
     self.sessionKeys={}    
-        
+
+    self.inbuff=Queue()
+    
   def bind(self, address):
     ip=address[0]
     if ':' in ip:
@@ -77,23 +80,38 @@ class dust_socket:
         return data
         
   def recvfrom(self, bufsize):
-    data, addr=self.sock.recvfrom(bufsize)
+    if not self.inbuff.empty():
+      data, addr=self.inbuff.get()
+    else:
+      data, addr=self.sock.recvfrom(bufsize)
+      
     if not data:
       print('No data')
       return None, None
+    else:
+      packet=self.decodePacket(addr, data)
+      if not packet:
+        return None, None
+      else:
+        if packet.remaining:
+          self.inbuff.put((remaining, addr))
+        return packet
       
-    sessionKey=self.makeSession(addr, False) # Don't use an invite when you receive a packet from an unknown host, that's not the protocol
-    if not sessionKey:
+  def decodePacket(self, addr, data):
+    sessionKey=self.makeSession(addr, False) # Don't introduce yourself when you receive a packet from an unknown host, that's not the protocol
+    if sessionKey: # Must be a data packet
+      packet=DataPacket()
+      packet.decodeDataPacket(sessionKey, data)
+      print('checking:', packet.checkMac(), ',', packet.checkTimestamp())
+      if packet.checkMac() and packet.checkTimestamp():        
+        return packet.data, addr
+    else: # Must be an intro packet
       print('Unknown address', addr)
       if self.introducer:
-        self.introducer.acceptIntroduction(data, addr)
-      return None, None
-      
-    packet=DataPacket()
-    packet.decodeDataPacket(sessionKey, data)
-    print('checking:', packet.checkMac(), ',', packet.checkTimestamp())
-    if packet.checkMac() and packet.checkTimestamp():
-      return packet.data, addr
+        intro=self.introducer.acceptIntroduction(data, addr)
+        if intro and intro.chained=True:
+        else:
+          return None, None
       
   def send(self, data):
     if not self.connectDest or not self.connectSessionKey:

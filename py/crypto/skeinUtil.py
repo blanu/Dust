@@ -2,10 +2,15 @@ import random
 import struct
 
 from skein import skein512
-from core.util import splitFields
+from core.util import splitFields, splitField
 
 SEED_SIZE=16
+IV_SIZE=16
 
+def pbkdf(pb, salt, i, digest_bits=256):
+  data=(pb.encode('ascii')+salt)*i
+  return skein512(data, digest_bits=digest_bits).digest()
+  
 class SkeinPRNG:
   def __init__(self, seed=None):
     if seed:
@@ -31,7 +36,33 @@ class SkeinPRNG:
       return i%max
     else:
       return i
+    
+def encrypt(k, iv, data):
+  cipher=SkeinCipher(k, iv)
+  return cipher.encrypt(data)
       
-def pbkdf(pb, salt, i, digest_bits=256):
-  data=(pb.encode('ascii')+salt)*i
-  return skein512(data, digest_bits=digest_bits).digest()
+def decrypt(k, iv, data):
+  cipher=SkeinCipher(k, iv)
+  return cipher.decrypt(data)
+  
+class SkeinCipher:
+  def __init__(self, key, iv):
+    self.key=key
+    self.iv=iv
+
+  def getBytes(self, n):
+    result=skein512(self.iv, mac=self.key, digest_bits=(IV_SIZE+n)*8).digest()
+    self.iv, entropy=splitField(result, IV_SIZE)    
+    return entropy
+
+  def encrypt(self, data):
+    l=len(data)
+    entropy=self.getBytes(l)
+    cdata=bytearray()
+    for x in range(l):
+      print(data[x], entropy[x])
+      cdata.append(data[x] ^ entropy[x])
+    return bytes(cdata)
+    
+  def decrypt(self, data):
+    return self.encrypt(data)

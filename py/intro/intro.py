@@ -14,11 +14,12 @@ class Introducer:
 
     intro=IntroPacket()
     intro.decodeIntroPacket(self.keys.incomingInvites, data)
-    if not intro.intro:
+    if intro.intro:
+      self.keys.addHost(addr, intro.intro.pubkey)
+      return intro
+    else:
       print('Could not read intro packet')
-      return
-      
-    self.keys.addHost(addr, intro.intro.pubkey)
+      return None      
     
   def makeIntroduction(self, addr, sock):
     print('Introducing', addr)
