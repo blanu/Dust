@@ -6,6 +6,7 @@ from core.util import splitFields, splitField
 
 SEED_SIZE=16
 IV_SIZE=16
+BLOCK_SIZE
 
 def pbkdf(pb, salt, i, digest_bits=256):
   data=(pb.encode('ascii')+salt)*i
@@ -49,11 +50,15 @@ class SkeinCipher:
   def __init__(self, key, iv):
     self.key=key
     self.iv=iv
+    self.entropy=b''
 
   def getBytes(self, n):
-    result=skein512(self.iv, mac=self.key, digest_bits=(IV_SIZE+n)*8).digest()
-    self.iv, entropy=splitField(result, IV_SIZE)    
-    return entropy
+    while len(self.entropy)<n:
+      result=skein512(self.iv, mac=self.key, digest_bits=(IV_SIZE+BLOCK_SIZE)*8).digest()
+      self.iv, entropy=splitField(result, IV_SIZE)    
+      self.entropy=self.entropy+entropy
+    b, self.entropy=splitField(self.entropy, n)
+    return b
 
   def encrypt(self, data):
     l=len(data)
