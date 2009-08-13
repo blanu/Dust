@@ -8,9 +8,12 @@ SEED_SIZE=16
 IV_SIZE=16
 BLOCK_SIZE=32
 
-def pbkdf(pb, salt, i, digest_bits=256):
+def pbkdf(pb, salt, i, pers=None, digest_bits=256):
   data=(pb.encode('ascii')+salt)*i
-  return skein512(data, digest_bits=digest_bits).digest()
+  if pers:
+    return skein512(data, pers=pers, digest_bits=digest_bits).digest()
+  else:
+    return skein512(data, digest_bits=digest_bits).digest()
   
 class SkeinPRNG:
   def __init__(self, seed=None):
@@ -47,14 +50,18 @@ def decrypt(k, iv, data):
   return cipher.decrypt(data)
   
 class SkeinCipher:
-  def __init__(self, key, iv):
+  def __init__(self, key, iv, pers=None):
     self.key=key
     self.iv=iv
     self.entropy=b''
+    self.pers=pers
 
   def getBytes(self, n):
     while len(self.entropy)<n:
-      result=skein512(self.iv, mac=self.key, digest_bits=(IV_SIZE+BLOCK_SIZE)*8).digest()
+      if self.pers:
+        result=skein512(nonce=self.iv, mac=self.key, pers=self.pers, digest_bits=(IV_SIZE+BLOCK_SIZE)*8).digest()
+      else:
+        result=skein512(nonce=self.iv, mac=self.key, digest_bits=(IV_SIZE+BLOCK_SIZE)*8).digest()
       self.iv, entropy=splitField(result, IV_SIZE)    
       self.entropy=self.entropy+entropy
     b, self.entropy=splitField(self.entropy, n)
@@ -65,7 +72,6 @@ class SkeinCipher:
     entropy=self.getBytes(l)
     cdata=bytearray()
     for x in range(l):
-      print(data[x], entropy[x])
       cdata.append(data[x] ^ entropy[x])
     return bytes(cdata)
     
