@@ -6,7 +6,7 @@ from core.util import splitFields, splitField
 
 SEED_SIZE=16
 IV_SIZE=16
-BLOCK_SIZE
+BLOCK_SIZE=32
 
 def pbkdf(pb, salt, i, digest_bits=256):
   data=(pb.encode('ascii')+salt)*i

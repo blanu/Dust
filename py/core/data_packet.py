@@ -40,16 +40,6 @@ def makeMac(k, data):
   result=skein512(data, digest_bits=256, mac=k).digest()
   return result
 
-# From 0 to size bytes
-def makeFiller(size, l):
-  if l<size:
-    padl=size-l
-  elif l%size==0:
-    return b''
-  else:
-    padl=size-(l % size)
-  return b"\x00"*padl    
-
 # 16 bytes
 def makeIV(entropy):
   return entropy.getBytes(IV_SIZE)
@@ -70,7 +60,6 @@ class DataPacket:
     self.body=None
     
     self.mac=None
-    self.filler=None
     self.payload=None
     
     self.iv=None
@@ -98,10 +87,6 @@ class DataPacket:
     s=s+'  dataLength: '+str(self.dataLength)+"\n"
     s=s+'  paddingLength: '+str(self.paddingLength)+"\n"
     s=s+'  data: '+str(self.data)+"\n"
-    if self.filler:
-      s=s+'  filler: '+str(len(self.filler))+"\n"
-    else:
-      s=s+"  filler: None\n"
     if self.padding:
       s=s+'  padding: '+encode(self.padding)+"\n"
     else:
@@ -119,7 +104,6 @@ class DataPacket:
 
     self.padding=makePadding(entropy, BLOCK_SIZE)    
     bodyLength=TIMESTAMP_SIZE+DATA_LENGTH_SIZE+PADDING_LENGTH_SIZE+len(self.data)
-    self.filler=makeFiller(BLOCK_SIZE, MAC_SIZE+bodyLength)
     
     self.timestamp=getTime()
     timestamp=makeTimestamp(self.timestamp)
@@ -130,7 +114,7 @@ class DataPacket:
     self.body=timestamp+dataLength+paddingLength+self.data
     
     self.mac=makeMac(self.sk, self.body)
-    self.payload=self.mac+self.body+self.filler
+    self.payload=self.mac+self.body
   
     self.iv=makeIV(entropy)
     self.encrypted=encrypt(self.sk, self.iv, self.payload)
@@ -142,13 +126,11 @@ class DataPacket:
     self.packet=packet
 
     self.iv, self.encrypted=splitField(self.packet, IV_SIZE)
-    r=len(self.encrypted) % BLOCK_SIZE
-    if r>0:
-      self.encrypted=self.encrypted[:-r]
     self.payload=decrypt(self.sk, self.iv, self.encrypted)
 
     self.mac, self.body=splitField(self.payload, MAC_SIZE)
 
+    print('body:', self.body)
     self.timestamp, self.dataLength, self.paddingLength, self.data=splitFields(self.body, [TIMESTAMP_SIZE, DATA_LENGTH_SIZE, PADDING_LENGTH_SIZE])
     self.timestamp=struct.unpack("I", self.timestamp)[0]
     self.dataLength=struct.unpack("H", self.dataLength)[0]
@@ -161,7 +143,6 @@ class DataPacket:
     self.body=self.body[:bodyLength]
 
     payloadLength=MAC_SIZE+bodyLength
-    payloadLength=payloadLength+len(makeFiller(BLOCK_SIZE, payloadLength))
     
     realPacketLength=IV_SIZE+payloadLength+self.paddingLength
     if len(packet)>realPacketLength:
