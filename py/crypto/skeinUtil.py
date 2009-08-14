@@ -16,20 +16,27 @@ def pbkdf(pb, salt, i, pers=None, digest_bits=256):
     return skein512(data, digest_bits=digest_bits).digest()
   
 class SkeinPRNG:
-  def __init__(self, seed=None):
+  def __init__(self, seed=None, pers=None):
     if seed:
       self.seed=seed
     else:
       self.seed=self.generateSeed()
+    self.pers=pers
       
   def generateSeed(self):
     return bytes(random.randint(0, 255) for _ in range(SEED_SIZE))
 
   def reseed(self, seed):
-    self.seed=skein512(self.seed+seed, digest_bits=SEED_SIZE*8).digest()
+    if self.pers:
+      self.seed=skein512(self.seed+seed, pers=self.pers, digest_bits=SEED_SIZE*8).digest()
+    else:
+      self.seed=skein512(self.seed+seed, digest_bits=SEED_SIZE*8).digest()
     
   def getBytes(self, n):
-    result=skein512(self.seed, digest_bits=(SEED_SIZE+n)*8).digest()
+    if self.pers:
+      result=skein512(self.seed, pers=self.pers, digest_bits=(SEED_SIZE+n)*8).digest()
+    else:
+      result=skein512(self.seed, digest_bits=(SEED_SIZE+n)*8).digest()
     self.seed, r=splitFields(result, [SEED_SIZE, n])
     return r
 
