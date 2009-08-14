@@ -1,9 +1,8 @@
 import time
 import struct
 
-from skein import threefish, skein512
 from crypto.curve import *
-from crypto.skeinUtil import encrypt, decrypt
+from crypto.dust import encrypt, decrypt, mac
 
 from core.util import splitField, splitFields, encode
 
@@ -37,7 +36,7 @@ def makeLength(l, size):
 
 # 32 bytes
 def makeMac(k, data):
-  result=skein512(data, digest_bits=256, mac=k).digest()
+  result=mac(k, data)
   return result
 
 # 16 bytes

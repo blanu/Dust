@@ -1,6 +1,6 @@
-from crypto.skeinUtil import SkeinPRNG
+from crypto.dust import DustPRNG
 
-r=SkeinPRNG()
+r=DustPRNG()
 print(r.getBytes(10))
 print(r.getBytes(20))
 print(r.getBytes(1))

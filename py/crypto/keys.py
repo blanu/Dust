@@ -11,7 +11,7 @@ from crypto.curve import *
 from core.data_packet import DataPacket
 from core.util import encode, decode, encodeAddress
 from invite.invite import loadInvitePackage
-from crypto.skeinUtil import SkeinPRNG
+from crypto.dust import DustPRNG
 
 class KeyManager:
   def __init__(self):
@@ -20,7 +20,7 @@ class KeyManager:
     self.incomingInvites=None
     self.outgoingInvites=None
     self.invitePassword=None
-    self.entropy=SkeinPRNG()
+    self.entropy=DustPRNG()
 
   def loadKeypair(self, filename):
     f=open(filename, 'r')

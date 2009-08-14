@@ -8,7 +8,7 @@ try:
 except ImportError:
     from invite.win32_inet_pton import inet_pton, inet_ntop
 
-from crypto.skeinUtil import pbkdf
+from crypto.dust import pbkdf
 
 from core.data_packet import DataPacket
 from core.util import getPublicIP, splitFields, splitField, encodeFlags, decodeFlags, fill, encode

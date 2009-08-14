@@ -1,7 +1,6 @@
-from crypto import skeinUtil
+from crypto import dust
 
 passwd="testpw"
-prng=skeinUtil.SkeinPRNG()
+prng=dust.DustPRNG()
 salt=prng.getBytes(32)
-pbkdf=skeinUtil.pbkdf
-pers=b'1978-10-26 dust@blanu.net Dust/PBKDF'
+pbkdf=dust.pbkdf
