@@ -11,7 +11,6 @@ class multiplex_socket(dust_socket):
     self.connectService=serviceName
     
   def msend(self, data, service=None):
-    print('ss:', service)
     if not service:
       service=self.connectService
     multiplex=MultiplexMessage()

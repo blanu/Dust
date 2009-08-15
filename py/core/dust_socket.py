@@ -2,7 +2,6 @@ import sys
 import time
 import struct
 from socket import *
-from Queue import Queue
 
 import yaml
 
@@ -21,7 +20,7 @@ class dust_socket:
     self.connectSessionKey=None
     self.sessionKeys={}    
 
-    self.inbuff=Queue()
+    self.remaining=None
     
   def bind(self, address):
     ip=address[0]
@@ -80,8 +79,9 @@ class dust_socket:
         return data
         
   def recvfrom(self, bufsize):
-    if not self.inbuff.empty():
-      data, addr=self.inbuff.get()
+    if self.remaining:
+      data, addr=self.remaining
+      self.remaining=None
     else:
       data, addr=self.sock.recvfrom(bufsize)
       
@@ -94,24 +94,27 @@ class dust_socket:
         return None, None
       else:
         if packet.remaining:
-          self.inbuff.put((remaining, addr))
-        return packet
+          self.remaining=(packet.remaining, addr)
+        if type(packet)==DataPacket:
+          return packet.data, addr
+        else:
+          return None, None
       
   def decodePacket(self, addr, data):
     sessionKey=self.makeSession(addr, False) # Don't introduce yourself when you receive a packet from an unknown host, that's not the protocol
     if sessionKey: # Must be a data packet
       packet=DataPacket()
       packet.decodeDataPacket(sessionKey, data)
-      print('checking:', packet.checkMac(), ',', packet.checkTimestamp())
       if packet.checkMac() and packet.checkTimestamp():        
-        return packet.data, addr
+        return packet
     else: # Must be an intro packet
       print('Unknown address', addr)
       if self.introducer:
         intro=self.introducer.acceptIntroduction(data, addr)
-        if intro and intro.chained=True:
+        if intro:
+          return intro
         else:
-          return None, None
+          return None
       
   def send(self, data):
     if not self.connectDest or not self.connectSessionKey:
@@ -135,7 +138,6 @@ class dust_socket:
       if not sessionKey:
         print('Introduction failed.')
         return
-    print('send to', addr)
     packet=DataPacket()
     packet.createDataPacket(sessionKey, data, self.keys.entropy)
     self.sock.sendto(packet.packet, 0, addr)    

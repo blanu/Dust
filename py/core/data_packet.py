@@ -129,7 +129,6 @@ class DataPacket:
 
     self.mac, self.body=splitField(self.payload, MAC_SIZE)
 
-    print('body:', self.body)
     self.timestamp, self.dataLength, self.paddingLength, self.data=splitFields(self.body, [TIMESTAMP_SIZE, DATA_LENGTH_SIZE, PADDING_LENGTH_SIZE])
     self.timestamp=struct.unpack("I", self.timestamp)[0]
     self.dataLength=struct.unpack("H", self.dataLength)[0]

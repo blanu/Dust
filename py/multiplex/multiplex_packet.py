@@ -4,7 +4,6 @@ from core.data_packet import DataPacket
 def makeByteLength(data):
   b=bytearray(1)
   b[0]=len(data)
-  print('mbl#@#@#:', b)
   return b
   
 class MultiplexMessage:
@@ -15,7 +14,6 @@ class MultiplexMessage:
     self.message=None
     
   def createMultiplexMessage(self, serviceName, data):
-    print('sn:', serviceName)
     self.serviceName=serviceName.encode('ascii')
     self.serviceNameLength=makeByteLength(self.serviceName)
     self.data=data

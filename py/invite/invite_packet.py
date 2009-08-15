@@ -24,8 +24,6 @@ SALT_LENGTH=32
 
 IPV4_LENGTH=4
 
-PBKDF_ITERATIONS=13000
-
 class InviteMessage:
   def __init__(self):
     self.pubkey=None
@@ -132,13 +130,13 @@ class InvitePacket(DataPacket):
     self.invite=invite
     
     self.salt=self.makeSalt(entropy)        
-    sk=pbkdf(password, self.salt, PBKDF_ITERATIONS)
+    sk=pbkdf(password, self.salt)
     self.createDataPacket(sk, self.invite.message, entropy)
     self.packet=self.salt+self.packet
   
   def decodeInvitePacket(self, password, packet):
     self.salt, packet=splitField(packet, SALT_LENGTH)
-    sk=pbkdf(password, self.salt, PBKDF_ITERATIONS)
+    sk=pbkdf(password, self.salt)
     
     self.decodeDataPacket(sk, packet)
     self.invite=InviteMessage()
