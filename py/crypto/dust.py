@@ -13,8 +13,12 @@ PBKDF_ITERATIONS=13000
 
 MAC_PERS=b'1978-10-26 dust@blanu.net Dust/MAC'
 PRNG_PERS=b'1978-10-26 dust@blanu.net Dust/PRNG'
+HASH_PERS=b'1978-10-26 dust@blanu.net Dust/hash'
 PBKDF_PERS=b'1978-10-26 dust@blanu.net Dust/PBKDF'
 CIPHER_PERS=b'1978-10-26 dust@blanu.net Dust/cipher'
+
+def hash(data):
+  return skein512(data, digest_bits=256, pers=HASH_PERS).digest()
 
 def mac(key, data):
   return skein512(data, digest_bits=256, mac=key, pers=MAC_PERS).digest()

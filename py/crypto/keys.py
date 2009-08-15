@@ -11,7 +11,7 @@ from crypto.curve import *
 from core.data_packet import DataPacket
 from core.util import encode, decode, encodeAddress
 from invite.invite import loadInvitePackage
-from crypto.dust import DustPRNG
+from crypto.dust import DustPRNG, hash
 
 class KeyManager:
   def __init__(self):
@@ -88,7 +88,7 @@ class KeyManager:
       print('Unknown hosts', addressKey)
       return None
     print('pubkey:', pubkey)
-    sessionKey=self.keypair.createSession(pubkey).bytes
+    sessionKey=hash(self.keypair.createSession(pubkey).bytes)
     return sessionKey
 
   def setInvitePassword(self, passwd):
