@@ -5,7 +5,6 @@ from skein import skein512
 from core.util import splitFields, splitField
 
 SEED_SIZE=16
-IV_SIZE=16
 BLOCK_SIZE=32
 
 def pbkdf(pb, salt, i, pers=None, digest_bits=256):
@@ -56,7 +55,7 @@ def decrypt(k, iv, data):
   cipher=SkeinCipher(k, iv)
   return cipher.decrypt(data)
   
-class SkeinCipher:
+class SkeinCipherOFB:
   def __init__(self, key, iv, pers=None):
     self.key=key
     self.iv=iv
@@ -66,11 +65,11 @@ class SkeinCipher:
   def getBytes(self, n):
     while len(self.entropy)<n:
       if self.pers:
-        result=skein512(nonce=self.iv, mac=self.key, pers=self.pers, digest_bits=(IV_SIZE+BLOCK_SIZE)*8).digest()
+        result=skein512(nonce=self.iv, mac=self.key, pers=self.pers, digest_bits=(BLOCK_SIZE)*8).digest()
       else:
-        result=skein512(nonce=self.iv, mac=self.key, digest_bits=(IV_SIZE+BLOCK_SIZE)*8).digest()
-      self.iv, entropy=splitField(result, IV_SIZE)    
-      self.entropy=self.entropy+entropy
+        result=skein512(nonce=self.iv, mac=self.key, digest_bits=(BLOCK_SIZE)*8).digest()
+      self.entropy=self.entropy+result
+      self.iv=result
     b, self.entropy=splitField(self.entropy, n)
     return b
 

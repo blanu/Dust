@@ -38,6 +38,6 @@ def decrypt(k, iv, data):
   cipher=DustCipher(k, iv)
   return cipher.decrypt(data)
   
-class DustCipher(skeinUtil.SkeinCipher):
+class DustCipher(skeinUtil.SkeinCipherOFB):
   def __init__(self, key, iv):
-    skeinUtil.SkeinCipher.__init__(self, key, iv, pers=CIPHER_PERS)
+    skeinUtil.SkeinCipherOFB.__init__(self, key, iv, pers=CIPHER_PERS)
