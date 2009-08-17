@@ -10,7 +10,7 @@ except ImportError:
 
 from crypto.dust import pbkdf
 
-from core.data_packet import DataPacket
+from core.dust_packet import DustPacket
 from core.util import getPublicIP, splitFields, splitField, encodeFlags, decodeFlags, fill, encode
 from crypto.curve import Key
 
@@ -116,9 +116,9 @@ class InviteMessage:
     self.id=id
     self.secret=secret
 
-class InvitePacket(DataPacket):
+class InvitePacket(DustPacket):
   def __init__(self):
-    DataPacket.__init__(self)
+    DustPacket.__init__(self)
 
     self.salt=None        
     self.invite=None
@@ -131,14 +131,14 @@ class InvitePacket(DataPacket):
     
     self.salt=self.makeSalt(entropy)        
     sk=pbkdf(password, self.salt)
-    self.createDataPacket(sk, self.invite.message, entropy)
+    self.createDustPacket(sk, self.invite.message, entropy)
     self.packet=self.salt+self.packet
   
   def decodeInvitePacket(self, password, packet):
     self.salt, packet=splitField(packet, SALT_LENGTH)
     sk=pbkdf(password, self.salt)
     
-    self.decodeDataPacket(sk, packet)
+    self.decodeDustPacket(sk, packet)
     self.invite=InviteMessage()
     self.invite.decodeInviteMessage(self.data)
     return self.invite
