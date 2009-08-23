@@ -14,11 +14,18 @@ def encodeAddress(addr):
   if ip=='':
     ip='::'
   port=addr[1]
-  return '['+ip+']:'+str(port)
+  if '.' in ip:
+    return ip+':'+str(port)
+  else:
+    return '['+ip+']:'+str(port)
   
 def decodeAddress(s):
-  m=re.match('\[([0-9a-f:]+)\]:([0-9]+)', s)
-  return (m.group(1), int(m.group(2)))
+  if '.' in s:
+    parts=s.split(':')
+    return (parts[0], int(parts[1]))
+  else:
+    m=re.match('\[([0-9a-f:]+)\]:([0-9]+)', s)
+    return (m.group(1), int(m.group(2)))
   
 def getPublicIP(v6=True):
   if v6:
@@ -75,3 +82,12 @@ def fill(bytes, size):
   while len(bytes)<size:
     bytes=bytes+b'\x00'
   return bytes
+  
+def xor(a, b):
+  if len(a)!=len(b):
+    print('xor parameters must be the same length:', len(a), len(b))
+    return None      
+  c=bytearray()
+  for x in range(len(a)):
+    c.append(a[x] ^ b[x])
+  return bytes(c)    

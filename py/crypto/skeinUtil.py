@@ -2,7 +2,7 @@ import random
 import struct
 
 from skein import skein512
-from core.util import splitFields, splitField
+from core.util import splitFields, splitField, xor
 
 SEED_SIZE=16
 BLOCK_SIZE=32
@@ -76,10 +76,7 @@ class SkeinCipherOFB:
   def encrypt(self, data):
     l=len(data)
     entropy=self.getBytes(l)
-    cdata=bytearray()
-    for x in range(l):
-      cdata.append(data[x] ^ entropy[x])
-    return bytes(cdata)
+    return xor(data, entropy)
     
   def decrypt(self, data):
     return self.encrypt(data)

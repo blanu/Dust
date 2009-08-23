@@ -1,7 +1,7 @@
 What do I need to run this?
 
 Python3.0 (required for PySkein)
-PySkein (skein bindings for python)
+PySkein 0.4 (skein bindings for python)
 PyYAML (YAML implementation for python)
 python-bitstring (make sure to get the Python 3.x version)
 curve25519 module (included for athlon and Win32, you'll need to recompile otherwise)
@@ -15,14 +15,27 @@ Send out invites (out of band)
 
 Configure server/services.py to enable desired services (for example, the mail relay)
 Edit config/emailServer.py or other relevant config files to configure enabled services
-Run server/packet-router.py
+Run commands/serve.py port 6/4 password, example: commands/serve.py 8000 6 testpassword
 
 How do I use the network to proxy information?
 
 Generate your keypair: commands/gen.py
-Obtain an invite (out of band)
+Obtain an invite
 Obtain the password for the invite
 Merge the invite file into your personal invite database: commands/process-invite.py invitePassword passwordForYourInviteDb
 
-Send a mail message: test/intro-mmail-send.py (it will prompt for headers and email body)
+Send a mail message: test/intro-mmail-send.py inport outport 6/4 password (it will prompt for headers and email body)
+Example: test/intro-mmail-send.py 7001 8000 6 testpassword
 
+How do I use Dust Lite services?
+
+Dust Lite works just like normal Dust, only there is no need to use invites. Consequently, it lacks the security of normal Dust.
+
+To run a Dust Lite server, run commands/lite-serv.py port 6/4
+To send mail with a Dust Lite server, run command/lite-mmail-send.py inport outport 6/4
+
+What Dust services are available?
+
+By default, mail and chat are included. The mail service acts as a proxy which let's you send normal mail messages to a list of allowed destination hosts.
+Chat is a simple service for debugging which prints received messages on the server's console.
+New services can be added easily by editting server/services.py.

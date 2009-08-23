@@ -6,14 +6,14 @@ from core.util import getPublicIP
 
 from email.mime.text import MIMEText
 
-passwd=sys.argv[1]
-ipv=sys.argv[2]
+inport=int(sys.argv[1])
+outport=int(sys.argv[2])
+ipv=sys.argv[3]
 if ipv=='4':
   v6=False
 else:
   v6=True
-inport=int(sys.argv[3])
-outport=int(sys.argv[4])
+passwd=sys.argv[4]
 
 host=getPublicIP(v6)
 dest=host

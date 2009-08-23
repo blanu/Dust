@@ -13,7 +13,11 @@ from intro.intro import Introducer
 class dust_socket:
   def __init__(self, keys):
     self.keys=keys
-    self.keypair=keys.getKeypair()
+    if keys:
+      self.keypair=keys.getKeypair()
+    
+    self.myAddress=None
+    self.myAddressKey=None
     
     self.dest=None
     self.connectDest=None
@@ -30,6 +34,8 @@ class dust_socket:
       self.sock=socket(AF_INET, SOCK_DGRAM)
     self.sock.bind(address)
     self.introducer=Introducer(self.keys, address)    
+    self.myAddress=address
+    self.myAddressKey=encodeAddress(address)
     
   def connect(self, address):
     if address==self.connectDest:
