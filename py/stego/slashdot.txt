@@ -1,0 +1,381 @@
+
+
+
+
+
+
+
+
+_S_t_o_r_i_e_s
+_S_l_a_s_h_ _B_o_x_e_s
+_C_o_m_m_e_n_t_s
+************ _SS_ll_aa_ss_hh_dd_oo_tt ************
+********** NNeewwss ffoorr nneerrddss,, ssttuuffff tthhaatt mmaatttteerrss **********
+_J_u_m_p_ _t_o_ _a_r_t_i_c_l_e_s
+    * _S_u_b_m_i_t_ _S_t_o_r_y
+    * _H_e_l_p
+    * _L_o_g_ _I_n
+ Search [fhfilter            ]
+[Unknown INPUT type]
+[Search] [Search]
+
+    * _R_S_S _S_t_o_r_i_e_s
+    * _R_e_c_e_n_t
+    * _P_o_p_u_l_a_r
+    * _S_e_a_r_c_h
+_C_r_e_a_t_e_ _A_c_c_o_u_n_t [*] _1_9_:_1_9
+    * _P_r_e_f_e_r_e_n_c_e_s
+****** _SS_ll_aa_ss_hh_dd_oo_tt _[[_ee_]]{{ ccoolloorr:: """",, vviieewwnnaammee:: ""ssttoorriieess"",, ffiilltteerr:: """",, nnaammee:: ""MMaaiinn"",, iidd::
+1133 }} ******
+_A_M_D _[_e_]
+_A_p_a_c_h_e _[_e_]
+_A_p_p_l_e _[_e_]
+_A_s_k_ _S_l_a_s_h_d_o_t _[_e_]
+_B_a_c_k_s_l_a_s_h _[_e_]
+_B_o_o_k_ _R_e_v_i_e_w_s _[_e_]
+_B_S_D _[_e_]
+_D_e_v_e_l_o_p_e_r_s _[_e_]
+_E_n_t_e_r_t_a_i_n_m_e_n_t _[_e_]
+_F_e_a_t_u_r_e_s _[_e_]
+_G_a_m_e_s _[_e_]
+_G_e_e_k_s_ _i_n_ _S_p_a_c_e _[_e_]
+_H_a_r_d_w_a_r_e _[_e_]
+_I_d_l_e _[_e_]
+_I_n_t_e_l _[_e_]
+_I_n_t_e_r_v_i_e_w_s _[_e_]
+_I_T _[_e_]
+_L_i_n_u_x _[_e_]
+_M_e_t_a _[_e_]
+_M_o_b_i_l_e _[_e_]
+_N_e_w_s _[_e_]
+_O_r_a_c_l_e _[_e_]
+_P_o_l_i_t_i_c_s _[_e_]
+_P_o_l_l_s _[_e_]
+_S_c_i_e_n_c_e _[_e_]
+_S_e_a_r_c_h _[_e_]
+_S_F_._n_e_t_ _A_u_t_h _[_e_]
+_T_a_c_o_ _H_e_l_l _[_e_]
+_T_e_c_h_n_o_l_o_g_y _[_e_]
+_T_h_e_ _2_0_0_0_ _B_e_a_n_i_e_s _[_e_]
+_T_h_i_n_k_G_e_e_k _[_e_]
+_V_e_n_d_o_r_s _[_e_]
+_Y_R_O _[_e_]
+****** _SS_ii_tt_ee_ _II_nn_ff_oo ******
+    * _F_A_Q
+    * _B_u_g_s
+    * _C_o_d_e
+****** SSttoorriieess ******
+    * _O_l_d_ _S_t_o_r_i_e_s
+    * _O_l_d_ _P_o_l_l_s
+    * _H_a_l_l_ _o_f_ _F_a_m_e
+    * _S_u_b_m_i_t_ _S_t_o_r_y
+Please _cc_rr_ee_aa_tt_ee_ _aa_nn_ _aa_cc_cc_oo_uu_nn_tt to participate in the Slashdot moderation system
+ 5580787 story
+********  CCoommmmeennttss:: _11_11  _++_--   _II_TT_:: _TT_hh_rr_ee_ee_ _II_nn_dd_ii_cc_tt_ee_dd_ _II_nn_ _HH_uu_gg_ee_ _II_dd_ee_nn_tt_ii_tt_yy_//_DD_aa_tt_aa_ _BB_rr_ee_aa_cc_hh oonn
+MMoonnddaayy AAuugguusstt 1177,, @@0066::5533PPMM  ********
+ Posted by kdawson on Monday August 17, @06:53PM
+
+ffrroomm tthhee hhooppiinngg--yyoouu--ddiiddnn''tt--cchhaarrggee--tthhaatt--sslluurrppeeee ddeepptt..
+background: url(//c.fsdn.com/sd/topics/topicsecurity.gif); width:59px; height:
+78px; _s_e_c_u_r_i_t_y
+ScentCone and other readers let us know about an indictment just unsealed in
+federal court for _s_t_e_a_l_i_n_g_ _1_3_0_ _m_i_l_l_i_o_n_ _c_r_e_d_i_t_ _c_a_r_d_s and other data useful in
+identity theft, or just plain money theft. The breaches were at _p_a_y_m_e_n_t
+_p_r_o_c_e_s_s_o_r_ _H_e_a_r_t_l_a_n_d (accounting for the bulk of the 130M), Hannaford, 7-11, and
+two unnamed "national retailers." Interestingly, the focus of the indictment,
+Albert "Segvec" Gonzalez, is currently awaiting trial for masterminding the _T_J_X
+_b_r_e_a_k_-_i_n, which until Heartland counted as the largest credit-card theft ever.
+The indictment cites SQL injection attacks as the entry vector. Two unnamed
+Russia-based conspirators were also indicted. Securosis has analysis of the
+_s_e_c_u_r_i_t_y_ _i_m_p_l_i_c_a_t_i_o_n_s_ _o_f_ _t_h_e_ _b_r_e_a_c_h ("These appear to be preventable attacks
+using common security controls. It's possible some advanced techniques were
+used, but I doubt it") and the _a_t_t_a_c_k_e_r_s_'_ _m_e_t_h_o_d_o_l_o_g_y.
+ _R_e_a_d_ _M_o_r_e_._._.  _1_1 comments
+ court security typo it security story
+===============================================================================
+ 5580359 story
+********  CCoommmmeennttss:: _33_66  _++_--   _HH_aa_rr_dd_ww_aa_rr_ee_:: _II_BB_MM_ _SS_cc_ii_ee_nn_tt_ii_ss_tt_ss_ _BB_uu_ii_ll_dd_ _CC_oo_mm_pp_uu_tt_ee_rr_ _CC_hh_ii_pp_ss_ _FF_rr_oo_mm_ _DD_NN_AA
+oonn MMoonnddaayy AAuugguusstt 1177,, @@0066::0022PPMM  ********
+ Posted by _S_c_u_t_t_l_e_M_o_n_k_e_y on Monday August 17, @06:02PM
+
+ffrroomm tthhee ssoommee--cchhiippss--aarree--lloonnggeerr--tthhaann--ootthheerrss ddeepptt..
+background: url(//c.fsdn.com/sd/topics/topicibm.gif); width:87px; height:35px;
+_i_b_m
+_s_n_y_d_e_q writes "Scientists at IBM are experimenting with using _D_N_A_ _m_o_l_e_c_u_l_e_s_ _a_s
+_a_ _w_a_y_ _t_o_ _c_r_e_a_t_e_ _t_i_n_y_ _c_i_r_c_u_i_t_s that could form the basis of smaller, more
+powerful computer chips. The technique builds on work done by Cal Tech's Paul
+Rothemund, who found that _D_N_A_ _m_o_l_e_c_u_l_e_s_ _c_a_n_ _b_e_ _m_a_d_e_ _t_o_ _'_s_e_l_f_-_a_s_s_e_m_b_l_e_'_ _i_n_t_o
+_t_i_n_y_ _f_o_r_m_s [PDF] such as triangles, squares and stars. 'To make a chip, the
+scientists first create lithographic templates using traditional chip making
+techniques. After, they pour a DNA solution over the surface of the silicon and
+the tiny triangles and squares -- what the scientists call DNA origami -- _l_i_n_e
+_t_h_e_m_s_e_l_v_e_s_ _u_p_ _t_o_ _t_h_e_ _p_a_t_t_e_r_n_s_ _e_t_c_h_e_d_ _o_u_t_ _u_s_i_n_g_ _l_i_t_h_o_g_r_a_p_h_y.' DNA-based chips
+may sound like _c_r_a_c_k_p_o_t_ _t_e_c_h, but those involved believe the methodology could
+lead to a new way of fabricating features on the surface of chips that allows
+semiconductors to be made even smaller, faster and more power-efficient than
+they are today."
+ _R_e_a_d_ _M_o_r_e_._._.  _3_6 comments
+ hardware ibm borg skynet eugenics hardware ibm story
+===============================================================================
+ 5580297 story
+********  CCoommmmeennttss:: _77_00  _++_--   _HH_aa_rr_dd_ww_aa_rr_ee_:: _WW_ii_rr_ee_ll_ee_ss_ss_ _PP_oo_ww_ee_rr_ _CC_oo_nn_ss_oo_rr_tt_ii_uu_mm_ _PP_uu_ss_hh_ee_ss_ _ff_oo_rr_ _""_QQ_ii_""
+_SS_tt_aa_nn_dd_aa_rr_dd oonn MMoonnddaayy AAuugguusstt 1177,, @@0055::1111PPMM  ********
+ Posted by _S_c_u_t_t_l_e_M_o_n_k_e_y on Monday August 17, @05:11PM
+
+ffrroomm tthhee ssoommeeoonnee--ccaallll--aappppllee ddeepptt..
+background: url(//c.fsdn.com/sd/topics/topicpower.gif); width:59px; height:
+66px; _p_o_w_e_r
+The Wireless Power Consortium (comprised of Samsung, Sanyo, Olympus, Philips,
+Texas Instruments, and others) has started a push towards a _w_i_r_e_l_e_s_s_ _c_h_a_r_g_i_n_g
+_s_t_a_n_d_a_r_d under the moniker "Qi" (pronounced "chee"). "Members of the Wireless
+Power Consortium are reviewing version 0.95 of its technical specification
+which defines a proposed standard for charging devices, using up to 5Watts
+power, delivered by electromagnetic induction. The spec could evolve into a
+standard -- and will be demonstrated by multiple vendors on September 15th to
+16th. ... It is less ambitious than the system demonstrated this summer by
+Witricity, which operates at a distance of a few meters, using resonance, which
+the company claims has green benefits through replacing disposable batteries."
+ _R_e_a_d_ _M_o_r_e_._._.  _7_0 comments
+ hardware power !quiteinteresting !falungong zap hardware power story
+===============================================================================
+ 5579059 story
+********  CCoommmmeennttss:: _11_99_88  _++_--   _YY_oo_uu_rr_ _RR_ii_gg_hh_tt_ss_ _OO_nn_ll_ii_nn_ee_:: _CC_oo_mm_cc_aa_ss_tt_ _FF_ii_nn_aa_ll_ll_yy_ _FF_ii_ll_ee_ss_ _SS_uu_ii_tt
+_AA_gg_aa_ii_nn_ss_tt_ _FF_CC_CC_ _OO_vv_ee_rr_ _TT_rr_aa_ff_ff_ii_cc_ _SS_hh_aa_pp_ii_nn_gg oonn MMoonnddaayy AAuugguusstt 1177,, @@0044::1188PPMM  ********
+ Posted by _S_c_u_t_t_l_e_M_o_n_k_e_y on Monday August 17, @04:18PM
+
+ffrroomm tthhee hhooppiinngg--ffoorr--mmuuttuuaall--ddeessttrruuccttiioonn ddeepptt..
+Following up on their threat last year to sue the FCC over sanctions imposed,
+_C_o_m_c_a_s_t_ _h_a_s_ _f_i_n_a_l_l_y_ _f_i_l_e_d_ _s_u_i_t, stating that there are no statutes or
+regulations that support the FCC's authority to stop traffic shaping
+procedures. "First, let's recap: After months of proceedings, hearings, and
+investigations, the FCC concluded on August 1, 2008 that Comcast was
+discriminating against certain P2P applications using deep packet inspection
+techniques. These methods thwarted the ability of users to share video and
+other files via BitTorrent. 'Comcast was delaying subscribers' downloads and
+blocking their uploads,' declared then FCC Chair Kevin Martin. 'It was doing so
+24/7, regardless of the amount of congestion on the network or how small the
+file might be. Even worse, Comcast was hiding that fact by making [affected]
+users think there was a problem with their Internet connection or the
+application.'"
+ _R_e_a_d_ _M_o_r_e_._._.  _1_9_8 comments
+ court internet netneutrality democrats bullmoose yro court story
+===============================================================================
+ 5578735 story
+********  CCoommmmeennttss:: _99_66  _++_--   _AA_ss_kk_ _SS_ll_aa_ss_hh_dd_oo_tt_:: _II_ss_ _tt_hh_ee_ _FF_ee_dd_ee_rr_aa_ll_ _GG_oo_vv_ee_rr_nn_mm_ee_nn_tt_ _tt_hh_ee_ _MM_oo_ss_tt
+_II_nn_tt_ee_rr_ee_ss_tt_ii_nn_gg_ _TT_ee_cc_hh_ _SS_tt_aa_rr_tt_uu_pp_ _FF_oo_rr_ _22_00_00_99_?? oonn MMoonnddaayy AAuugguusstt 1177,, @@0033::2266PPMM  ********
+ Posted by _S_c_u_t_t_l_e_M_o_n_k_e_y on Monday August 17, @03:26PM
+
+ffrroomm tthhee ggeett--ssttuuffff--ddoonnee--cczzaarr ddeepptt..
+background: url(//c.fsdn.com/sd/topics/topictech2.gif); width:60px; height:
+80px; _t_e_c_h_n_o_l_o_g_y
+With all of the recent focus on technology and the promises to continue
+"getting stuff done" by the US government, Techdirt's Masnick suggests that
+they might just be the _m_o_s_t_ _i_n_t_e_r_e_s_t_i_n_g_ _t_e_c_h_ _s_t_a_r_t_u_p to watch this year. "But,
+of course, talk is cheap (especially in politics). And, while Chopra (and Vivek
+Kundra, the government's CIO) both actually have a nice track record of
+accomplishing these sorts of goals in their past jobs, the proof is in what's
+actually getting done. We'd already mentioned at least one success story with
+the IT dashboard at USASpending.gov, but can it continue? I have to admit, a
+second thing that impressed me about Chopra was that, even with such a success,
+he didn't focus on it. The fact that he got together such a site in such a
+short period of time is impressive enough, and while he mentioned it in his
+talks, most of them were much more focused not on what he'd already done, but
+on what he was going to do -- and the plans all seemed quite achievable.
+ _R_e_a_d_ _M_o_r_e_._._.  _9_6 comments
+ technology democrats socialism !startup government askslashdot technology
+story
+===============================================================================
+ 5578069 story
+********  CCoommmmeennttss:: _77_11  _++_--   _TT_ee_cc_hh_nn_oo_ll_oo_gg_yy_:: _NN_ee_ww_ _NN_aa_nn_oo_--_LL_aa_ss_ee_rr_ _CC_rr_ee_aa_tt_ee_dd oonn MMoonnddaayy AAuugguusstt
+1177,, @@0022::3377PPMM  ********
+ Posted by _S_c_u_t_t_l_e_M_o_n_k_e_y on Monday August 17, @02:37PM
+
+ffrroomm tthhee vveerryy--ssmmaallll--bbrreeaakktthhrroouugghhss ddeepptt..
+background: url(//c.fsdn.com/sd/topics/topictech2.gif); width:60px; height:
+80px; _t_e_c_h_n_o_l_o_g_y
+Many sources are reporting that researchers have _c_r_e_a_t_e_d_ _t_h_e_ _w_o_r_l_d_'_s_ _s_m_a_l_l_e_s_t
+_l_a_s_e_r since the inception of lasers almost a half-century ago. Dubbed
+"spasers," as an acronym for "surface plasmon amplification by stimulated
+emission of radiation," their incredibly tiny size could become a critical
+component for future technologies like "nanophotonic" circuitry. "Such circuits
+will require a laser-light source, but current lasers can't be made small
+enough to integrate them into electronic chips. Now researchers have overcome
+this obstacle, harnessing clouds of electrons called 'surface plasmons,'
+instead of the photons that make up light, to create the tiny spasers."
+ _R_e_a_d_ _M_o_r_e_._._.  _7_1 comments
+ hardware technology metroid nanosharks spasers tech technology story
+===============================================================================
+ 5577177 story
+********  CCoommmmeennttss:: _11_11_99  _++_--   _GG_aa_mm_ee_ss_:: _SS_tt_aa_rr_CC_rr_aa_ff_tt_ _II_II_ _SS_ii_nn_gg_ll_ee_--_PP_ll_aa_yy_ee_rr_ _DD_ee_tt_aa_ii_ll_ss_ _RR_ee_vv_ee_aa_ll_ee_dd oonn
+MMoonnddaayy AAuugguusstt 1177,, @@0011::5511PPMM  ********
+ Posted by Soulskill on Monday August 17, @01:51PM
+
+ffrroomm tthhee nnoo--llaann--wwaahh--wwaahh--hheeyy--llooookk ddeepptt..
+background: url(//c.fsdn.com/sd/topics/topicgamespcgames.gif); width:60px;
+height:78px; _p_c_g_a_m_e_s
+As Blizzcon approaches, a number of gaming sites were invited out to California
+to get an early look at the single-player campaign for SSttaarrCCrraafftt IIII:: WWiinnggss ooff
+LLiibbeerrttyy. Kotaku has _a_ _d_e_t_a_i_l_e_d_ _w_r_i_t_e_-_u_p (_s_p_o_i_l_e_r_-_f_r_e_e_ _v_e_r_s_i_o_n), and 1Up
+summarizes one of the missions: "... you're on _a_ _p_l_a_n_e_t_ _w_i_t_h_ _a_n_ _a_l_t_e_r_n_a_t_i_n_g
+_d_a_y_/_n_i_g_h_t_ _c_y_c_l_e (every five minutes, it switches): during daylight, you're
+safe. You can build forces and go out and destroy structures. At night, the
+infected Terrans will relentlessly stream towards your base -- necessitating a
+strong defense against the 'zombie horde.'" An _i_n_t_e_r_v_i_e_w_ _w_i_t_h_ _s_o_m_e_ _o_f_ _t_h_e
+_d_e_v_e_l_o_p_e_r_s is available, in which lead designer Dustin Browder says Blizzard
+will continue their trend of having downloadable maps and other improvements
+throughout the game's life. BlizzPlanet posted a _m_i_s_s_i_o_n_ _g_u_i_d_e for the part of
+the game they got to see, and new video footage has been released that _s_h_o_w_s
+_o_f_f_ _t_h_e_ _s_i_n_g_l_e_-_p_l_a_y_e_r_ _m_o_d_e.
+ _R_e_a_d_ _M_o_r_e_._._.  _1_1_9 comments
+ games pcgames rts starcraft2 wtblan games pcgames story
+===============================================================================
+ 5576711 story
+********  CCoommmmeennttss:: _11_44_44  _++_--   _TT_ee_cc_hh_nn_oo_ll_oo_gg_yy_:: _EE_nn_gg_ll_ii_ss_hh_ _WW_ii_kk_ii_pp_ee_dd_ii_aa_ _RR_ee_aa_cc_hh_ee_ss_ _33_ _MM_ii_ll_ll_ii_oo_nn
+_AA_rr_tt_ii_cc_ll_ee_ss oonn MMoonnddaayy AAuugguusstt 1177,, @@0011::1111PPMM  ********
+ Posted by _C_m_d_r_T_a_c_o on Monday August 17, @01:11PM
+
+ffrroomm tthhee nneexxtt--vveerrssiioonn--wwiillll--hhaavvee--114400--cchhaarr--lliimmiitt ddeepptt..
+FunPika writes "It has taken more than eight years and the work of vast numbers
+of people around the world, but the English version of _W_i_k_i_p_e_d_i_a_ _h_a_s_ _f_i_n_a_l_l_y
+_a_m_a_s_s_e_d_ _m_o_r_e_ _t_h_a_n_ _t_h_r_e_e_ _m_i_l_l_i_o_n_ _a_r_t_i_c_l_e_s. The site broke through the 3 million
+barrier early on Monday morning UK time, with the honors taken by a short
+article about Norwegian actor _B_e_a_t_e_ _E_r_i_k_s_e_n -- a 48-year-old cast member of a
+popular local soap opera."
+ _R_e_a_d_ _M_o_r_e_._._.  _1_4_4 comments
+ internet citationneeded !notable !barrier bigroundnumber tech internet story
+===============================================================================
+ 5577151 story
+********  CCoommmmeennttss:: _11_22_22  _++_--   _II_dd_ll_ee_:: _SS_cc_hh_oo_oo_ll_ _UU_nn_ii_ff_oo_rr_mm_ _TT_oo_ _BB_ll_oo_cc_kk_ _CC_ee_ll_ll_ _PP_hh_oo_nn_ee_ _EE_mm_ii_ss_ss_ii_oo_nn_ss oonn
+MMoonnddaayy AAuugguusstt 1177,, @@1122::3377PPMM  ********
+ Posted by samzenpus on Monday August 17, @12:37PM
+
+ffrroomm tthhee lluuddddiittee--hhiigghh ddeepptt..
+background: url(//c.fsdn.com/sd/articles/09/08/17/1549256-1-thumb.png); width:
+130px; height:97px; _s_c_i_e_n_c_e
+_F_o_e_h_g writes "ForeignPolicy.com reports, 'A Belarusian textile company has
+developed a special school uniform that _p_r_o_t_e_c_t_s_ _k_i_d_s_ _f_r_o_m_ _e_l_e_c_t_r_o_m_a_g_n_e_t_i_c
+_r_a_d_i_a_t_i_o_n_ _e_m_a_n_a_t_i_n_g_ _f_r_o_m_ _t_h_e_i_r_ _c_e_l_l_p_h_o_n_e_s. The uniform features a dedicated
+pocket that can store the phone and make it safe for those who wear it.'" Now
+someone has to create an oven mitt that can protect you from the harmful
+radiation given off by your microwave oven.
+ _R_e_a_d_ _M_o_r_e_._._.  _1_2_2 comments
+ science technology metallica tinfoilhat !barrier idle science story
+===============================================================================
+ 5576655 story
+********  CCoommmmeennttss:: _33_44_00  _++_--   _HH_aa_rr_dd_ww_aa_rr_ee_:: _NN_AA_SS_AA_ _DD_ee_vv_ee_ll_oo_pp_ii_nn_gg_ _NN_uu_cc_ll_ee_aa_rr_ _RR_ee_aa_cc_tt_oo_rr_ _FF_oo_rr_ _MM_oo_oo_nn
+_aa_nn_dd_ _MM_aa_rr_ss oonn MMoonnddaayy AAuugguusstt 1177,, @@1122::2288PPMM  ********
+ Posted by _C_m_d_r_T_a_c_o on Monday August 17, @12:28PM
+
+ffrroomm tthhee rreeaacctt--ttoo--tthhee--rreeaaccttoorr ddeepptt..
+background: url(//c.fsdn.com/sd/topics/topicpower.gif); width:59px; height:
+66px; _p_o_w_e_r
+_A_l writes "NASA recently finished testing _a_ _m_i_n_i_a_t_u_r_e_ _n_u_c_l_e_a_r_ _r_e_a_c_t_o_r that
+would provide power for an astronaut base on the Moon or Mars. The reactor
+combines a small fission system with a _S_t_i_r_l_i_n_g_ _e_n_g_i_n_e to make a 'safe,
+reliable, and efficient' way to produce electricity. The system being tested at
+NASA's Glenn Research Center can produce 2.3 kilowatts and could be ready for
+launch by 2020, NASA officials say. The reactor ought to provide much more
+power than solar panels but could prove controversial with the public concerned
+about launching a nuclear power source and placing it on the Moon or another
+planet."
+ _R_e_a_d_ _M_o_r_e_._._.  _3_4_0 comments
+ space nasa power space1999 stirling hardware power story
+===============================================================================
+
+ 
+ _T_o_d_a_y   _Y_e_s_t_e_r_d_a_y   _S_a_t_u_r_d_a_y   [//c.fsdn.com/sd/spinner_tr.gif] _M_a_n_y_ _m_o_r_e
+   _S_u_b_m_i_t_ _S_t_o_r_y
+****** _AA_ss_kk_ _SS_ll_aa_ss_hh_dd_oo_tt ******
+    * _I_s_ _t_h_e_ _F_e_d_e_r_a_l_ _G_o_v_e_r_n_m_e_n_t_ _t_h_e_ _M_o_s_t_ _I_n_t_e_r_e_s_t_i_n_g_ _T_e_c_h_ _S_t_a_r_t_u_p_ _F_o_r_ _2_0_0_9_?
+    * _T_h_e_ _B_e_s_t_ _a_n_d_ _W_o_r_s_t_ _T_e_c_h_-_B_o_o_k_ _P_u_b_l_i_s_h_e_r_s_?
+    * _H_o_w_ _T_o_ _S_t_o_p_ _B_u_s_i_n_e_s_s_e_s_ _S_t_o_r_i_n_g_ _S_S_N_s_ _I_n_d_e_f_i_n_i_t_e_l_y_?
+    * _W_h_y_ _S_h_o_u_l_d_ _I_ _T_r_u_s_t_ _M_y_ _N_e_t_w_o_r_k_ _A_d_m_i_n_i_s_t_r_a_t_o_r_?
+    * _S_c_i_e_n_c_e_,_ _T_e_c_h_n_o_l_o_g_y_,_ _N_a_t_u_r_a_l_ _H_i_s_t_o_r_y_ _M_u_s_e_u_m_s_?
+****** SSllaasshhddoott PPoollll ******
+ Poll   MMyy sseennssee ooff ddiirreeccttiioonn iiss ......
+oAstoundingly good; I'm basically never lost.
+oBetter than average, but I stumble occasionally.
+oAbout average.
+oNot so hot, but I get along.
+oPoor.
+oHow did I accidentally stumble to wherever it is I am?
+[Vote] [ _RR_ee_ss_uu_ll_tt_ss | _PP_oo_ll_ll_ss ]
+Comments:447733 | Votes:2277001177
+****** _RR_ee_cc_ee_nn_tt_ _TT_aa_gg_ss ******
+    * _w_i_n_d_o_w_s
+    * _m_i_c_r_o_s_o_f_t
+    * _s_o_c_i_a_l
+    * _n_e_t_n_e_u_t_r_a_l_i_t_y
+    * _b_u_l_l_m_o_o_s_e
+    * _l_i_b_e_r_t_a_r_i_a_n_s
+    * _d_r_m
+****** SSllaasshhddoott LLooggiinn ******
+ Log In  Nickname  [unickname           ]  Password    [********************]
+º Public Terminal  [Log in]
+===============================================================================
+     [http://                         ]  [Log in with OpenID]
+_CC_rr_ee_aa_tt_ee_ _AA_cc_cc_oo_uu_nn_tt  ||  _RR_ee_tt_rr_ii_ee_vv_ee_ _PP_aa_ss_ss_ww_oo_rr_dd
+****** _FF_rr_ee_ss_hh_mm_ee_aa_tt ******
+    * _S_y_s_t_e_m_R_e_s_c_u_e_C_d_ _1_._2_._3
+    * _T_h_e_ _D_i_g_i_t_a_l_ _S_e_e_d_ _V_a_u_l_t_ _s_e_-_0_._3_._0
+    * _P_R_T_r_e_e_ _1_._2
+    * _K_D_E_ _P_a_r_t_i_t_i_o_n_ _M_a_n_a_g_e_r_ _1_._0_._0
+    * _H_o_l_t_z_ _1_._3_._1
+    * _C_o_r_n_e_l_i_O_S_ _0_._9_._8_r_1_7
+    * _R_e_m_u_c_o_ _0_._9_._1
+    * _D_a_t_a_ _C_r_o_w_ _3_._4_._1_5
+    * _O_p_e_n_ _A_d_m_i_n_i_s_t_r_a_t_i_o_n_ _f_o_r_ _S_c_h_o_o_l_s_ _4_._1_0
+    * _E_i_f_f_e_l_S_t_u_d_i_o_ _6_._5_._8_._2_9_4
+    * _J_U_C_E_ _1_._5_0
+    * _T_h_e_ _L_e_g_e_n_d_ _o_f_ _E_d_g_a_r_ _0_._2_5
+    * _G_I_M_P_ _2_._7_._0
+    * _i_c_o_u_t_i_l_s_ _0_._2_8_._0
+    * _J_S_t_o_c_k_ _1_._0_._4_i
+
+Search Freshmeat:
+
+ [q                   ]
+_MM_oo_rr_ee_ _MM_ee_aa_tt_.._.._..
+****** _BB_oo_oo_kk_ _RR_ee_vv_ii_ee_ww_ss ******
+Recent reviews from Slashdot readers:
+    * _A_d_v_a_n_c_e_d_ _E_x_c_e_l_ _f_o_r_ _S_c_i_e_n_t_i_f_i_c_ _D_a_t_a_ _A_n_a_l_y_s_i_s Learn to turn Excel into
+      something that rivals Mathematica using VBA, brains, and a heaping
+      helping of fortitude.(_J_a_c_k_ _H_e_r_r_i_n_g_t_o_n_'_s_ _r_e_v_i_e_w_.)
+    * _N_a_g_i_o_s_ _3_ _E_n_t_e_r_p_r_i_s_e_ _N_e_t_w_o_r_k_ _M_o_n_i_t_o_r_i_n_g A great book for anyone using
+      Nagios as more than a casual user.(_j_g_o_g_u_e_n_'_s_ _r_e_v_i_e_w_.)
+    * _S_c_h_n_e_i_e_r_ _o_n_ _S_e_c_u_r_i_t_y Schneier argues that security is not something you
+      can buy; it is something you must get.(_B_e_n_ _R_o_t_h_k_e_'_s_ _r_e_v_i_e_w_.)
+_S_u_b_m_i_t_t_i_n_g_ _a_ _r_e_v_i_e_w for consideration is easy; please first read _S_l_a_s_h_d_o_t_'_s
+_b_o_o_k_ _r_e_v_i_e_w_ _g_u_i_d_e_l_i_n_e_s. Updated: 2008114 by samzenpus
+****** QQuuiicckk LLiinnkkss ******
+CCooooll SSiitteess::
+· _X_K_C_D (It's teh funz0rz)
+· _A_n_i_m_e_F_u (Addicted to Anime?)
+· _P_e_n_n_y_ _A_r_c_a_d_e (The First one is always Free)
+· _E_v_e_r_y_t_h_i_n_g (Blow your Mind)
+· _T_h_e_m_e_s_._f_r_e_s_h_m_e_a_t_._n_e_t (Make X Perty)
+· _S_l_a_s_h_d_o_t_._j_p (So familiar...)
+· _C_m_d_r_T_a_c_o_._n_e_t (I used to be in charge)
+SSuuppppoorrtt SSllaasshhddoott::
+· _T_h_i_n_k_G_e_e_k (Clothe Yourself in Slashdot)
+****** _AA_dd_dd_ _SS_ll_aa_ss_hh_bb_oo_xx_++ ******
+ Search [query               ] [Search]
+A long memory is the most subversive idea in America.
+All trademarks and copyrights on this page are owned by their respective
+owners. Comments are owned by the Poster. The Rest © 1997-2009 _S_o_u_r_c_e_F_o_r_g_e,
+Inc.
+******** PPlleeaassee LLoogg IInn ttoo CCoonnttiinnuuee_xx ********
+ Log In  Nickname  [unickname           ]  Password    [********************]
+º Public Terminal  [Log in]
+===============================================================================
+     [http://                         ]  [Log in with OpenID]
+_CC_rr_ee_aa_tt_ee_ _AA_cc_cc_oo_uu_nn_tt  ||  _RR_ee_tt_rr_ii_ee_vv_ee_ _PP_aa_ss_ss_ww_oo_rr_dd
+    * _h_o_m_e
+    * _s_u_b_m_i_t_ _s_t_o_r_y
+    * _h_e_l_p
+    * _a_d_v_e_r_t_i_s_e
+    * _t_e_r_m_s_ _o_f_ _s_e_r_v_i_c_e
+    * _p_r_i_v_a_c_y
+    * _r_s_s
+_J_u_m_p_ _t_o_ _t_o_p_ _o_f_ _p_a_g_e
+******** _CC_ll_oo_ss_ee ********
