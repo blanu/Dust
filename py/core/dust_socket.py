@@ -15,17 +15,17 @@ class dust_socket:
     self.keys=keys
     if keys:
       self.keypair=keys.getKeypair()
-    
+
     self.myAddress=None
     self.myAddressKey=None
-    
+
     self.dest=None
     self.connectDest=None
     self.connectSessionKey=None
-    self.sessionKeys={}    
+    self.sessionKeys={}
 
     self.remaining=None
-    
+
   def bind(self, address):
     ip=address[0]
     if ':' in ip:
@@ -33,10 +33,10 @@ class dust_socket:
     else:
       self.sock=socket(AF_INET, SOCK_DGRAM)
     self.sock.bind(address)
-    self.introducer=Introducer(self.keys, address)    
+    self.introducer=Introducer(self.keys, address)
     self.myAddress=address
     self.myAddressKey=encodeAddress(address)
-    
+
   def connect(self, address):
     if address==self.connectDest:
       return
@@ -46,12 +46,12 @@ class dust_socket:
       self.connectDest=address
     else:
       self.connectDest=None
-    
-  def makeSession(self, address, tryInvite):    
+
+  def makeSession(self, address, tryInvite):
     addressKey=encodeAddress(address)
-    
+
     if addressKey in self.sessionKeys:
-      return self.sessionKeys[addressKey]    
+      return self.sessionKeys[addressKey]
 
     if self.keys.isKnown(addressKey):
       sessionKey=self.keys.getSessionKeyForAddress(addressKey)
@@ -70,7 +70,7 @@ class dust_socket:
       else:
         print('Failed to connect, no introducer (or tryInvite=False) and unknown address')
         return
-      
+
   def recv(self, bufsize):
     if not self.connectDest or not self.connectSessionKey:
       print('Not connected')
@@ -83,36 +83,44 @@ class dust_socket:
         return None
       else:
         return data
-        
+
   def recvfrom(self, bufsize):
     if self.remaining:
       data, addr=self.remaining
       self.remaining=None
     else:
       data, addr=self.sock.recvfrom(bufsize)
-      
+
     if not data:
-      print('No data')
+      print('Dust: No data')
       return None, None
     else:
       packet=self.decodePacket(addr, data)
       if not packet:
+        print('Dust: No packet')
         return None, None
       else:
+        #print('Packet:')
+        #print(packet)
         if packet.remaining:
           self.remaining=(packet.remaining, addr)
         if type(packet)==DataPacket:
           return packet.data, addr
         else:
+          print('Not a data packet')
           return None, None
-      
+
   def decodePacket(self, addr, data):
     sessionKey=self.makeSession(addr, False) # Don't introduce yourself when you receive a packet from an unknown host, that's not the protocol
     if sessionKey: # Must be a data packet
       packet=DataPacket()
       packet.decodeDataPacket(sessionKey, data)
-      if packet.checkMac() and packet.checkTimestamp():        
+      if packet.checkMac() and packet.checkTimestamp():
         return packet
+      else:
+        print('Integrity failed', packet.checkMac(), packet.checkTimestamp())
+        print(packet)
+        return None
     else: # Must be an intro packet
       print('Unknown address', addr)
       if self.introducer:
@@ -121,14 +129,14 @@ class dust_socket:
           return intro
         else:
           return None
-      
+
   def send(self, data):
     if not self.connectDest or not self.connectSessionKey:
       print('send: Not connected')
       return
     else:
       self.sendto(data, self.connectDest)
-      
+
   def sendraw(self, data):
     if not self.connectDest or not self.connectSessionKey:
       print('Not connected')
@@ -146,7 +154,9 @@ class dust_socket:
         return
     packet=DataPacket()
     packet.createDataPacket(sessionKey, data, self.keys.entropy)
-    self.sock.sendto(packet.packet, 0, addr)    
+    #print('Sending')
+    #print(packet)
+    self.sock.sendto(packet.packet, 0, addr)
 
   def sendtoraw(self, data, addr):
     self.sock.sendto(data, 0, addr)

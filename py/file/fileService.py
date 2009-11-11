@@ -2,7 +2,7 @@ import os
 import yaml
 import json
 
-from file.file_message import FileMessage
+from file.file_packet import FileMessage
 
 class FileHandler:
   def __init__(self):
@@ -11,7 +11,7 @@ class FileHandler:
     f.close()
 
     self.commands={'getMeta': self.getMeta, 'putMeta': self.putMeta, 'get': self.get, 'put': self.put}
-    self.blockSize=1024
+    self.blockSize=512
 
   def handle(self, msock, msg, addr):
     print('-----------------')
@@ -28,14 +28,16 @@ class FileHandler:
       return
 
   def getMeta(self, msock, headers, data, addr):
+    print('getMeta')
     file=headers['file']
 
     result={'command': 'putMeta', 'file': file}
-    result['length']=os.path.getsize(file)
+    result['length']=os.path.getsize(self.config['root']+'/'+file)
 
     fmsg=FileMessage()
     fmsg.createFileMessage(result, None)
-    msock.sendto(fmsg.message, addr, service='file')
+
+    msock.msendto(fmsg.message, addr, service='file')
 
   def putMeta(self, msock, headers, data, addr):
     file=headers['file']
@@ -47,19 +49,26 @@ class FileHandler:
     file=headers['file']
     offset=headers['offset']
 
-    f=open(file, 'rb')
+    f=open(self.config['root']+'/'+file, 'rb')
     f.seek(offset)
     bs=f.read(self.blockSize)
+    f.close()
 
     result={'command': 'put', 'file': file, 'offset': offset}
 
     fmsg=FileMessage()
     fmsg.createFileMessage(result, bs)
 
-    msock.sendto(fmsg.message, addr, service='filedata')
+    msock.msendto(fmsg.message, addr, service='file')
 
   def put(self, msock, headers, data, addr):
     file=headers['file']
     offset=headers['offset']
 
     print('got put', file, offset, len(data))
+    print(data)
+
+    f=open(self.config['incoming']+'/'+file, 'ab')
+    f.seek(offset)
+    f.write(data)
+    f.close()
