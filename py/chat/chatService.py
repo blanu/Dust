@@ -4,8 +4,7 @@ class ChatHandler:
   def __init__(self):
     pass
 
-  def handle(self, msg, addr):
+  def handle(self, msock, msg, addr):
     print('Message from '+encodeAddress(addr)+':')
     print(msg.decode('ascii'))
     print('-----------------')
-    
