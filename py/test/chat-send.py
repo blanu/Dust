@@ -2,19 +2,15 @@ import sys
 import time
 from crypto.keys import KeyManager
 from multiplex.multiplex_socket import *
-from core.util import getPublicIP
+from core.util import getPublicIP, decodeAddress
 
 passwd=sys.argv[1]
-ipv=sys.argv[2]
-if ipv=='4':
-  v6=False
-else:
-  v6=True
-inport=int(sys.argv[3])
-outport=int(sys.argv[4])
+inport=int(sys.argv[2])
+addr=sys.argv[3]
 
-host=getPublicIP(v6)
-dest=host
+dest, outport, ipv=decodeAddress(addr)
+
+host=getPublicIP(ipv)
 
 keys=KeyManager()
 keys.setInvitePassword(passwd)
