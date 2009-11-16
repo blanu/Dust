@@ -22,10 +22,10 @@ def encodeAddress(addr):
 def decodeAddress(s):
   if '.' in s:
     parts=s.split(':')
-    return (parts[0], int(parts[1]))
+    return (parts[0], int(parts[1]), False)
   else:
     m=re.match('\[([0-9a-f:]+)\]:([0-9]+)', s)
-    return (m.group(1), int(m.group(2)))
+    return (m.group(1), int(m.group(2)), True)
 
 def getPublicIP(v6=True):
   if v6:
