@@ -1,11 +1,19 @@
-from crypto.dust import DustPRNG, encrypt, decrypt
+#from crypto.dust import DustPRNG, encrypt, decrypt
+from core.util import encode, decode
+from crypto.skeinUtil import encrypt, decrypt, hash
 
-r=DustPRNG()
-iv=r.getBytes(16)
-key=r.getBytes(32)
+#r=DustPRNG()
+#iv=r.getBytes(16)
+#key=r.getBytes(32)
+key=decode("5475e69147a1463ef65116ccd8b3d732ead5ce8b5c9b0e61eb4c218fe6165013")
+iv=decode("5475e69147a1463ef65116ccd8b3d732ead5ce8b5c9b0e61eb4c218fe6165013")
 
-text=b'Hello'
+text=b'test data'
 
-data=encrypt(key, iv, text)
-print(data)
-print(decrypt(key, iv, data))
+print("hash: "+encode(hash(text)))
+print("hash: "+encode(hash(text, pers=b"a")))
+
+#data=encrypt(key, iv, text)
+#print(text)
+#print(encode(data))
+#print(decrypt(key, iv, data))

@@ -1,7 +1,7 @@
 import random
 import struct
 
-from skein import skein512
+from skein import skein256
 
 from crypto import skeinUtil
 
@@ -18,10 +18,10 @@ PBKDF_PERS=b'1978-10-26 dust@blanu.net Dust/PBKDF'
 CIPHER_PERS=b'1978-10-26 dust@blanu.net Dust/cipher'
 
 def hash(data):
-  return skein512(data, digest_bits=256, pers=HASH_PERS).digest()
+  return skein256(data, digest_bits=256, pers=HASH_PERS).digest()
 
 def mac(key, data):
-  return skein512(data, digest_bits=256, mac=key, pers=MAC_PERS).digest()
+  return skein256(data, digest_bits=256, mac=key, pers=MAC_PERS).digest()
 
 def pbkdf(pb, salt):
   return skeinUtil.pbkdf(pb, salt, PBKDF_ITERATIONS, pers=PBKDF_PERS)

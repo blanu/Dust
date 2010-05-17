@@ -87,6 +87,8 @@ class DustPacket:
 
     s=s+'  IV: '+encode(self.iv)+"\n"
 
+    s=s+"  payload: "+encode(self.payload)+"\n"
+
     if self.checkTimestamp():
       s=s+'  timestamp: '+str(self.timestamp)+" OK\n"
     else:
