@@ -16,11 +16,13 @@ public class TestSkein
     Random random=new Random();
     random.nextBytes(entropy);
 
+    /*
     byte[] pass="test".getBytes();
     int iterations=10;
     byte[] pbkdf=SkeinUtil.pbkdf(pass, entropy, iterations);
 
     System.out.println("pbkdf: "+Util.encode(pbkdf));
+    */
 
     byte[] data="test data".getBytes();
     byte[] hash=SkeinUtil.hash(data);
