@@ -73,10 +73,8 @@ class SkeinCipherOFB:
     while len(self.entropy)<n:
       if self.pers:
         result=skein256(nonce=self.iv, mac=self.key, pers=self.pers, digest_bits=(BLOCK_SIZE)*8).digest()
-        print("skein "+str(256)+" "+str(BLOCK_SIZE*8)+" "+encode(self.key)+" "+encode(self.pers)+" "+encode(self.iv)+" -> "+encode(result))
       else:
         result=skein256(nonce=self.iv, mac=self.key, digest_bits=(BLOCK_SIZE)*8).digest()
-        print("skein "+str(256)+" "+str(BLOCK_SIZE*8)+" "+encode(self.key)+" "+encode(self.iv)+" -> "+encode(result))
       self.entropy=self.entropy+result
       self.iv=result
     b, self.entropy=splitField(self.entropy, n)

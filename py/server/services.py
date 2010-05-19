@@ -1,13 +1,22 @@
-from mail.mailService import MailHandler
-from chat.chatService import ChatHandler
-from file.fileService import FileHandler
+#from mail.mailService import MailHandler
+#from chat.chatService import ChatHandler
+#from file.fileService import FileHandler
+from tracker.trackerService import TrackerService
+from tracker.trackbackService import TrackbackService
+from dustmail.dustmailService import DustmailService
 
-mh=MailHandler()
-ch=ChatHandler()
-fh=FileHandler()
+#mh=MailHandler()
+#ch=ChatHandler()
+#fh=FileHandler()
+tracker=TrackerService()
+trackback=TrackbackService()
+dustmail=DustmailService()
 
 services={
-  'mail': mh.handle,
-  'chat': ch.handle,
-  'file': fh.handle,
+#  'mail': mh,
+#  'chat': ch,
+#  'file': fh,
+  'tracker': tracker,
+  'trackback': trackback,
+  'dustmail': dustmail,
 }

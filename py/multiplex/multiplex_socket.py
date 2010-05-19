@@ -18,6 +18,7 @@ class multiplex_socket(dust_socket):
     dust_socket.send(self, multiplex.message)
 
   def msendto(self, data, addr, service=None):
+    print('msendto '+str(addr))
     if not service:
       service=self.connectService
     multiplex=MultiplexMessage()

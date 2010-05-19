@@ -84,7 +84,6 @@ def fill(bytes, size):
   return bytes
 
 def xor(a, b):
-  print("xor  "+encode(a)+" "+encode(b))
   if len(a)!=len(b):
     print('xor parameters must be the same length:', len(a), len(b))
     return None

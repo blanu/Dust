@@ -145,6 +145,7 @@ class dust_socket:
       self.sendtoraw(data, self.connectDest)
 
   def sendto(self, data, addr):
+    print('sendto '+str(addr))
     sessionKey=self.makeSession(addr, True)
     if not sessionKey:
       print('Unknown address', addr, 'trying introduction...')
