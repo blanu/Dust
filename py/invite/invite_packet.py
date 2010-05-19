@@ -1,6 +1,5 @@
 import time
 import struct
-import random
 import binascii
 
 from socket import AF_INET, AF_INET6
@@ -9,10 +8,10 @@ try:
 except ImportError:
     from invite.win32_inet_pton import inet_pton, inet_ntop
 
-from skein import skein512
+from crypto.dust import pbkdf
 
-from core.ec_packet import DataPacket
-from core.util import getPublicIP, splitFields, encodeFlags, decodeFlags, fill
+from core.dust_packet import DustPacket
+from core.util import getPublicIP, splitFields, splitField, encodeFlags, decodeFlags, fill, encode
 from crypto.curve import Key
 
 PUBKEY_LENGTH=32
@@ -20,7 +19,8 @@ FLAGS_LENGTH=1
 IP_LENGTH=16
 PORT_LENGTH=2
 ID_LENGTH=16
-SECRET_LENGTH=16
+SECRET_LENGTH=32
+SALT_LENGTH=32
 
 IPV4_LENGTH=4
 
@@ -36,17 +36,26 @@ class InviteMessage:
     self.secret=None
     
   def __str__(self):
-    return "<InviteMessage(%s,%s,%s,%s,%s,%s,%s)" % (self.pubkey, self.v6, self.tcp, self.ip, self.port, self.id, self.secret)
+    s="[\n"
+    s=s+'  pubkey: '+encode(self.pubkey.bytes)+"\n"
+    s=s+'  v6:     '+str(self.v6)+"\n"
+    s=s+'  tcp:    '+str(self.tcp)+"\n"
+    s=s+'  ip:     '+self.ip+"\n"
+    s=s+'  port:   '+str(self.port)+"\n"
+    s=s+'  id:     '+encode(self.id)+"\n"
+    s=s+'  secret: '+encode(self.secret)+"\n"
+    s=s+"]\n"
+    return s
 
-  def generate(self, pubkey, v6, tcp, port):
+  def generate(self, pubkey, v6, tcp, port, entropy):
     self.pubkey=pubkey
     self.v6=v6
     self.tcp=tcp
     self.ip=getPublicIP(v6)
     self.port=port
-    self.id=self.makeIdentifier()
-    self.secret = self.makeSecret()
-        
+    self.id=self.makeIdentifier(entropy)
+    self.secret = self.makeSecret(entropy)
+    
     pubkey=self.pubkey.bytes
     flags=encodeFlags((self.v6, self.tcp, False, False, False, False, False, False))
     if self.v6:
@@ -62,11 +71,11 @@ class InviteMessage:
 
     self.message=pubkey+flags+ip+port+id+secret
     
-  def makeIdentifier(self):
-    return bytes(random.randint(0, 255) for _ in range(16))
+  def makeIdentifier(self, entropy):
+    return entropy.getBytes(ID_LENGTH)
       
-  def makeSecret(self):
-    return bytes(random.randint(0, 255) for _ in range(16))
+  def makeSecret(self, entropy):
+    return entropy.getBytes(SECRET_LENGTH)
     
   def createInviteMessage(self, pubkey, v6, tcp, ip, port, id, secret):
     self.pubkey=pubkey
@@ -107,22 +116,29 @@ class InviteMessage:
     self.id=id
     self.secret=secret
 
-class InvitePacket(DataPacket):
+class InvitePacket(DustPacket):
   def __init__(self):
-    DataPacket.__init__(self)
+    DustPacket.__init__(self)
 
+    self.salt=None        
     self.invite=None
     
-  def createInvitePacket(self, password, invite):
+  def makeSalt(self, entropy):
+    return entropy.getBytes(SALT_LENGTH)
+    
+  def createInvitePacket(self, password, invite, entropy):
     self.invite=invite
     
-    sk=skein512(password.encode('ascii'), digest_bits=256).digest()
-    self.createDataPacket(sk, self.invite.message)
+    self.salt=self.makeSalt(entropy)        
+    sk=pbkdf(password, self.salt)
+    self.createDustPacket(sk, self.invite.message, entropy)
+    self.packet=self.salt+self.packet
   
   def decodeInvitePacket(self, password, packet):
-    sk=skein512(password.encode('ascii'), digest_bits=256).digest()
+    self.salt, packet=splitField(packet, SALT_LENGTH)
+    sk=pbkdf(password, self.salt)
     
-    self.decodeDataPacket(sk, packet)
+    self.decodeDustPacket(sk, packet)
     self.invite=InviteMessage()
     self.invite.decodeInviteMessage(self.data)
     return self.invite

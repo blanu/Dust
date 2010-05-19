@@ -5,23 +5,28 @@ from bitstring import BitString
 
 def encode(s):
   return binascii.hexlify(s).decode('ascii')
-  
+
 def decode(s):
   return binascii.unhexlify(s.encode('ascii'))
-  
+
 def encodeAddress(addr):
   ip=addr[0]
   if ip=='':
     ip='::'
   port=addr[1]
-  return '['+ip+']:'+str(port)
-  
+  if '.' in ip:
+    return ip+':'+str(port)
+  else:
+    return '['+ip+']:'+str(port)
+
 def decodeAddress(s):
-  print('decodeAddress:', s)
-  m=re.match('\[([0-9a-f:]+)\]:([0-9]+)', s)
-  print('m:', m)
-  return (m.group(1), int(m.group(2)))
-  
+  if '.' in s:
+    parts=s.split(':')
+    return (parts[0], int(parts[1]), False)
+  else:
+    m=re.match('\[([0-9a-f:]+)\]:([0-9]+)', s)
+    return (m.group(1), int(m.group(2)), True)
+
 def getPublicIP(v6=True):
   if v6:
     text=urlopen("http://ipv6.ip6.me/").read()
@@ -48,17 +53,22 @@ def splitFields(msg, fields):
       value=msg[:field]
       msg=msg[field:]
       values.append(value)
+    if len(msg)>0:
+      values.append(msg)
     return values
   except:
     return None
-    
+
+def splitField(msg, field):
+  return msg[:field], msg[field:]
+
 def decodeFlags(flagsByte):
-  bits=BitString(data=flagsByte)
+  bits=BitString(bytes=flagsByte)
   bools=[]
   for x in range(bits.length):
     bools.append(bits.readbit().uint==1)
   return bools
-  
+
 def encodeFlags(bools):
   bits=BitString()
   for bool in bools:
@@ -66,9 +76,18 @@ def encodeFlags(bools):
       bits.append(BitString('0b1'))
     else:
       bits.append(BitString('0b0'))
-  return bits.data
+  return bits.bytes
 
 def fill(bytes, size):
   while len(bytes)<size:
     bytes=bytes+b'\x00'
   return bytes
+
+def xor(a, b):
+  if len(a)!=len(b):
+    print('xor parameters must be the same length:', len(a), len(b))
+    return None
+  c=bytearray()
+  for x in range(len(a)):
+    c.append(a[x] ^ b[x])
+  return bytes(c)

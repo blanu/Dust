@@ -26,18 +26,24 @@ class MailHandler:
 
     addressKey=encodeAddress(addr)
 
-    sender=self.config['senders'][addressKey]
-    if not sender:
-      print('Unknown sender', addr)
+    try:
+      sender=self.config['senders'][addressKey]
+    except:
+      print('Unknown sender', addr, 'trying generic...')
+      try:
+        sender=self.config['senders']['*']
+      except:
+        print('No generic sender rules, rejecting.')       
+        return
+      
+    if not tod in sender['to']:
+      print('Illegal to address', tod, sender['to'])
+    elif not frmd in sender['from']:
+      print('Illegal from address', frmd, sender['from'])
     else:
-      if not tod in sender['to']:
-        print('Illegal to address', tod, sender['to'])
-      elif not frmd in sender['from']:
-        print('Illegal from address', frmd, sender['from'])
-      else:
-        print('Sending...')
-        #    smtp = smtplib.SMTP(self.config['smtpHost'])
-        #    smtp.set_debuglevel(1)
-        #    smtp.sendmail(frm, to, msg)
-        #    smtp.quit()
-
+      print('Sending...')
+      #    smtp = smtplib.SMTP(self.config['smtpHost'])
+      #    smtp.set_debuglevel(1)
+      #    smtp.sendmail(frm, to, msg)
+      #    smtp.quit()
+     

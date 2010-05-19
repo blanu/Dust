@@ -1,0 +1,29 @@
+<project>
+  <target name="copyjars" depends="makejar" description="Copies the jars from here to the Dust libs">
+    <copy
+        todir="../java/lib"
+        flatten="true">
+      <fileset dir="lib">
+        <include name="**/*.jar" />
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="makejar" depends="compile" description="Makes a jar of classes">
+    <jar destfile="lib/skein.jar" basedir="classes" includes="**/*.class"/>
+  </target>
+
+  <target name="compile" description="Compiles Java">
+    <mkdir dir="classes" />
+    <copy todir="classes">
+      <fileset dir="src">
+        <exclude name="**/*.java" />
+      </fileset>
+    </copy>
+    <javac
+        srcdir="src"
+        destdir="classes"
+        classpathref="project.classpath"
+        debug="on" />
+  </target>
+</project>

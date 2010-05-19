@@ -1,6 +1,5 @@
 import os
 import struct
-import random
 import binascii
 from ctypes import *
 
@@ -64,22 +63,17 @@ class Key:
   def __repr__(self):
     return "Key<%s>" % (binascii.hexlify(self.bytes))
 
-def createSecret():
-  keybytes=[]
-  for x in range(32):
-    r=random.getrandbits(8)
-    keybytes.append(r)
-  keybytes[0] = keybytes[0] & 248
-  keybytes[31] = keybytes[31] & 127
-  keybytes[31] = keybytes[31] | 64
+def createSecret(entropy):
+  secret=entropy.getBytes(32)
 
-  secret=struct.pack('32B', *keybytes)
-  
+  secret[0] = secret[0] & 248
+  secret[31] = secret[31] & 127
+  secret[31] = secret[31] | 64
+
   return secret
   
 def createPublicKey(secret):
-  basepoint=[9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  bps=struct.pack('32B', *basepoint)
+  bps=bytes([9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
   pubkey=create_string_buffer(32)
 
   # Compute public key from private key

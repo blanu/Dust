@@ -6,10 +6,12 @@ from socket import *
 
 import yaml
 
+import crypto.curve
 from crypto.curve import *
-from core.ec_packet import DataPacket
+from core.data_packet import DataPacket
 from core.util import encode, decode, encodeAddress
 from invite.invite import loadInvitePackage
+from crypto.dust import DustPRNG, hash
 
 class KeyManager:
   def __init__(self):
@@ -18,7 +20,8 @@ class KeyManager:
     self.incomingInvites=None
     self.outgoingInvites=None
     self.invitePassword=None
-      
+    self.entropy=DustPRNG()
+
   def loadKeypair(self, filename):
     f=open(filename, 'r')
     pair=yaml.load(f.read())
@@ -26,6 +29,9 @@ class KeyManager:
     pubkey=decode(pair[0])
     privkey=decode(pair[1])
     self.keypair=Keypair(Key(privkey, False), Key(pubkey, False))
+    
+  def createKeypair(self):
+    self.keypair=crypto.curve.createKeypair(self.entropy)
     
   def saveKeypair(self, filename):
     pubkey=encode(self.keypair.public.bytes)
@@ -66,6 +72,7 @@ class KeyManager:
     return self.knownHosts[address]
 
   def addHost(self, address, pubkey):
+    print('addHost:', address, pubkey)
     addressKey=encodeAddress(address)
     self.knownHosts[addressKey]=pubkey
     print('knownHosts:', self.knownHosts)    
@@ -81,7 +88,7 @@ class KeyManager:
       print('Unknown hosts', addressKey)
       return None
     print('pubkey:', pubkey)
-    sessionKey=self.keypair.createSession(pubkey).bytes
+    sessionKey=hash(self.keypair.createSession(pubkey).bytes)
     return sessionKey
 
   def setInvitePassword(self, passwd):
@@ -99,7 +106,7 @@ class KeyManager:
     if not passwd:
       passwd=self.invitePassword
     if passwd and self.incomingInvites:
-      self.incomingInvites.save(filename, self.invitePassword)
+      self.incomingInvites.save(filename, self.invitePassword, self.entropy)
     else:
       print('No invite password or no invites')
       
@@ -115,7 +122,7 @@ class KeyManager:
     if not passwd:
       passwd=self.invitePassword
     if passwd and self.outgoingInvites:
-      self.outgoingInvites.save(filename, self.invitePassword)
+      self.outgoingInvites.save(filename, self.invitePassword, self.entropy)
     else:
       print('No invite password or no invites')
       
