@@ -20,4 +20,4 @@ class PacketRouter:
       if msg and addr and service:
         handler=services[service]
         print('Routing to', handler, '...')
-        handler(msg, addr)
+        handler(msock, msg, addr)

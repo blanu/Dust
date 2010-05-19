@@ -10,7 +10,7 @@ class MailHandler:
     self.config=yaml.load(f.read())
     f.close()
 
-  def handle(self, msg, addr):
+  def handle(self, msock, msg, addr):
     print('-----------------')
     print(msg.decode('ascii'))
 
