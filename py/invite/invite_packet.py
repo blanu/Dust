@@ -34,7 +34,7 @@ class InviteMessage:
     self.address=None
     self.id=None
     self.secret=None
-    
+
   def __str__(self):
     s="[\n"
     s=s+'  pubkey: '+encode(self.pubkey.bytes)+"\n"
@@ -55,7 +55,7 @@ class InviteMessage:
     self.port=port
     self.id=self.makeIdentifier(entropy)
     self.secret = self.makeSecret(entropy)
-    
+
     pubkey=self.pubkey.bytes
     flags=encodeFlags((self.v6, self.tcp, False, False, False, False, False, False))
     if self.v6:
@@ -70,13 +70,13 @@ class InviteMessage:
     secret=self.secret
 
     self.message=pubkey+flags+ip+port+id+secret
-    
+
   def makeIdentifier(self, entropy):
     return entropy.getBytes(ID_LENGTH)
-      
+
   def makeSecret(self, entropy):
     return entropy.getBytes(SECRET_LENGTH)
-    
+
   def createInviteMessage(self, pubkey, v6, tcp, ip, port, id, secret):
     self.pubkey=pubkey
     self.v6=v6
@@ -85,7 +85,7 @@ class InviteMessage:
     self.port=port
     self.id=id
     self.secret=secret
-    
+
     pubkey=self.pubkey.bytes
     flags=encodeFlags((self.v6, self.tcp, False, False, False, False, False, False))
     if self.v6:
@@ -96,12 +96,13 @@ class InviteMessage:
     port=struct.pack('H', self.port)
     id=self.id
     secret=self.secret
-    
+
     self.message=pubkey+flags+ip+port+id+secret
-    
+
   def decodeInviteMessage(self, message):
     self.message=message
-    
+    print('decodeInviteMessage('+encode(message)+')'+str(len(message)))
+
     pubkey, flags, ip, port, id, secret=splitFields(self.message, [PUBKEY_LENGTH, FLAGS_LENGTH, IP_LENGTH, PORT_LENGTH, ID_LENGTH, SECRET_LENGTH])
     self.pubkey=Key(pubkey, False)
     flags=decodeFlags(flags)
@@ -120,26 +121,25 @@ class InvitePacket(DustPacket):
   def __init__(self):
     DustPacket.__init__(self)
 
-    self.salt=None        
+    self.salt=None
     self.invite=None
-    
+
   def makeSalt(self, entropy):
     return entropy.getBytes(SALT_LENGTH)
-    
+
   def createInvitePacket(self, password, invite, entropy):
     self.invite=invite
-    
-    self.salt=self.makeSalt(entropy)        
+
+    self.salt=self.makeSalt(entropy)
     sk=pbkdf(password, self.salt)
     self.createDustPacket(sk, self.invite.message, entropy)
     self.packet=self.salt+self.packet
-  
+
   def decodeInvitePacket(self, password, packet):
     self.salt, packet=splitField(packet, SALT_LENGTH)
     sk=pbkdf(password, self.salt)
-    
+
     self.decodeDustPacket(sk, packet)
     self.invite=InviteMessage()
     self.invite.decodeInviteMessage(self.data)
     return self.invite
-      
