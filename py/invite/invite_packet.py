@@ -61,9 +61,9 @@ class InviteMessage:
     if self.v6:
       ip=inet_pton(AF_INET6, self.ip)
     else:
-      print('v4:', self.ip)
+      #print('v4:', self.ip)
       ip=inet_pton(AF_INET, self.ip)
-      print('ip:', ip)
+      #print('ip:', ip)
       ip=fill(ip, IP_LENGTH)
     port=struct.pack('H', self.port)
     id=self.id
@@ -101,7 +101,7 @@ class InviteMessage:
 
   def decodeInviteMessage(self, message):
     self.message=message
-    print('decodeInviteMessage('+encode(message)+')'+str(len(message)))
+    #print('decodeInviteMessage('+encode(message)+')'+str(len(message)))
 
     pubkey, flags, ip, port, id, secret=splitFields(self.message, [PUBKEY_LENGTH, FLAGS_LENGTH, IP_LENGTH, PORT_LENGTH, ID_LENGTH, SECRET_LENGTH])
     self.pubkey=Key(pubkey, False)
@@ -136,10 +136,11 @@ class InvitePacket(DustPacket):
     self.packet=self.salt+self.packet
 
   def decodeInvitePacket(self, password, packet):
-    print('decodeInvitePacket('+password+', '+encode(packet)+')')
+    #print('decodeInvitePacket('+password+', '+encode(packet)+')')
     self.salt, packet=splitField(packet, SALT_LENGTH)
+    #print('salt('+encode(self.salt)+', '+encode(packet)+')')
     sk=pbkdf(password, self.salt)
-    print('sk: '+encode(sk))
+    #print('sk: '+encode(sk))
 
     self.decodeDustPacket(sk, packet)
     self.invite=InviteMessage()

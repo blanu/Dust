@@ -6,7 +6,7 @@ from crypto.keys import KeyManager
 from core.util import getPublicIP, encodeAddress, decodeAddress, encode
 
 inport=int(sys.argv[1])
-v6=sys.argv[2]
+v6=sys.argv[2]=='6'
 passwd=sys.argv[3]
 
 host=getPublicIP(v6)
