@@ -136,8 +136,10 @@ class InvitePacket(DustPacket):
     self.packet=self.salt+self.packet
 
   def decodeInvitePacket(self, password, packet):
+    print('decodeInvitePacket('+password+', '+encode(packet)+')')
     self.salt, packet=splitField(packet, SALT_LENGTH)
     sk=pbkdf(password, self.salt)
+    print('sk: '+encode(sk))
 
     self.decodeDustPacket(sk, packet)
     self.invite=InviteMessage()
