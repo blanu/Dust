@@ -155,8 +155,8 @@ class dust_socket:
         return
     packet=DataPacket()
     packet.createDataPacket(sessionKey, data, self.keys.entropy)
-    #print('Sending')
-    #print(packet)
+    print('Sending')
+    print(packet)
     self.sock.sendto(packet.packet, 0, addr)
 
   def sendtoraw(self, data, addr):
