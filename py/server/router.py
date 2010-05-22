@@ -3,7 +3,7 @@ from crypto.keys import KeyManager
 from core.util import getPublicIP
 from util.safethread import SafeThread
 
-from server.services import services
+from server.activeServices import activeServices
 print("services:", services)
 
 class PacketRouter:
