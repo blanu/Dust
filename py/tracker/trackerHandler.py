@@ -16,6 +16,7 @@ class TrackerHandler:
       trackback=TrackbackClient(self.router, self.addr)
       trackback.putPeerForEndpoint(key, value)
     except:
+      print('exception')
       pass
 
   def putPeerForEndpoint(self, key, value):
