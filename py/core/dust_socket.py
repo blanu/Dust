@@ -7,11 +7,11 @@ import yaml
 
 from crypto.curve import *
 from core.data_packet import DataPacket
-from core.util import encodeAddress
+from core.util import encodeAddress, encode
 from intro.intro import Introducer
 
 class dust_socket:
-  def __init__(self, keys):
+  def __init__(self, keys, socket=None):
     self.keys=keys
     if keys:
       self.keypair=keys.getKeypair()
@@ -25,6 +25,13 @@ class dust_socket:
     self.sessionKeys={}
 
     self.remaining=None
+
+    if socket:
+      self.sock=socket
+      address=self.sock.getsockname()
+      self.introducer=Introducer(self.keys, address)
+      self.myAddress=address
+      self.myAddressKey=encodeAddress(address)
 
   def bind(self, address):
     ip=address[0]
