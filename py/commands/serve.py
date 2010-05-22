@@ -4,6 +4,7 @@ import time
 from server.router import PacketRouter
 from crypto.keys import KeyManager
 from core.util import getPublicIP, encodeAddress, decodeAddress, encode
+from util.ymap import YamlMap
 
 from tracker.trackerClient import TrackerClient
 
@@ -30,9 +31,10 @@ router.start()
 
 keypair=keys.getKeypair()
 pubkey=keypair.public
-pubkeyhex=encode(pubkey.bytes)
 
-tracker.putPeerForEndpoint(pubkeyhex, [pubkeyhex, encodeAddress((host,inport))])
+endpoints=YamlMap('config/endpoints')
+for key in endpoints.values():
+  tracker.putPeerForEndpoint(encode(key), [encode(pubkey.bytes), encodeAddress((host,inport))])
 
 while True:
   time.sleep(1)
