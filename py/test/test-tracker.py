@@ -1,7 +1,7 @@
 import sys
 import time
 from crypto.keys import KeyManager
-from core.util import getPublicIP
+from core.util import getPublicIP, encodeAddress
 from server.router import PacketRouter
 
 from tracker.trackerClient import TrackerClient
@@ -39,7 +39,7 @@ trackback=router.getService('trackback')
 
 router.start()
 
-tracker.putPeerForEndpoint('a', 'b')
+tracker.putPeerForEndpoint('43aafb64bc96460f3928f6068b2a01aa87bac16da6dc034b4525d1837e9cb85e', ['43aafb64bc96460f3928f6068b2a01aa87bac16da6dc034b4525d1837e9cb85e', encodeAddress((host, inport))])
 trackback.setPutPeerForEndpointCallback('43aafb64bc96460f3928f6068b2a01aa87bac16da6dc034b4525d1837e9cb85e', foundPeer)
 tracker.getPeerForEndpoint('43aafb64bc96460f3928f6068b2a01aa87bac16da6dc034b4525d1837e9cb85e')
 
