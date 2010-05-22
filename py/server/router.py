@@ -1,4 +1,4 @@
-from multiplex.multiplex_socket import *
+from extensions.multiplex.multiplex_socket import *
 from crypto.keys import KeyManager
 from core.util import getPublicIP
 from util.safethread import SafeThread

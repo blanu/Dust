@@ -1,4 +1,4 @@
-from multiplex.multiplex_packet import MultiplexMessage
+from extensions.multiplex.multiplex_packet import MultiplexMessage
 from core.dust_socket import dust_socket
 
 class multiplex_socket(dust_socket):
