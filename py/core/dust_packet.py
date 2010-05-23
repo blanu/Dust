@@ -163,5 +163,6 @@ class DustPacket:
   def checkTimestamp(self):
     now=int(round(time.time()))
     delta=now-self.timestamp
-    return delta<10
+    print('timestamp delta: '+str(delta))
+    return delta<10*1000 # 10 secondsy
 

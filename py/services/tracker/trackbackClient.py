@@ -1,4 +1,4 @@
-from jsonrpc.proxy import ServiceProxy
+from util.jsonrpc.proxy import ServiceProxy
 
 class TrackbackClient(ServiceProxy):
   def __init__(self, router, addr):

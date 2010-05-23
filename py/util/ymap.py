@@ -25,6 +25,9 @@ class YamlMap:
     self.map[key]=value
     self.save()
 
+  def values(self):
+    return self.map.values()
+
   def save(self):
     f=open(self.filename, 'w')
     yaml.dump(self.map, f)
