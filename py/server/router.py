@@ -4,7 +4,7 @@ from core.util import getPublicIP
 from util.safethread import SafeThread
 
 from server.activeServices import activeServices
-print("services:", services)
+print("services:", activeServices)
 
 class PacketRouter:
   def __init__(self, v6, port, keys, passwd):
@@ -18,11 +18,11 @@ class PacketRouter:
 
     self.ui=None
 
-    for service in services.values():
+    for service in activeServices.values():
       service.setRouter(self)
 
   def getService(self, name):
-    return services[name]
+    return activeServices[name]
 
   def connect(self, dest, outport):
     self.msock.connect((dest, outport))
@@ -43,7 +43,7 @@ class PacketRouter:
     while True:
       msg, addr, service=self.msock.mrecvfrom(1024)
       if msg and addr and service:
-        handler=services[service]
+        handler=activeServices[service]
 #        print('Routing to', handler, '...')
         handler.handle(self.msock, msg, addr)
 
