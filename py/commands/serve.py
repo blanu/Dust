@@ -32,9 +32,9 @@ router.start()
 keypair=keys.getKeypair()
 pubkey=keypair.public
 
-endpoints=YamlMap('config/endpoints')
+endpoints=YamlMap('config/endpoints.yaml')
 for key in endpoints.values():
-  tracker.putPeerForEndpoint(encode(key), [encode(pubkey.bytes), encodeAddress((host,inport))])
+  tracker.putPeerForEndpoint(key, [encode(pubkey.bytes), encodeAddress((host,inport))])
 
 while True:
   try:
