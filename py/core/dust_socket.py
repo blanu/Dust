@@ -165,7 +165,7 @@ class dust_socket:
 
   def sendto(self, data, addr):
     print('sendto '+str(addr))
-    packet=encodePacket(addr, data)
+    packet=self.encodePacket(addr, data)
     print('Sending')
     print(packet)
     self.sock.sendto(packet.packet, 0, addr)
