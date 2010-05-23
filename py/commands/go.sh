@@ -1,3 +1,4 @@
+export PYTHONPATH=.
 python3.1 commands/make-invite.py test 7000 6
 #rm config/outgoing_invites.ip
 python3.1 commands/process-invite.py test test
