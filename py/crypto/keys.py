@@ -21,6 +21,7 @@ class KeyManager:
     self.incomingInvites=None
     self.outgoingInvites=None
     self.invitePassword=None
+    self.knownHostsFile=None
     self.entropy=DustPRNG()
 
   def loadKeypair(self, filename):
@@ -56,8 +57,9 @@ class KeyManager:
     return self.keypair
 
   def loadKnownHosts(self, filename):
+    self.knownHostsFile=filename
     self.knownHosts={}
-    if os.path.exists(filename):
+    if os.path.exists(self.knownHostsFile):
       f=open(filename, 'r')
       hosts=yaml.load(f.read())
       f.close()
@@ -65,15 +67,18 @@ class KeyManager:
       for address, pubkey in hosts.items():
         self.knownHosts[address]=Key(decode(pubkey), False)
 
-  def saveKnownHosts(self, filename):
-    hosts={}
+  def saveKnownHosts(self, filename=None):
+    if not filename and self.knownHostsFile:
+      filename=self.knownHostsFile
+    if filename:
+      hosts={}
 
-    for address, pubkey in self.knownHosts.items():
-      hosts[address]=encode(pubkey.bytes)
+      for address, pubkey in self.knownHosts.items():
+        hosts[address]=encode(pubkey.bytes)
 
-    f=open(filename, 'w')
-    f.write(yaml.dump(hosts))
-    f.close()
+      f=open(filename, 'w')
+      f.write(yaml.dump(hosts))
+      f.close()
 
   def isKnown(self, address):
     return address in self.knownHosts
