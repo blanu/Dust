@@ -29,6 +29,8 @@ keys.loadKeypair('config/id.yaml')
 keys.loadIncomingInvites('config/incoming_invites.ip')
 keys.loadOutgoingInvites('config/outgoing_invites.ip')
 
+endpoint=keys.loadEndpoint('~/.dust/endpoint.yaml')
+
 keypair=keys.getKeypair()
 pubkey=keypair.public
 destpubkey=pubkey
