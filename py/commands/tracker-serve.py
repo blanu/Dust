@@ -22,4 +22,7 @@ router=PacketRouter(v6, inport, keys, passwd)
 router.start()
 
 while True:
-  time.sleep(1)
+  try:
+    time.sleep(1)
+  except:
+    sys.exit(0)

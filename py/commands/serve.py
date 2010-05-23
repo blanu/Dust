@@ -37,4 +37,8 @@ for key in endpoints.values():
   tracker.putPeerForEndpoint(encode(key), [encode(pubkey.bytes), encodeAddress((host,inport))])
 
 while True:
-  time.sleep(1)
+  try:
+    time.sleep(1)
+  except:
+    sys.exit(0)
+
