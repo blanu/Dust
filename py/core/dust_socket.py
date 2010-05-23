@@ -29,9 +29,12 @@ class dust_socket:
     if socket:
       self.sock=socket
       address=self.sock.getsockname()
-      self.introducer=Introducer(self.keys, address)
-      self.myAddress=address
-      self.myAddressKey=encodeAddress(address)
+      self.setAddress(address)
+
+  def setAddress(self, address):
+    self.introducer=Introducer(self.keys, address)
+    self.myAddress=address
+    self.myAddressKey=encodeAddress(address)
 
   def bind(self, address):
     ip=address[0]
@@ -40,9 +43,7 @@ class dust_socket:
     else:
       self.sock=socket(AF_INET, SOCK_DGRAM)
     self.sock.bind(address)
-    self.introducer=Introducer(self.keys, address)
-    self.myAddress=address
-    self.myAddressKey=encodeAddress(address)
+    self.setAddress(address)
 
   def connect(self, address):
     if address==self.connectDest:
