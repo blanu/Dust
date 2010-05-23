@@ -16,6 +16,7 @@ from crypto.dust import DustPRNG, hash
 class KeyManager:
   def __init__(self):
     self.knownHosts=None
+    self.endpoint=None
     self.keypair=None
     self.incomingInvites=None
     self.outgoingInvites=None
@@ -29,6 +30,15 @@ class KeyManager:
     pubkey=decode(pair[0])
     privkey=decode(pair[1])
     self.keypair=Keypair(Key(privkey, False), Key(pubkey, False))
+
+  def loadEndpoint(self, filename):
+    f=open(filename, 'r')
+    pair=yaml.load(f.read())
+    f.close()
+    pubkey=decode(pair[0])
+    privkey=decode(pair[1])
+    self.endpoint=Keypair(Key(privkey, False), Key(pubkey, False))
+    return self.endpoint
 
   def createKeypair(self):
     self.keypair=crypto.curve.createKeypair(self.entropy)

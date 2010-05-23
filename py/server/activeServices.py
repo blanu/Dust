@@ -12,7 +12,7 @@ tracker=TrackerService()
 trackback=TrackbackService()
 dustmail=DustmailService()
 
-services={
+activeServices={
 #  'mail': mh,
 #  'chat': ch,
 #  'file': fh,

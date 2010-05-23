@@ -2,7 +2,7 @@ import os
 import time
 
 from util.ymap import YamlMap
-from dustmail.dustmailbackClient import DustmailbackClient
+from services.dustmail.dustmailbackClient import DustmailbackClient
 
 class DustmailHandler:
   def __init__(self, router):

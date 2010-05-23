@@ -29,6 +29,8 @@ keys.loadKeypair('config/id.yaml')
 keys.loadIncomingInvites('config/incoming_invites.ip')
 keys.loadOutgoingInvites('config/outgoing_invites.ip')
 
+endpoint=keys.loadEndpoint('~/.dust/endpoint.yaml')
+
 keypair=keys.getKeypair()
 pubkey=keypair.public
 destpubkey=pubkey
@@ -71,4 +73,7 @@ msg='message.........'
 msg=PendingMessage(tracker, trackback, dustmail, keypair, destpubkey, msg)
 
 while True:
-  time.sleep(1)
+  try:
+    time.sleep(1)
+  except:
+    sys.exit(0)

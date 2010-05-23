@@ -1,6 +1,6 @@
 from core.util import encodeAddress
 from util.jsonrpc.serviceHandler import ServiceHandler
-from tracker.trackerHandler import TrackerHandler
+from services.tracker.trackerHandler import TrackerHandler
 
 class TrackerService:
   def __init__(self):
