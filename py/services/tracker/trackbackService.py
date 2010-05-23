@@ -1,5 +1,5 @@
 from core.util import encodeAddress
-from jsonrpc.serviceHandler import ServiceHandler
+from util.jsonrpc.serviceHandler import ServiceHandler
 from tracker.trackbackHandler import TrackbackHandler
 
 class TrackbackService:
