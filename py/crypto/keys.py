@@ -31,7 +31,7 @@ class KeyManager:
     privkey=decode(pair[1])
     self.keypair=Keypair(Key(privkey, False), Key(pubkey, False))
 
-  def loadEndpoint(self, filename);
+  def loadEndpoint(self, filename):
     f=open(filename, 'r')
     pair=yaml.load(f.read())
     f.close()
