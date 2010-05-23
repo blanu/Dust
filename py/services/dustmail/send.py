@@ -1,23 +1,19 @@
+import os
 import sys
 import time
 from crypto.keys import KeyManager
 from crypto.curve import Key
-from core.util import getPublicIP, encode, decode, encodeAddress
+from core.util import getPublicIP, encode, decode, encodeAddress, decodeAddress
 from core.data_packet import DataPacket
 from server.router import PacketRouter
 
-from tracker.trackerClient import TrackerClient
-from dustmail.dustmailClient import DustmailClient
+from services.tracker.trackerClient import TrackerClient
+from services.dustmail.dustmailClient import DustmailClient
 
 passwd=sys.argv[1]
 inport=int(sys.argv[2])
-dest=sys.argv[3]
-outport=int(sys.argv[4])
-ipv=int(sys.argv[5])
-if ipv==6:
-  v6=True
-else:
-  v6=False
+destAddress=sys.argv[3]
+dest, outport, v6=decodeAddress(destAddress)
 
 host=getPublicIP(v6)
 print('Host: '+str(host))
@@ -29,7 +25,7 @@ keys.loadKeypair('config/id.yaml')
 keys.loadIncomingInvites('config/incoming_invites.ip')
 keys.loadOutgoingInvites('config/outgoing_invites.ip')
 
-endpoint=keys.loadEndpoint('~/.dust/endpoint.yaml')
+endpoint=keys.loadEndpoint(os.path.expanduser('~/.dust/endpoint.yaml'))
 
 keypair=keys.getKeypair()
 pubkey=keypair.public
