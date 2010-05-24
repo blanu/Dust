@@ -29,9 +29,12 @@ class dust_socket:
     if socket:
       self.sock=socket
       address=self.sock.getsockname()
-      self.introducer=Introducer(self.keys, address)
-      self.myAddress=address
-      self.myAddressKey=encodeAddress(address)
+      self.setAddress(address)
+
+  def setAddress(self, address):
+    self.introducer=Introducer(self.keys, address)
+    self.myAddress=address
+    self.myAddressKey=encodeAddress(address)
 
   def bind(self, address):
     ip=address[0]
@@ -40,9 +43,7 @@ class dust_socket:
     else:
       self.sock=socket(AF_INET, SOCK_DGRAM)
     self.sock.bind(address)
-    self.introducer=Introducer(self.keys, address)
-    self.myAddress=address
-    self.myAddressKey=encodeAddress(address)
+    self.setAddress(address)
 
   def connect(self, address):
     if address==self.connectDest:
@@ -137,6 +138,18 @@ class dust_socket:
         else:
           return None
 
+  def encodePacket(self, addr, data):
+    sessionKey=self.makeSession(addr, True)
+    if not sessionKey:
+      print('Unknown address', addr, 'trying introduction...')
+      sessionKey=self.introducer.makeIntroduction(addr, self.sock)
+      if not sessionKey:
+        print('Introduction failed.')
+        return
+    packet=DataPacket()
+    packet.createDataPacket(sessionKey, data, self.keys.entropy)
+    return packet
+
   def send(self, data):
     if not self.connectDest or not self.connectSessionKey:
       print('send: Not connected')
@@ -153,15 +166,7 @@ class dust_socket:
 
   def sendto(self, data, addr):
     print('sendto '+str(addr))
-    sessionKey=self.makeSession(addr, True)
-    if not sessionKey:
-      print('Unknown address', addr, 'trying introduction...')
-      sessionKey=self.introducer.makeIntroduction(addr)
-      if not sessionKey:
-        print('Introduction failed.')
-        return
-    packet=DataPacket()
-    packet.createDataPacket(sessionKey, data, self.keys.entropy)
+    packet=self.encodePacket(addr, data)
     print('Sending')
     print(packet)
     self.sock.sendto(packet.packet, 0, addr)
