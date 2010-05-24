@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import glob
 from crypto.curve import Key
 from crypto.keys import KeyManager
 from core.util import getPublicIP, encode, decode
@@ -25,11 +26,21 @@ maildir='spool/'+pubkeyhex
 addressBook=YamlMap('config/dustmail-addressbook.yaml')
 
 def displayList():
-  msgs=os.listdir(maildir)
+#  msgs=os.listdir(maildir)
+  msgs=[]
+  for file in glob.glob(maildir + '/*.*'):
+    stats = os.stat(file)
+    lastmod_date = time.localtime(stats[8])
+    date_file_tuple = lastmod_date, file
+    msgs.append(date_file_tuple)
+
+  msgs.sort()
+  msgs.reverse()
+
   for x in range(len(msgs)):
-    fname=msgs[x]
-    frm=fname.split('-')[0]
-    modtime=time.strftime("%m/%d/%Y %I:%M%p",time.localtime(os.path.getmtime(maildir+'/'+fname)))
+    date, fname=msgs[x]
+    frm=fname.split('/')[-1].split('-')[0]
+    modtime=time.strftime("%m/%d/%Y %I:%M%p",date)
     try:
       frm=addressBook[frm]
     except:
@@ -38,11 +49,11 @@ def displayList():
   return msgs
 
 def displayMessage(fname):
-  f=open(maildir+'/'+fname, 'r')
+  f=open(fname, 'r')
   msg=f.read()
   f.close()
 
-  destpubkey=Key(decode(fname.split('-')[0]), False)
+  destpubkey=Key(decode(fname.split('/')[-1].split('-')[0]), False)
   sessionKey=keypair.createSession(destpubkey)
 
   data=decode(msg)
@@ -66,4 +77,4 @@ while input!='x':
       msgs=displayList()
     else:
       parseCommand(command)
-  displayMessage(msgs[num-1])
+  displayMessage(msgs[num-1][1])
