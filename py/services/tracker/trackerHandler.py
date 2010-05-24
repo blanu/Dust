@@ -15,8 +15,8 @@ class TrackerHandler:
       value=map[key]
       trackback=TrackbackClient(self.router, self.addr)
       trackback.putPeerForEndpoint(key, value)
-    except:
-      print('exception')
+    except Exception as e:
+      print('exception: '+str(e))
       pass
 
   def putPeerForEndpoint(self, key, value):
@@ -25,6 +25,6 @@ class TrackerHandler:
       map=self.state['endpoints']
       map[key]=value
       self.state.save()
-    except:
+    except Exception as e:
       map={key: value}
       self.state['endpoints']=map
