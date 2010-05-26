@@ -142,7 +142,7 @@ class dust_socket:
     sessionKey=self.makeSession(addr, True)
     if not sessionKey:
       print('Unknown address', addr, 'trying introduction...')
-      sessionKey=self.introducer.makeIntroduction(addr)
+      sessionKey=self.introducer.makeIntroduction(addr, self.sock)
       if not sessionKey:
         print('Introduction failed.')
         return

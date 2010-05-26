@@ -14,6 +14,8 @@ passwd=sys.argv[1]
 inport=int(sys.argv[2])
 destAddress=sys.argv[3]
 dest, outport, v6=decodeAddress(destAddress)
+recipient=sys.argv[4]
+message=sys.argv[5]
 
 host=getPublicIP(v6)
 print('Host: '+str(host))
@@ -29,14 +31,12 @@ endpoint=keys.loadEndpoint(os.path.expanduser('~/.dust/endpoint.yaml'))
 
 keypair=keys.getKeypair()
 pubkey=keypair.public
-destpubkey=pubkey
 pubkeyhex=encode(pubkey.bytes)
-destpubkeyhex=pubkeyhex
+
+destpubkey=Key(decode(recipient), False)
 
 router=PacketRouter(v6, inport, keys, passwd)
 router.connect(dest, outport)
-
-dustmail=DustmailClient(router)
 
 tracker=TrackerClient(router)
 trackback=router.getService('trackback')
@@ -44,8 +44,7 @@ trackback=router.getService('trackback')
 router.start()
 
 class PendingMessage:
-  def __init__(self, tracker, trackback, dustmail, keypair, endkey, msg):
-    self.dustmail=dustmail
+  def __init__(self, tracker, trackback, keypair, endkey, msg):
     self.keypair=keypair
     self.endkey=endkey
     self.msg=msg
@@ -55,18 +54,18 @@ class PendingMessage:
   def foundPeer(self, endkey, peer):
     print('foundPeer!!! '+str(endkey)+' '+str(peer))
     destkey=decode(peer[0])
-    addr=peer[1]
+    addr=decodeAddress(peer[1])
     data=self.msg.encode('ascii')
     sessionKey=keypair.createSession(Key(destkey, False))
     print('session '+str(sessionKey.bytes))
     packet=DataPacket()
     packet.createDataPacket(sessionKey.bytes, data, keys.entropy)
-    self.dustmail.sendMessage(encode(self.keypair.public.bytes), encode(destkey), encode(packet.packet))
+    dustmail=DustmailClient(router, addr)
+    dustmail.sendMessage(encode(self.keypair.public.bytes), encode(destkey), encode(packet.packet))
 
 tracker.putPeerForEndpoint(pubkeyhex, [pubkeyhex, encodeAddress((host,inport))])
 
-msg='message.........'
-msg=PendingMessage(tracker, trackback, dustmail, keypair, destpubkey, msg)
+pending=PendingMessage(tracker, trackback, keypair, destpubkey, message)
 
 while True:
   try:
