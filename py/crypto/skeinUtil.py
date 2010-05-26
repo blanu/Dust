@@ -1,25 +1,30 @@
 import random
 import struct
 
-from skein import skein256
+from crypto.pyskein import skein512
 from core.util import splitFields, splitField, xor, encode
 
 SEED_SIZE=16
 BLOCK_SIZE=32
 
-def hash(data, pers=None):
+def hash(data, digest_bits=512, mac=None, pers=None):
   if pers:
-    return skein256(data, pers=pers, digest_bits=256).digest()
+    if mac:
+      return skein512(data, pers=pers, digest_bits=digest_bits).digest()
+    else:
+      return skein512(data, pers=pers, digest_bits=digest_bits).digest()
   else:
-    return skein256(data, digest_bits=256).digest()
-
+    if mac:
+      return skein512(data, digest_bits=digest_bits).digest()
+    else:
+      return skein512(data, digest_bits=digest_bits).digest()
 
 def pbkdf(pb, salt, i, pers=None, digest_bits=256):
   data=(pb.encode('ascii')+salt)*i
   if pers:
-    return skein256(data, pers=pers, digest_bits=digest_bits).digest()
+    return skein512(data, pers=pers, digest_bits=digest_bits).digest()
   else:
-    return skein256(data, digest_bits=digest_bits).digest()
+    return skein512(data, digest_bits=digest_bits).digest()
 
 class SkeinPRNG:
   def __init__(self, seed=None, pers=None):
@@ -34,15 +39,15 @@ class SkeinPRNG:
 
   def reseed(self, seed):
     if self.pers:
-      self.seed=skein256(self.seed+seed, pers=self.pers, digest_bits=SEED_SIZE*8).digest()
+      self.seed=skein512(self.seed+seed, pers=self.pers, digest_bits=SEED_SIZE*8).digest()
     else:
-      self.seed=skein256(self.seed+seed, digest_bits=SEED_SIZE*8).digest()
+      self.seed=skein512(self.seed+seed, digest_bits=SEED_SIZE*8).digest()
 
   def getBytes(self, n):
     if self.pers:
-      result=skein256(self.seed, pers=self.pers, digest_bits=(SEED_SIZE+n)*8).digest()
+      result=skein512(self.seed, pers=self.pers, digest_bits=(SEED_SIZE+n)*8).digest()
     else:
-      result=skein256(self.seed, digest_bits=(SEED_SIZE+n)*8).digest()
+      result=skein512(self.seed, digest_bits=(SEED_SIZE+n)*8).digest()
     self.seed, r=splitFields(result, [SEED_SIZE, n])
     return r
 
@@ -72,9 +77,9 @@ class SkeinCipherOFB:
   def getBytes(self, n):
     while len(self.entropy)<n:
       if self.pers:
-        result=skein256(nonce=self.iv, mac=self.key, pers=self.pers, digest_bits=(BLOCK_SIZE)*8).digest()
+        result=skein512(nonce=self.iv, mac=self.key, pers=self.pers, digest_bits=(BLOCK_SIZE)*8).digest()
       else:
-        result=skein256(nonce=self.iv, mac=self.key, digest_bits=(BLOCK_SIZE)*8).digest()
+        result=skein512(nonce=self.iv, mac=self.key, digest_bits=(BLOCK_SIZE)*8).digest()
       self.entropy=self.entropy+result
       self.iv=result
     b, self.entropy=splitField(self.entropy, n)
