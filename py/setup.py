@@ -4,12 +4,13 @@ from distutils.core import setup
 
 setup(
   name='Dust',
-  version='0.1',
+  version='0.1a1',
   description='Blocking-resistant network protocol',
   author='Brandon Wiley',
   author_email='dust@blanu.net',
   url='http://github.com/blanu/Dust',
-  packages=['Dust'],
+#  packages=['Dust'],
+  packages=find_packages(),
   long_description="""\
     Dust is an Internet protocol designed to resist a number of attacks currently in active use to censor Internet communication.
   """,
@@ -27,7 +28,7 @@ setup(
   keywords='cryptography privacy internet',
   license='BSD',
   install_requires=[
-    'pyskein',
+    'pyskein>=0.6',
     'bitstring',
     'yaml',
   ],
