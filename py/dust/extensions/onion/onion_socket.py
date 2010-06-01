@@ -62,14 +62,6 @@ class onion_socket:
       print('Integrity failed', packet.checkMac(), packet.checkTimestamp())
       print(packet)
       return None
-    else: # Must be an intro packet
-      print('Unknown address', endpoint)
-      if self.introducer:
-        intro=self.introducer.acceptIntroduction(data, endpoint)
-        if intro:
-          return intro
-        else:
-          return None
 
   def encodePacket(self, endpoint, data):
     packet=OnionPacket()
