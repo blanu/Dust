@@ -32,7 +32,7 @@ class PacketRouter:
 
   def setUI(self, ui):
     self.ui=ui
-    for service in services.values():
+    for service in activeServices.values():
       service.setUI(ui)
 
   def start(self):

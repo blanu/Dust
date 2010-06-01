@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
   name='Dust',
-  version='0.1a4',
+  version='0.1a5',
   description='Blocking-resistant network protocol',
   author='Brandon Wiley',
   author_email='dust@blanu.net',
