@@ -1,6 +1,6 @@
-from core.util import encodeAddress
-from util.jsonrpc.serviceHandler import ServiceHandler
-from services.tracker.trackbackHandler import TrackbackHandler
+from dust.core.util import encodeAddress
+from dust.util.jsonrpc.serviceHandler import ServiceHandler
+from dust.services.tracker.trackbackHandler import TrackbackHandler
 
 class TrackbackService:
   def __init__(self):

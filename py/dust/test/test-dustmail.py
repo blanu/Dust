@@ -1,12 +1,12 @@
 import sys
 import time
-from crypto.keys import KeyManager
-from crypto.curve import Key
-from core.util import getPublicIP, encode, decode, encodeAddress
-from core.data_packet import DataPacket
-from server.router import PacketRouter
+from dust.crypto.keys import KeyManager
+from dust.crypto.curve import Key
+from dust.core.util import getPublicIP, encode, decode, encodeAddress
+from dust.core.data_packet import DataPacket
+from dust.server.router import PacketRouter
 
-from tracker.trackerClient import TrackerClient
+from dust.services.tracker.trackerClient import TrackerClient
 from dustmail.dustmailClient import DustmailClient
 
 passwd=sys.argv[1]

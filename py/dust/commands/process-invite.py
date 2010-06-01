@@ -1,6 +1,6 @@
 import sys
 
-from crypto.keys import KeyManager
+from dust.crypto.keys import KeyManager
 
 passwd=sys.argv[1]
 mypasswd=sys.argv[2]

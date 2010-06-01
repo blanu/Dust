@@ -2,11 +2,11 @@ import os
 import sys
 import time
 import glob
-from crypto.curve import Key
-from crypto.keys import KeyManager
-from core.util import getPublicIP, encode, decode
-from core.data_packet import DataPacket
-from util.ymap import YamlMap
+from dust.crypto.curve import Key
+from dust.crypto.keys import KeyManager
+from dust.core.util import getPublicIP, encode, decode
+from dust.core.data_packet import DataPacket
+from dust.util.ymap import YamlMap
 
 passwd=sys.argv[1]
 

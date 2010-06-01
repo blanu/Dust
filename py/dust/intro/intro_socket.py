@@ -5,9 +5,9 @@ from socket import *
 
 import yaml
 
-from crypto.curve import *
-from intro.intro_packet import IntroPacket
-from core.util import encodeAddress
+from dust.crypto.curve import *
+from dust.intro.intro_packet import IntroPacket
+from dust.core.util import encodeAddress
 
 class intro_socket:
   def __init__(self, keys, socket=None):

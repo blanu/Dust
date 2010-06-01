@@ -1,7 +1,7 @@
 import sys
 import time
-from multiplex.multiplex_socket import *
-from crypto.curve import loadKeypair
+from dust.extensions.multiplex.multiplex_socket import *
+from dust.crypto.curve import loadKeypair
 
 buffsize=102400
 host = '::1'

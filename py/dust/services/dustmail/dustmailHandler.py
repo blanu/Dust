@@ -1,8 +1,8 @@
 import os
 import time
 
-from util.ymap import YamlMap
-from services.dustmail.dustmailbackClient import DustmailbackClient
+from dust.util.ymap import YamlMap
+from dust.services.dustmail.dustmailbackClient import DustmailbackClient
 
 class DustmailHandler:
   def __init__(self, router):

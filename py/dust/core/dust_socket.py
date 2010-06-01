@@ -5,10 +5,10 @@ from socket import *
 
 import yaml
 
-from crypto.curve import *
-from core.data_packet import DataPacket
-from core.util import encodeAddress, encode
-from intro.intro import Introducer
+from dust.crypto.curve import *
+from dust.core.data_packet import DataPacket
+from dust.core.util import encodeAddress, encode
+from dust.intro.intro import Introducer
 
 class dust_socket:
   def __init__(self, keys, socket=None):

@@ -1,7 +1,7 @@
 import sys
 
-from server.lite_router import LitePacketRouter
-from crypto.keys import KeyManager
+from dust.server.lite_router import LitePacketRouter
+from dust.crypto.keys import KeyManager
 
 inport=int(sys.argv[1])
 v6=sys.argv[2]

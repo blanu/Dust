@@ -1,6 +1,6 @@
-#from crypto.dust import DustPRNG, encrypt, decrypt
-from core.util import encode, decode
-from crypto.skeinUtil import encrypt, decrypt, hash
+#from dust.crypto.dust import DustPRNG, encrypt, decrypt
+from dust.core.util import encode, decode
+from dust.crypto.skeinUtil import encrypt, decrypt, hash
 
 #r=DustPRNG()
 #iv=r.getBytes(16)

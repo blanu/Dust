@@ -1,9 +1,9 @@
-from extensions.multiplex.multiplex_socket import *
-from crypto.keys import KeyManager
-from core.util import getPublicIP
-from util.safethread import SafeThread
+from dust.extensions.multiplex.multiplex_socket import *
+from dust.crypto.keys import KeyManager
+from dust.core.util import getPublicIP
+from dust.util.safethread import SafeThread
 
-from server.activeServices import activeServices
+from dust.server.activeServices import activeServices
 print("services:", activeServices)
 
 class PacketRouter:

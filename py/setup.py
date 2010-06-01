@@ -34,4 +34,5 @@ setup(
   ],
 #  console_scripts=[
 #  ],
+  zip_safe=True,
 )

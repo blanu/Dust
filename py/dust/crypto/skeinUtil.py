@@ -1,8 +1,8 @@
 import random
 import struct
 
-from crypto.pyskein import skein512
-from core.util import splitFields, splitField, xor, encode
+from dust.crypto.pyskein import skein512
+from dust.core.util import splitFields, splitField, xor, encode
 
 SEED_SIZE=16
 BLOCK_SIZE=32

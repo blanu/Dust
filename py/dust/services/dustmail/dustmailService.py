@@ -1,6 +1,6 @@
-from core.util import encodeAddress
-from util.jsonrpc.serviceHandler import ServiceHandler
-from services.dustmail.dustmailHandler import DustmailHandler
+from dust.core.util import encodeAddress
+from dust.util.jsonrpc.serviceHandler import ServiceHandler
+from dust.services.dustmail.dustmailHandler import DustmailHandler
 
 class DustmailService:
   def __init__(self):

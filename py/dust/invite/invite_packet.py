@@ -6,13 +6,13 @@ from socket import AF_INET, AF_INET6
 try:
     from socket import inet_pton, inet_ntop
 except ImportError:
-    from invite.win32_inet_pton import inet_pton, inet_ntop
+    from dust.invite.win32_inet_pton import inet_pton, inet_ntop
 
-from crypto.dust import pbkdf
+from dust.crypto.dust import pbkdf
 
-from core.dust_packet import DustPacket
-from core.util import getPublicIP, splitFields, splitField, encodeFlags, decodeFlags, fill, encode
-from crypto.curve import Key
+from dust.core.dust_packet import DustPacket
+from dust.core.util import getPublicIP, splitFields, splitField, encodeFlags, decodeFlags, fill, encode
+from dust.crypto.curve import Key
 
 PUBKEY_LENGTH=32
 FLAGS_LENGTH=1

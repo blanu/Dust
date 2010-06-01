@@ -2,7 +2,7 @@ import yaml
 import email
 import smtplib
 
-from core.util import encodeAddress
+from dust.core.util import encodeAddress
 
 class MailHandler:
   def __init__(self):

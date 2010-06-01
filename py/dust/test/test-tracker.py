@@ -1,10 +1,10 @@
 import sys
 import time
-from crypto.keys import KeyManager
-from core.util import getPublicIP, encodeAddress
-from server.router import PacketRouter
+from dust.crypto.keys import KeyManager
+from dust.core.util import getPublicIP, encodeAddress
+from dust.server.router import PacketRouter
 
-from tracker.trackerClient import TrackerClient
+from dust.services.tracker.trackerClient import TrackerClient
 
 def foundPeer(pubkey, peer):
   print('foundPeer '+str(pubkey)+' '+str(peer))

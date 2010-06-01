@@ -1,9 +1,9 @@
 import sys
 import time
 
-from server.router import PacketRouter
-from crypto.keys import KeyManager
-from core.util import getPublicIP, encodeAddress, decodeAddress, encode
+from dust.server.router import PacketRouter
+from dust.crypto.keys import KeyManager
+from dust.core.util import getPublicIP, encodeAddress, decodeAddress, encode
 
 inport=int(sys.argv[1])
 v6=sys.argv[2]=='6'

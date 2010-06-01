@@ -1,4 +1,4 @@
-from util.ymap import YamlMap
+from dust.util.ymap import YamlMap
 
 class TrackbackHandler:
   def __init__(self):

@@ -1,5 +1,5 @@
-from core.data_packet import DataPacket
-from core.util import splitFields
+from dust.core.data_packet import DataPacket
+from dust.core.util import splitFields
 
 SENDER_LENGTH=32
 RECEIVER_LENGTH=32

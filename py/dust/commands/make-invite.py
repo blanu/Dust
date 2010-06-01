@@ -3,9 +3,9 @@ import sys
 # python sucks
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
-from invite.invite import InvitePackage
-from crypto.keys import KeyManager
-from core.util import getAddress, getPublicIP
+from dust.invite.invite import InvitePackage
+from dust.crypto.keys import KeyManager
+from dust.core.util import getAddress, getPublicIP
 
 password=sys.argv[1]
 

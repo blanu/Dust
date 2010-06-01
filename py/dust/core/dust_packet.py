@@ -1,10 +1,10 @@
 import time
 import struct
 
-from crypto.curve import *
-from crypto.dust import encrypt, decrypt, mac
+from dust.crypto.curve import *
+from dust.crypto.dust import encrypt, decrypt, mac
 
-from core.util import splitField, splitFields, encode
+from dust.core.util import splitField, splitFields, encode
 
 PADDING_RANGE = 32
 

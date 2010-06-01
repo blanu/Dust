@@ -1,7 +1,7 @@
 import sys
-from multiplex.lite_multiplex_socket import *
-from core.util import getPublicIP
-from crypto.keys import KeyManager
+from dust.extensions.multiplex.lite_multiplex_socket import *
+from dust.core.util import getPublicIP
+from dust.crypto.keys import KeyManager
 
 ipv=sys.argv[1]
 if ipv=='4':

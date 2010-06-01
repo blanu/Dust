@@ -1,6 +1,6 @@
 import timeit
 
-from crypto.dust import DustPRNG
+from dust.crypto.dust import DustPRNG
 
 passwd="testpw"
 

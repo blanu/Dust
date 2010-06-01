@@ -1,8 +1,8 @@
-from multiplex.lite_multiplex_socket import *
-from crypto.keys import KeyManager
-from core.util import getPublicIP
+from dust.extensions.multiplex.lite_multiplex_socket import *
+from dust.crypto.keys import KeyManager
+from dust.core.util import getPublicIP
 
-from server.services import services
+from dust.server.services import services
 print("services:", services)
 
 class LitePacketRouter:

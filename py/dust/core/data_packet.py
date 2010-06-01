@@ -1,4 +1,4 @@
-from core.dust_packet import DustPacket
+from dust.core.dust_packet import DustPacket
 
 class DataPacket(DustPacket):
   def __init__(self):
@@ -6,7 +6,7 @@ class DataPacket(DustPacket):
 
   def createDataPacket(self, key, data, entropy):
     self.createDustPacket(key, data, entropy)
-    
+
   def decodeDataPacket(self, key, packet):
     self.decodeDustPacket(key, packet)
 

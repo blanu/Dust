@@ -1,8 +1,8 @@
 import sys
 
-from file.file_socket import file_socket
-from crypto.keys import KeyManager
-from file.fileService import FileHandler
+from dust.services.file.file_socket import file_socket
+from dust.crypto.keys import KeyManager
+from dust.services.file.fileService import FileHandler
 
 host = '2002:ae94:84fa:4:250:8dff:fe5f:6e33'
 inport=7001

@@ -1,6 +1,6 @@
-from crypto.dust import hash
-from core.dust_socket import dust_socket
-from core.util import encodeAddress, xor
+from dust.crypto.dust import hash
+from dust.core.dust_socket import dust_socket
+from dust.core.util import encodeAddress, xor
 
 class lite_socket(dust_socket):
   def makeSession(self, address, tryInvite):

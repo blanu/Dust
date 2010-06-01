@@ -4,10 +4,10 @@ import yaml
 import email
 import smtplib
 
-from multiplex_socket import *
-from crypto.curve import loadKeypair
+from dust.extensions.multiplex_socket import *
+from dust.crypto.curve import loadKeypair
 
-from services import services
+from dust.services import services
 print("services:", services)
 
 buffsize=102400

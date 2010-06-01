@@ -5,10 +5,10 @@ from socket import *
 
 import yaml
 
-from crypto.curve import *
-from extensions.onion.onion_packet import OnionPacket
-from core.util import encodeAddress, encode
-from intro.intro import Introducer
+from dust.crypto.curve import *
+from dust.extensions.onion.onion_packet import OnionPacket
+from dust.core.util import encodeAddress, encode
+from dust.intro.intro import Introducer
 
 class onion_socket:
   def __init__(self, keys, socket):

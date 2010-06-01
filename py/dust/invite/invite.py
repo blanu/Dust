@@ -1,8 +1,8 @@
 import sys
 
-from core.util import encode, decode
+from dust.core.util import encode, decode
 
-from invite.invite_packet import InviteMessage, InvitePacket
+from dust.invite.invite_packet import InviteMessage, InvitePacket
 
 def createInvitePackage(pubkey, v6, tcp, port, number):
   ip=InvitePackage()

@@ -1,4 +1,4 @@
-from util.jsonrpc.proxy import ServiceProxy
+from dust.util.jsonrpc.proxy import ServiceProxy
 
 class DustmailbackClient(ServiceProxy):
   def __init__(self, router):

@@ -1,6 +1,6 @@
-from crypto.keys import KeyManager
-from core.data_packet import DataPacket
-from core.util import encode, decode
+from dust.crypto.keys import KeyManager
+from dust.core.data_packet import DataPacket
+from dust.core.util import encode, decode
 
 keys=KeyManager()
 #psk=keys.entropy.getBytes(32)

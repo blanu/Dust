@@ -1,8 +1,8 @@
 import sys
 import time
-from crypto.keys import KeyManager
-from multiplex.multiplex_socket import *
-from core.util import getPublicIP, decodeAddress
+from dust.crypto.keys import KeyManager
+from dust.extensions.multiplex.multiplex_socket import *
+from dust.core.util import getPublicIP, decodeAddress
 
 passwd=sys.argv[1]
 inport=int(sys.argv[2])

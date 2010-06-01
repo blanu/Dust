@@ -1,7 +1,7 @@
-from core.dust_packet import DustPacket
-from invite.invite import InvitePackage
-from core.util import getAddress, encode
-from crypto.curve import Key, Keypair
+from dust.core.dust_packet import DustPacket
+from dust.invite.invite import InvitePackage
+from dust.core.util import getAddress, encode
+from dust.crypto.curve import Key, Keypair
 
 ID_LENGTH=16
 PUBKEY_LENGTH=32

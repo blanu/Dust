@@ -2,7 +2,7 @@ import os
 import yaml
 import json
 
-from file.file_packet import FileMessage
+from dust.services.file.file_packet import FileMessage
 
 class FileHandler:
   def __init__(self):

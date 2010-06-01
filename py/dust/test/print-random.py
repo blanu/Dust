@@ -1,4 +1,4 @@
-from crypto.dust import DustPRNG
+from dust.crypto.dust import DustPRNG
 
 r=DustPRNG()
 print(r.getBytes(10))

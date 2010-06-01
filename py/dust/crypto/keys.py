@@ -6,12 +6,12 @@ from socket import *
 
 import yaml
 
-import crypto.curve
-from crypto.curve import *
-from core.data_packet import DataPacket
-from core.util import encode, decode, encodeAddress
-from invite.invite import loadInvitePackage
-from crypto.dust import DustPRNG, hash
+import dust.crypto.curve
+from dust.crypto.curve import *
+from dust.core.data_packet import DataPacket
+from dust.core.util import encode, decode, encodeAddress
+from dust.invite.invite import loadInvitePackage
+from dust.crypto.dust import DustPRNG, hash
 
 class KeyManager:
   def __init__(self):

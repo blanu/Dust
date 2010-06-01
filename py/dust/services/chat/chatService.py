@@ -1,4 +1,4 @@
-from core.util import encodeAddress
+from dust.core.util import encodeAddress
 
 class ChatHandler:
   def __init__(self):

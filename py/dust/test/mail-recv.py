@@ -4,8 +4,8 @@ import yaml
 import email
 import smtplib
 
-from core.dust_socket import *
-from crypto.curve import loadKeypair
+from dust.core.dust_socket import *
+from dust.crypto.curve import loadKeypair
 
 f=open('emailServer.yaml', 'r')
 config=yaml.load(f.read())

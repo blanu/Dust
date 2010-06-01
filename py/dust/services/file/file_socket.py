@@ -1,5 +1,5 @@
-from file.file_packet import FileMessage
-from multiplex.multiplex_socket import multiplex_socket
+from dust.services.file.file_packet import FileMessage
+from dust.extensions.multiplex.multiplex_socket import multiplex_socket
 
 class file_socket(multiplex_socket):
   def __init__(self, keys):

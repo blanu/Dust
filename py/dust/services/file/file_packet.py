@@ -3,9 +3,9 @@ import time
 import struct
 import random
 
-from core.dust_packet import makeLength
-from core.util import encode
-from multiplex.multiplex_packet import MultiplexPacket
+from dust.core.dust_packet import makeLength
+from dust.core.util import encode
+from dust.extensions.multiplex.multiplex_packet import MultiplexPacket
 
 class FileMessage:
   def __init__(self):

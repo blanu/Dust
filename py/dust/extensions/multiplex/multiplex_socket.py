@@ -1,5 +1,5 @@
-from extensions.multiplex.multiplex_packet import MultiplexMessage
-from core.dust_socket import dust_socket
+from dust.extensions.multiplex.multiplex_packet import MultiplexMessage
+from dust.core.dust_socket import dust_socket
 
 class multiplex_socket(dust_socket):
   def __init__(self, keys):

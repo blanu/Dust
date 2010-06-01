@@ -1,7 +1,7 @@
 import random
 import struct
 
-from crypto import skeinUtil
+from dust.crypto import skeinUtil
 
 SEED_SIZE=16
 IV_SIZE=16

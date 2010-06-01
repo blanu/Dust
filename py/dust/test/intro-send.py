@@ -1,7 +1,7 @@
 import sys
-from intro.intro_socket import *
-from crypto.keys import KeyManager
-from core.util import getPublicIP
+from dust.intro.intro_socket import *
+from dust.crypto.keys import KeyManager
+from dust.core.util import getPublicIP
 
 passwd=sys.argv[1]
 ipv=sys.argv[2]

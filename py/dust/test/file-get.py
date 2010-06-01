@@ -1,9 +1,9 @@
 import sys
 
-from file.file_socket import file_socket
-from crypto.keys import KeyManager
+from dust.services.file.file_socket import file_socket
+from dust.crypto.keys import KeyManager
 
-from server.services import services
+from dust.server.services import services
 print("services:", services)
 
 host = '2002:ad82:39e1:7:250:8dff:fe5f:6e33'

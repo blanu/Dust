@@ -1,4 +1,4 @@
-from crypto import dust
+from dust.crypto import dust
 
 passwd="testpw"
 prng=dust.DustPRNG()

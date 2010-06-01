@@ -1,8 +1,8 @@
-from invite.invite import loadInvitePackage
-from intro.intro_packet import IntroPacket
-from intro.intro_socket import intro_socket
-from core.util import getAddress, getPublicIP
-from crypto.curve import Key
+from dust.invite.invite import loadInvitePackage
+from dust.intro.intro_packet import IntroPacket
+from dust.intro.intro_socket import intro_socket
+from dust.core.util import getAddress, getPublicIP
+from dust.crypto.curve import Key
 
 class Introducer:
   def __init__(self, keys, myaddr):

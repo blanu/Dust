@@ -1,7 +1,7 @@
 import sys
 import time
-from multiplex_socket import *
-from crypto.curve import loadKeypair
+from dust.extensions.multiplex_socket import *
+from dust.crypto.curve import loadKeypair
 
 from email.mime.text import MIMEText
 

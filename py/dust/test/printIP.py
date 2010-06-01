@@ -1,6 +1,6 @@
 import sys
 
-from core.util import getPublicIP
+from dust.core.util import getPublicIP
 
 ipv=sys.argv[1]
 

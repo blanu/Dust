@@ -1,9 +1,9 @@
 #from mail.mailService import MailHandler
 #from chat.chatService import ChatHandler
-#from file.fileService import FileHandler
-from services.tracker.trackerService import TrackerService
-from services.tracker.trackbackService import TrackbackService
-from services.dustmail.dustmailService import DustmailService
+#from dust.services.file.fileService import FileHandler
+from dust.services.tracker.trackerService import TrackerService
+from dust.services.tracker.trackbackService import TrackbackService
+from dust.services.dustmail.dustmailService import DustmailService
 
 #mh=MailHandler()
 #ch=ChatHandler()

@@ -1,4 +1,4 @@
-from core.data_packet import DataPacket
+from dust.core.data_packet import DataPacket
 
 # 1 byte
 def makeByteLength(data):
@@ -42,7 +42,7 @@ class MultiplexPacket(DataPacket):
     self.multiplex.decodeMultiplexMessage(self.data)
 
 if __name__=='__main__':
-  from crypto.curve import *
+  from dust.crypto.curve import *
   sender=createKeypair()
   receiver=createKeypair()
 
