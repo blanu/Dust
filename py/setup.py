@@ -4,13 +4,16 @@ from setuptools import setup, find_packages
 
 setup(
   name='Dust',
-  version='0.1a2',
+  version='0.1a4',
   description='Blocking-resistant network protocol',
   author='Brandon Wiley',
   author_email='dust@blanu.net',
   url='http://github.com/blanu/Dust',
 #  packages=['Dust'],
   packages=find_packages(),
+  package_data={
+    '':['*.so', '*.dll'],
+  },
   long_description="""\
     Dust is an Internet protocol designed to resist a number of attacks currently in active use to censor Internet communication.
   """,
@@ -30,7 +33,7 @@ setup(
   install_requires=[
     'pyskein>=0.6',
     'bitstring',
-    'yaml',
+    'PyYAML>=3.09',
   ],
 #  console_scripts=[
 #  ],
