@@ -25,6 +25,9 @@ class YamlMap:
     self.map[key]=value
     self.save()
 
+  def keys(self):
+    return self.map.keys()
+
   def values(self):
     return self.map.values()
 

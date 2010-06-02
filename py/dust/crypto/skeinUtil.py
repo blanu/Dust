@@ -1,8 +1,11 @@
+import sys
 import random
 import struct
 
 from dust.crypto.pyskein import skein512
 from dust.core.util import splitFields, splitField, xor, encode
+
+v3=(sys.version[0]=='3')
 
 SEED_SIZE=16
 BLOCK_SIZE=32
@@ -71,7 +74,10 @@ class SkeinCipherOFB:
   def __init__(self, key, iv, pers=None):
     self.key=key
     self.iv=iv
-    self.entropy=b''
+    if v3:
+      self.entropy=bytes('', 'ascii')
+    else:
+      self.entropy=''
     self.pers=pers
 
   def getBytes(self, n):

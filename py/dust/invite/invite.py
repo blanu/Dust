@@ -17,7 +17,7 @@ def loadInvitePackage(filename, password):
 class InvitePackage:
   def __init__(self):
     self.invites=[]
-    
+
   def __str__(self):
     s='['
     for invite in self.invites:
@@ -32,37 +32,39 @@ class InvitePackage:
       if invite.id==id:
         return invite
     return None
-    
+
   def getInviteForHost(self, tcp, address):
     for invite in self.invites:
+      print('invite: '+str(invite)+' '+str(tcp)+' '+str(address)+' '+str(invite.tcp==tcp)+' '+str(invite.ip==address[0])+' '+str(invite.port==address[1])+' '+str(invite.ip.__class__)+' '+str(address[0].__class__)+' '+str(address[0])+' '+str(invite.ip))
       if invite.tcp==tcp and invite.ip==address[0] and invite.port==address[1]:
+        print('returning '+str(invite))
         return invite
     return None
-        
+
   def getInvitesForHost(self, tcp, address):
     results=[]
     for invite in self.invites:
       if invite.tcp==tcp and invite.ip==address[0] and invite.port==address[1]:
         results.append(invite)
     return results
-    
+
   def merge(self, ip):
     for invite in ip.invites:
       self.addInvite(invite)
-    
+
   def addInvite(self, invite):
     if not invite in self.invites:
       self.invites.append(invite)
-      
+
   def removeInvite(self, invite):
     self.invites.remove(invite)
-    
+
   def generate(self, pubkey, v6, tcp, port, number, entropy):
     for x in range(number+1):
       i=InviteMessage()
       i.generate(pubkey, v6, tcp, port, entropy)
       self.addInvite(i)
-      
+
   def load(self, filename, password):
     try:
       f=open(filename, 'r')
@@ -80,7 +82,7 @@ class InvitePackage:
         print('Mac check failed, possible a wrong password?')
 
     f.close()
-      
+
   def save(self, filename, password, entropy):
     f=open(filename, 'w')
 
@@ -90,5 +92,5 @@ class InvitePackage:
       data=encode(packet.packet)
       f.write(data)
       f.write("\n")
-      
-    f.close()     
+
+    f.close()

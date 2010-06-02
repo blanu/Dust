@@ -20,6 +20,11 @@ class onion_socket:
 
     self.remaining=None
 
+    self.endpoint=None
+
+  def setEndpoint(self, endpoint):
+    self.endpoint=endpoint
+
   def recvfrom(self, bufsize):
     if self.remaining:
       data, addr, endpoint=self.remaining
@@ -45,6 +50,13 @@ class onion_socket:
         else:
           print('Not a data packet')
           return None, None, None
+
+  def send(self, data):
+    if self.endpoint:
+      packet=self.encodePacket(self.endpoint, data)
+      self.sock.send(packet.packet)
+    else:
+      print('Not connected to endpoint')
 
   def sendto(self, data, addr, endpoint):
     print('sendto '+str(endpoint))

@@ -48,7 +48,7 @@ class ServiceProxy(object):
             return ServiceProxy(self.channel, methodName=name)
 
     def __call__(self, *args):
-         postdata = dumps({"method": self.methodName, 'params': args, 'id':'jsonrpc'})
+         postdata = bytes(dumps({"method": self.methodName, 'params': args, 'id':'jsonrpc'}), 'utf-8')
          if self.serviceName:
             if self.addr:
               self.channel.sendto(postdata, self.addr, service=self.serviceName)

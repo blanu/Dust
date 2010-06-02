@@ -49,13 +49,13 @@ class PacketRouter:
 
   def send(self, msg, service=None):
     if service:
-      self.msock.msend(msg.encode('ascii'), service=service)
+      self.msock.msend(msg, service=service)
     else:
-      self.msock.msend(msg.encode('ascii'))
+      self.msock.msend(msg)
 
   def sendto(self, msg, addr, service=None):
     print('router.sendto '+str(addr))
     if service:
-      self.msock.msendto(msg.encode('ascii'), addr, service=service)
+      self.msock.msendto(msg, addr, service=service)
     else:
-      self.msock.msendto(msg.encode('ascii'), addr)
+      self.msock.msendto(msg, addr)

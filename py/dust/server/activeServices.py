@@ -1,22 +1,14 @@
-#from mail.mailService import MailHandler
-#from chat.chatService import ChatHandler
-#from dust.services.file.fileService import FileHandler
-from dust.services.tracker.trackerService import TrackerService
-from dust.services.tracker.trackbackService import TrackbackService
-from dust.services.dustmail.dustmailService import DustmailService
+from dust.util.ymap import YamlMap
 
-#mh=MailHandler()
-#ch=ChatHandler()
-#fh=FileHandler()
-tracker=TrackerService()
-trackback=TrackbackService()
-dustmail=DustmailService()
+activeServices={}
 
-activeServices={
-#  'mail': mh,
-#  'chat': ch,
-#  'file': fh,
-  'tracker': tracker,
-  'trackback': trackback,
-  'dustmail': dustmail,
-}
+paths=YamlMap('config/activeServices.yaml')
+for serviceName in paths.keys():
+  modName, clsName=paths[serviceName]
+  path=modName.split('.')
+  mod=__import__(modName)
+  for name in path[1:]:
+    mod=getattr(mod, name)
+  cls=getattr(mod, clsName)
+  obj=cls()
+  activeServices[serviceName]=obj

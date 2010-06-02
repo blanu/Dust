@@ -42,7 +42,7 @@ class KeyManager:
     return self.endpoint
 
   def createKeypair(self):
-    self.keypair=crypto.curve.createKeypair(self.entropy)
+    self.keypair=createKeypair(self.entropy)
 
   def saveKeypair(self, filename):
     pubkey=encode(self.keypair.public.bytes)

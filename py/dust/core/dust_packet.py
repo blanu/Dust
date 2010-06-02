@@ -1,7 +1,6 @@
 import time
 import struct
 
-from dust.crypto.curve import *
 from dust.crypto.dust import encrypt, decrypt, mac
 
 from dust.core.util import splitField, splitFields, encode

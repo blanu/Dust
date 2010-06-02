@@ -1,7 +1,9 @@
 import re
+import sys
 import binascii
-from urllib.request import urlopen
 from bitstring import BitString
+
+v3=(sys.version[0]=='3')
 
 def encode(s):
   return binascii.hexlify(s).decode('ascii')
@@ -26,22 +28,6 @@ def decodeAddress(s):
   else:
     m=re.match('\[([0-9a-f:]+)\]:([0-9]+)', s)
     return (m.group(1), int(m.group(2)), True)
-
-def getPublicIP(v6=True):
-  if v6:
-    text=urlopen("http://ipv6.ip6.me/").read()
-    match=re.search(b"\+3>([^<]+)<", text)
-#    ip=urlopen("http://whatismyv6ip.com/myip").read()
-#    return ip.decode('ascii')
-    ip=match.group(1)
-    return ip.decode('ascii')
-  else:
-    text=urlopen("http://ip4.me/").read()
-    match=re.search(b"\+3>([^<]+)<", text)
-#    ip=urlopen("http://whatismyv6ip.com/myip").read()
-#    return ip.decode('ascii')
-    ip=match.group(1)
-    return ip.decode('ascii')
 
 def getAddress(port):
   return encodeAddress((getPublicIP(), port))
@@ -80,7 +66,11 @@ def encodeFlags(bools):
 
 def fill(bytes, size):
   while len(bytes)<size:
-    bytes=bytes+b'\x00'
+    if v3:
+      filler=bytes('\x00', 'ascii')
+    else:
+      filler='\x00'
+    bytes=bytes+filler
   return bytes
 
 def xor(a, b):
@@ -91,3 +81,24 @@ def xor(a, b):
   for x in range(len(a)):
     c.append(a[x] ^ b[x])
   return bytes(c)
+
+if v3:
+  from urllib.request import urlopen
+
+  def getPublicIP(v6=True):
+    if v6:
+      text=urlopen("http://ipv6.ip6.me/").read()
+      match=re.search(bytes("\+3>([^<]+)<", 'ascii'), text)
+#      ip=urlopen("http://whatismyv6ip.com/myip").read()
+#      return ip.decode('ascii')
+      ip=match.group(1)
+      ip=ip.decode('ascii')
+      return ip
+    else:
+      text=urlopen("http://ip4.me/").read()
+      match=re.search(bytes("\+3>([^<]+)<", 'ascii'), text)
+#      ip=urlopen("http://whatismyv6ip.com/myip").read()
+#      return ip.decode('ascii')
+      ip=match.group(1)
+      ip=ip.decode('ascii')
+      return ip
