@@ -1,21 +1,13 @@
 # Pure Python implementation of Skein-512-256.  Requires Python >=3.0.
-# Written by Hagen Fürstenau, released to the public domain.
+# Written by Hagen, released to the public domain.
 
-def print_state(g, T=None, msg=None):
-    if msg:
-        print(msg)
-    for i in range(len(g)//8):
-        print("X[{0}] =".format(i), end="")
-        for j in range(8):
-            print(" {0}".format(g[8*i+j]), end="")
-        print()
-    if T is not None:
-        for i in (0, 1):
-            print("T[{0}] =".format(i), end="")
-            for j in range(8):
-                print(" {0}".format(T[8*i+j]), end="")
-            print()
+import sys
 
+v3=(sys.version[0]=='3')
+if v3:
+  empty=bytes('', 'ascii')
+else:
+  empty=''
 
 ### bytes <--> words conversions ###
 
@@ -134,14 +126,42 @@ def ubi(g, m, ts):
         h = bytearray(x^y for x, y in zip(cipher, block))
     return h
 
-
-CONFIG = (b"SHA3"                        # schema identifier
-          b"\1\0"                        # version number
-          b"\0\0"                        # reserved
-          b"\0\1\0\0\0\0\0\0")           # output length
+if v3:
+  CONFIG = (bytes("SHA3", 'ascii'),                        # schema identifier
+            bytes("\1\0", 'ascii'),                        # version number
+            bytes("\0\0", 'ascii'),                        # reserved
+            bytes("\0\1\0\0\0\0\0\0", 'ascii'),
+           )           # output length
+          # plus 3 bytes tree parameters and 13 bytes reserved (0x00)
+else:
+  CONFIG = ("SHA3",                        # schema identifier
+            "\1\0",                        # version number
+            "\0\0",                        # reserved
+            "\0\1\0\0\0\0\0\0",
+           )           # output length
           # plus 3 bytes tree parameters and 13 bytes reserved (0x00)
 
-def skein512_256(msg, mac=b"", pers=b"", nonce=b"", tree=None):
+def skein512_256(msg, mac=None, pers=None, nonce=None, tree=None):
+    if msg==None:
+      if v3:
+        msg=bytes('', 'ascii')
+      else:
+        msg=''
+    if mac==None:
+      if v3:
+        mac=bytes('', 'ascii')
+      else:
+        msg=''
+    if pers==None:
+      if v3:
+        pers=bytes('', 'ascii')
+      else:
+        msg=''
+    if nonce==None:
+      if v3:
+        nonce=bytes('', 'ascii')
+      else:
+        msg=''
     tree_leaf, tree_fan, tree_max = tree if (tree is not None) else (0, 0, 0)
 
     g = bytes(64)
@@ -171,12 +191,12 @@ def tree_hash(g, msg, leaf_size, children, max_level):
         blocks = [msg[i*leaf_size:(i+1)*leaf_size]
                   for i in range((len(msg)-1)//leaf_size+1)]
     else:
-        blocks = [b""]
+        blocks = [empty]
     blocks = [ubi(g, block, (i*leaf_size)|(1<<112)|(48<<120))
               for i, block in enumerate(blocks)]
     level = 2
     while (level < max_level) and (len(blocks) > 1):
-        blocks = [b"".join(blocks[i*children:(i+1)*children])
+        blocks = [empty.join(blocks[i*children:(i+1)*children])
                   for i in range((len(blocks)-1)//children+1)]
         blocks = [ubi(g, block, (64*i*children)|(level<<112)|(48<<120))
                   for i, block in enumerate(blocks)]
@@ -184,18 +204,5 @@ def tree_hash(g, msg, leaf_size, children, max_level):
     if len(blocks) == 1:
         return blocks[0]
     else:
-        return ubi(g, b"".join(blocks), (max_level<<112)|(48<<120))
+        return ubi(g, empty.join(blocks), (max_level<<112)|(48<<120))
 
-
-### Print hash of MSG if called directly ###
-if __name__ == "__main__":
-    MSG = b"Nobody inspects the spammish repetition"
-    hash = skein512_256(MSG)
-    print(":Skein-512:   256-bit hash, msgLen = {0:5} bits".format(len(MSG)*8))
-    print("\nMessage:", MSG)
-    print("Result:")
-    for i in range(0, len(hash), 16):
-        print("     ", end="")
-        for j in range(i, i+16, 4):
-            print(" ".join(format(b, "02X") for b in hash[j:j+4]), end="  ")
-        print()

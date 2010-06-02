@@ -18,12 +18,8 @@ try:
 #  raise(Exception())
 except:
   print('Using pure python skein')
-  if v3:
-    from dust.crypto.skein512_512 import skein512_512_3 as skein_512_512
-    from dust.crypto.skein512_256 import skein512_256_3 as skein_512_256
-  else:
-    from dust.crypto.skein512_512 import skein512_512_2 as skein_512_512
-    from dust.crypto.skein512_256 import skein512_256_2 as skein_512_256
+  from dust.crypto.skein512_512 import skein512_512
+  from dust.crypto.skein512_256 import skein512_256
 
   def skein512(msg=None, mac=None, pers=None, nonce=None, tree=None, digest_bits=512):
     if msg==None:
