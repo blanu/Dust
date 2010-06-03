@@ -1,7 +1,6 @@
 import re
 import sys
 import binascii
-from bitstring import BitString
 
 v3=(sys.version[0]=='3')
 
@@ -49,6 +48,7 @@ def splitField(msg, field):
   return msg[:field], msg[field:]
 
 def decodeFlags(flagsByte):
+  from bitstring import BitString
   bits=BitString(bytes=flagsByte)
   bools=[]
   for x in range(bits.length):
@@ -56,6 +56,7 @@ def decodeFlags(flagsByte):
   return bools
 
 def encodeFlags(bools):
+  from bitstring import BitString
   bits=BitString()
   for bool in bools:
     if bool:
@@ -77,10 +78,16 @@ def xor(a, b):
   if len(a)!=len(b):
     print('xor parameters must be the same length:', len(a), len(b))
     return None
-  c=bytearray()
-  for x in range(len(a)):
-    c.append(a[x] ^ b[x])
-  return bytes(c)
+  if v3:
+    c=bytearray()
+    for x in range(len(a)):
+      c.append(a[x] ^ b[x])
+    return bytes(c)
+  else:
+    c=''
+    for x in range(len(a)):
+      c=c+(a[x] ^ b[x])
+    return c
 
 if v3:
   from urllib.request import urlopen

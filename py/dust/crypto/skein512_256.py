@@ -2,6 +2,9 @@
 # Written by Hagen, released to the public domain.
 
 import sys
+import traceback
+
+from dust.core.util import encode
 
 v3=(sys.version[0]=='3')
 if v3:
@@ -13,11 +16,24 @@ else:
 
 def BytesToWords(b, n):
     """Return n words for 8*n bytes."""
-    return [sum(b[8*i+j]<<(8*j) for j in range(8)) for i in range(n)]
+    result=[]
+    for i in range(n):
+      scratch=[]
+      for j in range(8):
+        if v3:
+          scratch.append(b[8*i+j]<<(8*j))
+        else:
+          scratch.append(ord(b[8*i+j])<<(8*j))
+      result.append(sum(scratch))
+    return result
 
 def WordsToBytes(w):
     """Return 8*n bytes for n words."""
-    return bytearray((v>>(8*j))&255 for v in w for j in range(8))
+    scratch=[(v>>(8*j))&255 for v in w for j in range(8)]
+    if v3:
+      return bytearray(scratch)
+    else:
+      return ''.join(map(chr, scratch))
 
 
 ### MIX function and inverse ###
@@ -106,11 +122,20 @@ def threefish_decrypt(key, tweak, encrypted):
 ### Skein ###
 
 def ubi(g, m, ts):
-    m = bytearray(m)
+    if v3:
+      m = bytearray(m)
+    else:
+      m = str(m)
     l = len(m)
     if (l == 0) or (l%64 != 0):
+      if v3:
         m.extend([0]*(64-l%64))
-    h = bytearray(g)
+      else:
+        m=m+("\x00"*(64-l%64))
+    if v3:
+      h = bytearray(g)
+    else:
+      h = str(g)
     ts_pos = ts
     for i in range(0, len(m), 64):
         block = m[i:i+64]
@@ -123,23 +148,16 @@ def ubi(g, m, ts):
             tweak -= len(m)-l
         tweak_bytes = WordsToBytes([tweak&(2**64-1), tweak>>64])
         cipher = threefish(h, tweak_bytes, block)
-        h = bytearray(x^y for x, y in zip(cipher, block))
+        if v3:
+          h = bytearray(x^y for x, y in zip(cipher, block))
+        else:
+          h = ''.join([chr(ord(x)^ord(y)) for x, y in zip(cipher, block)])
     return h
 
 if v3:
-  CONFIG = (bytes("SHA3", 'ascii'),                        # schema identifier
-            bytes("\1\0", 'ascii'),                        # version number
-            bytes("\0\0", 'ascii'),                        # reserved
-            bytes("\0\1\0\0\0\0\0\0", 'ascii'),
-           )           # output length
-          # plus 3 bytes tree parameters and 13 bytes reserved (0x00)
+  CONFIG = bytes("SHA3", 'ascii')+bytes("\1\0", 'ascii')+bytes("\0\0", 'ascii')+bytes("\0\1\0\0\0\0\0\0", 'ascii')
 else:
-  CONFIG = ("SHA3",                        # schema identifier
-            "\1\0",                        # version number
-            "\0\0",                        # reserved
-            "\0\1\0\0\0\0\0\0",
-           )           # output length
-          # plus 3 bytes tree parameters and 13 bytes reserved (0x00)
+  CONFIG = "SHA3"+"\1\0"+"\0\0"+"\0\1\0\0\0\0\0\0"
 
 def skein512_256(msg, mac=None, pers=None, nonce=None, tree=None):
     if msg==None:
@@ -164,10 +182,19 @@ def skein512_256(msg, mac=None, pers=None, nonce=None, tree=None):
         msg=''
     tree_leaf, tree_fan, tree_max = tree if (tree is not None) else (0, 0, 0)
 
-    g = bytes(64)
+    if v3:
+      g = bytes(64)
+    else:
+      g = "\x00"*64
+
     if mac:
-        g = ubi(g, mac, 0)
-    config = CONFIG + bytes((tree_leaf, tree_fan, tree_max)) + bytes(13)
+      g = ubi(g, mac, 0)
+
+    if v3:
+      config = CONFIG + bytes((tree_leaf, tree_fan, tree_max)) + bytes(13)
+    else:
+      config = CONFIG + chr(tree_leaf)+chr(tree_fan)+chr(tree_max) + "\x00"*13
+
     g = ubi(g, config, 4<<120)
     if pers:
         g = ubi(g, pers, 8<<120)
@@ -183,7 +210,10 @@ def skein512_256(msg, mac=None, pers=None, nonce=None, tree=None):
         if tree_max < 2:
             raise ValueError("maximum tree depth parameter has to be >= 2")
         g = tree_hash(g, msg, 64*(2**tree_leaf), 2**tree_fan, tree_max)
-    g = ubi(g, bytes(8), 63<<120)[:32]
+    if v3:
+      g = ubi(g, bytes(8), 63<<120)[:32]
+    else:
+      g = ubi(g, "\x00"*8, 63<<120)[:32]
     return g
 
 def tree_hash(g, msg, leaf_size, children, max_level):
