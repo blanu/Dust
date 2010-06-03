@@ -80,6 +80,7 @@ def subkeys(k, t):
 PI = [2, 1, 4, 7, 6, 5, 0, 3]
 def threefish(key, tweak, plain):
     """'key' and 'plain' contain 64 bytes, 'tweak' contains 16 bytes."""
+#    print('threefish('+encode(key)+', '+encode(tweak)+', '+encode(plain)+')')
     k = BytesToWords(key, 8)
     t = BytesToWords(tweak, 2)
     v = BytesToWords(plain, 8)
@@ -122,6 +123,7 @@ def threefish_decrypt(key, tweak, encrypted):
 ### Skein ###
 
 def ubi(g, m, ts):
+    #print('ubi('+encode(g)+', '+encode(m)+', '+str(ts)+')')
     if v3:
       m = bytearray(m)
     else:
@@ -154,32 +156,21 @@ def ubi(g, m, ts):
           h = ''.join([chr(ord(x)^ord(y)) for x, y in zip(cipher, block)])
     return h
 
-if v3:
-  CONFIG = bytes("SHA3", 'ascii')+bytes("\1\0", 'ascii')+bytes("\0\0", 'ascii')+bytes("\0\1\0\0\0\0\0\0", 'ascii')
-else:
-  CONFIG = "SHA3"+"\1\0"+"\0\0"+"\0\1\0\0\0\0\0\0"
+def skein512(msg=None, mac=None, pers=None, nonce=None, tree=None, digest_bits=512):
+    if digest_bits==512:
+      if v3:
+        CONFIG = bytes("SHA3", 'ascii')+bytes("\1\0", 'ascii')+bytes("\0\0", 'ascii')+bytes("\0\2\0\0\0\0\0\0", 'ascii')
+      else:
+        CONFIG = "SHA3"+"\1\0"+"\0\0"+"\0\2\0\0\0\0\0\0"
+    elif digest_bits==256:
+      if v3:
+        CONFIG = bytes("SHA3", 'ascii')+bytes("\1\0", 'ascii')+bytes("\0\0", 'ascii')+bytes("\0\1\0\0\0\0\0\0", 'ascii')
+      else:
+        CONFIG = "SHA3"+"\1\0"+"\0\0"+"\0\1\0\0\0\0\0\0"
+    else:
+      print('digest_bits must be 512 or 256')
+      return None
 
-def skein512_256(msg, mac=None, pers=None, nonce=None, tree=None):
-    if msg==None:
-      if v3:
-        msg=bytes('', 'ascii')
-      else:
-        msg=''
-    if mac==None:
-      if v3:
-        mac=bytes('', 'ascii')
-      else:
-        msg=''
-    if pers==None:
-      if v3:
-        pers=bytes('', 'ascii')
-      else:
-        msg=''
-    if nonce==None:
-      if v3:
-        nonce=bytes('', 'ascii')
-      else:
-        msg=''
     tree_leaf, tree_fan, tree_max = tree if (tree is not None) else (0, 0, 0)
 
     if v3:
@@ -200,7 +191,7 @@ def skein512_256(msg, mac=None, pers=None, nonce=None, tree=None):
         g = ubi(g, pers, 8<<120)
     if nonce:
         g = ubi(g, nonce, 20<<120)
-    if tree_leaf == tree_fan == tree_max == 0:
+    if msg and (tree_leaf == tree_fan == tree_max == 0):
         g = ubi(g, msg, 48<<120)
     else:
         if tree_leaf < 1:
@@ -210,10 +201,18 @@ def skein512_256(msg, mac=None, pers=None, nonce=None, tree=None):
         if tree_max < 2:
             raise ValueError("maximum tree depth parameter has to be >= 2")
         g = tree_hash(g, msg, 64*(2**tree_leaf), 2**tree_fan, tree_max)
-    if v3:
-      g = ubi(g, bytes(8), 63<<120)[:32]
+
+    if digest_bits==512:
+      if v3:
+        g = ubi(g, bytes(8), 63<<120)
+      else:
+        g = ubi(g, "\x00"*8, 63<<120)
     else:
-      g = ubi(g, "\x00"*8, 63<<120)[:32]
+      if v3:
+        g = ubi(g, bytes(8), 63<<120)[:32]
+      else:
+        g = ubi(g, "\x00"*8, 63<<120)[:32]
+
     return g
 
 def tree_hash(g, msg, leaf_size, children, max_level):
