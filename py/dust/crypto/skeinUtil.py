@@ -38,7 +38,10 @@ class SkeinPRNG:
     self.pers=pers
 
   def generateSeed(self):
-    return bytes(random.randint(0, 255) for _ in range(SEED_SIZE))
+    if v3:
+      return bytes(random.randint(0, 255) for _ in range(SEED_SIZE))
+    else:
+      return str(random.randint(0, 255) for _ in range(SEED_SIZE))
 
   def reseed(self, seed):
     if self.pers:

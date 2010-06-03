@@ -1,5 +1,4 @@
 from dust.core.data_packet import DataPacket
-from dust.crypto.curve import Key
 from dust.core.util import splitFields
 
 SENDER_LENGTH=32
@@ -15,8 +14,8 @@ class OnionPacket(DataPacket):
   def createOnionPacket(self, keypair, receiver, data, entropy):
     self.sender=keypair.public.bytes
     self.receiver=receiver
-    sk=keypair.createSession(Key(self.receiver, False))
-    self.createDataPacket(sk.bytes, data, entropy)
+    skb=keypair.createSessionBytes(self.receiver)
+    self.createDataPacket(skb, data, entropy)
     self.packet=self.sender+self.receiver+self.packet
 
   def decodeOnionPacket(self, keypair, packet):
@@ -25,5 +24,5 @@ class OnionPacket(DataPacket):
       print('Error! Onion packet meant for a different receiver. Keypair does not match')
       return
     else:
-      sk=keypair.createSession(Key(self.sender, False))
-      self.decodeDataPacket(sk.bytes, packet)
+      skb=keypair.createSessionBytes(self.sender)
+      self.decodeDataPacket(skb, packet)

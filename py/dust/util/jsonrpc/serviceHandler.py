@@ -19,8 +19,10 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-from json import loads, dumps
-
+try:
+  from json import loads, dumps
+except ImportError:
+  from simplejson import loads, dumps
 
 def ServiceMethod(fn):
     fn.IsServiceMethod = True
@@ -55,8 +57,8 @@ class ServiceHandler(object):
         try:
             req = self.translateRequest(json)
             print('req: '+str(req))
-        except ServiceRequestNotTranslatable as e:
-            err = e
+        except:
+            err = 'Service request not translatable'
             req={'id':id}
 
         if err==None:
@@ -71,15 +73,15 @@ class ServiceHandler(object):
             try:
                 meth = self.findServiceEndpoint(methName)
                 print('meth: '+str(meth))
-            except Exception as e:
-                err = e
+            except:
+                err = 'Could not find service endpoint'
 
         if err == None:
             try:
                 result = self.invokeServiceEndpoint(meth, args)
                 print('result: '+str(result))
-            except Exception as e:
-                err = e
+            except:
+                err = 'Could not invoke service'
         print('err: '+str(err))
 
 #        resultdata = self.translateResult(result, err, id)
@@ -114,7 +116,7 @@ class ServiceHandler(object):
 
         try:
             data = dumps({"result":rslt,"id":id,"error":err})
-        except Exception as e:
+        except:
             err = {"name": "JSONEncodeException", "message":"Result Object Not Serializable"}
             data = dumps({"result":None, "id":id,"error":err})
 

@@ -11,7 +11,7 @@ from dust.crypto.curve import *
 from dust.core.data_packet import DataPacket
 from dust.core.util import encode, decode, encodeAddress
 from dust.invite.invite import loadInvitePackage
-from dust.crypto.dust import DustPRNG, hash
+from dust.crypto.dustUtil import DustPRNG, hash
 
 class KeyManager:
   def __init__(self):

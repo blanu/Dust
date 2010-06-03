@@ -8,7 +8,7 @@ try:
 except ImportError:
     from dust.invite.win32_inet_pton import inet_pton, inet_ntop
 
-from dust.crypto.dust import pbkdf
+from dust.crypto.dustUtil import pbkdf
 
 from dust.core.dust_packet import DustPacket
 from dust.core.util import getPublicIP, splitFields, splitField, encodeFlags, decodeFlags, fill, encode

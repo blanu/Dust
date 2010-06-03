@@ -19,7 +19,10 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-from json import dumps, loads
+try:
+  from json import loads, dumps
+except ImportError:
+  from simplejson import loads, dumps
 
 class JSONRPCException(Exception):
     def __init__(self, rpcError):

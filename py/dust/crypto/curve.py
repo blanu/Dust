@@ -32,6 +32,9 @@ class Keypair:
   def createSession(self, public2):
     return Key(createShared(self.secret.buffer, public2.buffer), True)
 
+  def createSessionBytes(self, public2):
+    return createShared(self.secret.buffer, Key(public2, False).buffer)
+
   def save(self, sfilename, pfilename):
     self.secret.save(sfilename)
     self.public.save(pfilename)

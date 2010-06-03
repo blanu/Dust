@@ -1,4 +1,4 @@
-from dust.crypto.dust import hash
+from dust.crypto.dustUtil import hash
 from dust.core.dust_socket import dust_socket
 from dust.core.util import encodeAddress, xor
 
