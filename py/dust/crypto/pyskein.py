@@ -15,7 +15,7 @@ try:
     if nonce==None:
       nonce=bytes('', 'ascii')
     return cskein512(msg, mac=mac, pers=pers, nonce=nonce, tree=tree, digest_bits=digest_bits).digest()
-  raise(Exception())
+#  raise(Exception())
 except:
   print('Using pure python skein')
   from dust.crypto.skein512 import skein512
