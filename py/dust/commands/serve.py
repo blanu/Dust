@@ -5,6 +5,7 @@ from dust.server.router import PacketRouter
 from dust.crypto.keys import KeyManager
 from dust.core.util import getPublicIP, encodeAddress, decodeAddress, encode
 from dust.util.ymap import YamlMap
+from dust.util.safethread import wait
 
 from dust.services.tracker.trackerClient import TrackerClient
 
@@ -32,13 +33,11 @@ router.start()
 keypair=keys.getKeypair()
 pubkey=keypair.public
 
+invite=keys.generateInvite(inport, v6=v6)
+tracker.putInviteForPeer(encode(pubkey.bytes), encode(invite.message))
+
 endpoints=YamlMap('config/endpoints.yaml')
 for key in endpoints.values():
   tracker.putPeerForEndpoint(key, [encode(pubkey.bytes), encodeAddress((host,inport))])
 
-while True:
-  try:
-    time.sleep(1)
-  except:
-    sys.exit(0)
-
+wait()

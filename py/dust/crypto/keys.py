@@ -22,6 +22,7 @@ class KeyManager:
     self.outgoingInvites=None
     self.invitePassword=None
     self.knownHostsFile=None
+    self.outgoingFilename=None
     self.entropy=DustPRNG()
 
   def loadKeypair(self, filename):
@@ -141,6 +142,7 @@ class KeyManager:
       print('No invite password or no invites')
 
   def loadOutgoingInvites(self, filename, passwd=None):
+    self.outgoingFilename=filename
     if not passwd:
       passwd=self.invitePassword
     if passwd:
@@ -149,9 +151,16 @@ class KeyManager:
       print('No invite password')
 
   def saveOutgoingInvites(self, filename, passwd=None):
+    self.outgoingFilename=filename
     if not passwd:
       passwd=self.invitePassword
     if passwd and self.outgoingInvites:
       self.outgoingInvites.save(filename, self.invitePassword, self.entropy)
     else:
       print('No invite password or no invites')
+
+  def generateInvite(self, port, v6=True, tcp=False):
+    invites=self.outgoingInvites.generate(self.keypair.public, v6, tcp, port, 1, self.entropy)
+    if self.outgoingFilename:
+      self.saveOutgoingInvites(self.outgoingFilename, self.invitePassword)
+    return invites[0]

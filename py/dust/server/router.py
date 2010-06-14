@@ -4,7 +4,7 @@ from dust.core.util import getPublicIP
 from dust.util.safethread import SafeThread
 
 from dust.server.activeServices import activeServices
-print("services:", activeServices)
+print("services:", list(activeServices.keys()))
 
 class PacketRouter:
   def __init__(self, v6, port, keys, passwd):

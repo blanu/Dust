@@ -5,11 +5,11 @@ from dust.services.tracker.trackbackHandler import TrackbackHandler
 class TrackbackService:
   def __init__(self):
     self.router=None
-    self.handler=TrackbackHandler()
-    self.trackback=ServiceHandler(self.handler)
 
   def setRouter(self, r):
     self.router=r;
+    self.handler=TrackbackHandler(self.router.keys)
+    self.trackback=ServiceHandler(self.handler)
 
   def setPutPeerForEndpointCallback(self, key, callback):
     self.handler.setPutPeerForEndpointCallback(key, callback)

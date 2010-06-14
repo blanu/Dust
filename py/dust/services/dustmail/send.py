@@ -6,6 +6,8 @@ from dust.crypto.curve import Key
 from dust.core.util import getPublicIP, encode, decode, encodeAddress, decodeAddress
 from dust.core.data_packet import DataPacket
 from dust.server.router import PacketRouter
+from dust.util.safethread import wait
+from dust.invite.invite_packet import InviteMessage
 
 from dust.services.tracker.trackerClient import TrackerClient
 from dust.services.dustmail.dustmailClient import DustmailClient
@@ -35,16 +37,10 @@ pubkeyhex=encode(pubkey.bytes)
 
 destpubkey=Key(decode(recipient), False)
 
-router=PacketRouter(v6, inport, keys, passwd)
-router.connect(dest, outport)
-
-tracker=TrackerClient(router)
-trackback=router.getService('trackback')
-
-router.start()
-
 class PendingMessage:
-  def __init__(self, tracker, trackback, keypair, endkey, msg):
+  def __init__(self, keys, router, tracker, trackback, keypair, endkey, msg):
+    self.keys=keys
+    self.router=router
     self.keypair=keypair
     self.endkey=endkey
     self.msg=msg
@@ -54,21 +50,36 @@ class PendingMessage:
   def foundPeer(self, endkey, peer):
     print('foundPeer!!! '+str(endkey)+' '+str(peer))
     destkey=decode(peer[0])
-    addr=decodeAddress(peer[1])
+    addr=peer[1]
+
+    if keys.isKnown(addr) or self.keys.outgoingInvites.getInviteForHost(False, decodeAddress(addr)):
+      self.sendMessage(destkey, decodeAddress(addr))
+    else:
+      trackback.setPutInviteForPeerCallback(addr, self.foundInvite)
+      tracker.getInviteForPeer(addr)
+
+  def foundInvite(self, addr, invite):
+    self.sendMessage(invite.pubkey, decodeAddress(addr))
+
+  def sendMessage(self, destkey, addr):
     data=self.msg.encode('ascii')
-    sessionKey=keypair.createSession(Key(destkey, False))
+    sessionKey=self.keypair.createSession(Key(destkey, False))
     print('session '+str(sessionKey.bytes))
     packet=DataPacket()
-    packet.createDataPacket(sessionKey.bytes, data, keys.entropy)
-    dustmail=DustmailClient(router, addr)
+    packet.createDataPacket(sessionKey.bytes, data, self.keys.entropy)
+    dustmail=DustmailClient(self.router, addr)
     dustmail.sendMessage(encode(self.keypair.public.bytes), encode(destkey), encode(packet.packet))
+
+router=PacketRouter(v6, inport, keys, passwd)
+router.connect(dest, outport)
+
+tracker=TrackerClient(router)
+trackback=router.getService('trackback')
+
+router.start()
 
 tracker.putPeerForEndpoint(pubkeyhex, [pubkeyhex, encodeAddress((host,inport))])
 
-pending=PendingMessage(tracker, trackback, keypair, destpubkey, message)
+pending=PendingMessage(keys, router, tracker, trackback, keypair, destpubkey, message)
 
-while True:
-  try:
-    time.sleep(1)
-  except:
-    sys.exit(0)
+wait()

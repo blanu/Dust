@@ -60,10 +60,13 @@ class InvitePackage:
     self.invites.remove(invite)
 
   def generate(self, pubkey, v6, tcp, port, number, entropy):
+    invites=[]
     for x in range(number+1):
       i=InviteMessage()
       i.generate(pubkey, v6, tcp, port, entropy)
+      invites.append(i)
       self.addInvite(i)
+    return invites
 
   def load(self, filename, password):
     try:

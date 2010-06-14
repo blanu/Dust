@@ -19,6 +19,8 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
+import traceback
+
 try:
   from json import loads, dumps
 except ImportError:
@@ -81,7 +83,8 @@ class ServiceHandler(object):
                 result = self.invokeServiceEndpoint(meth, args)
                 print('result: '+str(result))
             except:
-                err = 'Could not invoke service'
+                err = 'Could not invoke service: '+str(meth)
+                traceback.print_exc()
         print('err: '+str(err))
 
 #        resultdata = self.translateResult(result, err, id)
