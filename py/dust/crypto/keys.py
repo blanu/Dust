@@ -41,6 +41,9 @@ class KeyManager:
     self.endpoint=Keypair(Key(privkey, False), Key(pubkey, False))
     return self.endpoint
 
+  def getEndpoint(self):
+    return self.endpoint
+
   def createKeypair(self):
     self.keypair=createKeypair(self.entropy)
 
@@ -85,6 +88,17 @@ class KeyManager:
 
   def getKeyForHost(self, address):
     return self.knownHosts[address]
+
+  def getHostForKey(self, key):
+    for address, pubkey in self.knownHosts.items():
+      print(key)
+      print(type(key))
+      print('==')
+      print(pubkey.bytes)
+      print(type(pubkey.bytes))
+      if key==pubkey.bytes:
+        return address
+    return None
 
   def addHost(self, address, pubkey):
     print('addHost:', address, pubkey)
