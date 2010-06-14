@@ -1,10 +1,13 @@
+import sys
 from dust.core.data_packet import DataPacket
+
+v3=(sys.version[0]=='3')
 
 # 1 byte
 def makeByteLength(data):
   b=bytearray(1)
   b[0]=len(data)
-  return b
+  return bytes(b)
 
 class MultiplexMessage:
   def __init__(self):
@@ -14,16 +17,28 @@ class MultiplexMessage:
     self.message=None
 
   def createMultiplexMessage(self, serviceName, data):
-    self.serviceName=serviceName.encode('ascii')
+    if v3 and type(serviceName)!=bytes:
+      self.serviceName=bytes(serviceName, 'ascii')
+    else:
+      self.serviceName=serviceName
     self.serviceNameLength=makeByteLength(self.serviceName)
-    self.data=data
+    if v3 and type(data)!=bytes:
+      self.data=bytes(data, 'ascii')
+    else:
+      self.data=data
     self.message=self.serviceNameLength+self.serviceName+self.data
 
   def decodeMultiplexMessage(self, message):
+    print('decoding multiplex message')
     self.message=message
     self.serviceNameLength=self.message[0]
-    self.serviceName=self.message[1:self.serviceNameLength+1].decode('ascii')
+    serviceName=self.message[1:self.serviceNameLength+1]
+    if v3:
+      self.serviceName=serviceName.decode('ascii')
+    else:
+      self.serviceName=serviceName
     self.data=self.message[self.serviceNameLength+1:]
+    print('decoded multiplex message')
 
 class MultiplexPacket(DataPacket):
   def __init__(self):
