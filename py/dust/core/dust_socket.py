@@ -64,7 +64,6 @@ class dust_socket:
     if self.keys.isKnown(addressKey):
       sessionKey=self.keys.getSessionKeyForAddress(addressKey)
       self.sessionKeys[addressKey]=sessionKey
-      print('SessionKey:', len(self.sessionKeys[addressKey]))
       return sessionKey
     else:
       if self.introducer and tryInvite:
@@ -165,10 +164,7 @@ class dust_socket:
       self.sendtoraw(data, self.connectDest)
 
   def sendto(self, data, addr):
-    print('sendto '+str(addr))
     packet=self.encodePacket(addr, data)
-    print('Sending')
-    print(packet)
     self.sock.sendto(packet.packet, 0, addr)
 
   def sendtoraw(self, data, addr):
