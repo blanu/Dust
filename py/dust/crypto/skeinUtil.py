@@ -50,12 +50,18 @@ class SkeinPRNG:
       self.seed=skein512(self.seed+seed, digest_bits=SEED_SIZE*8)
 
   def getBytes(self, n):
-    if self.pers:
-      result=skein512(self.seed, pers=self.pers, digest_bits=(SEED_SIZE+n)*8)
+    if v3:
+      result=bytes('', 'ascii')
     else:
-      result=skein512(self.seed, digest_bits=(SEED_SIZE+n)*8)
-    self.seed, r=splitFields(result, [SEED_SIZE, n])
-    return r
+      result=''
+    while len(result)<n:
+      if self.pers:
+        b=skein512(self.seed, pers=self.pers, digest_bits=512)
+      else:
+        b=skein512(self.seed, digest_bits=512)
+      self.seed, r=splitFields(b, [SEED_SIZE])
+      result=result+r
+    return result[:n]
 
   def getInt(self, max=None):
     bs=self.getBytes(4)
