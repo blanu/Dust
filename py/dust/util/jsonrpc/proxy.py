@@ -19,6 +19,10 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
+import sys
+
+v3=(sys.version[0]=='3')
+
 try:
   from json import loads, dumps
 except ImportError:
@@ -51,7 +55,10 @@ class ServiceProxy(object):
             return ServiceProxy(self.channel, methodName=name)
 
     def __call__(self, *args):
-         postdata = bytes(dumps({"method": self.methodName, 'params': args, 'id':'jsonrpc'}), 'utf-8')
+         if v3:
+           postdata = bytes(dumps({"method": self.methodName, 'params': args, 'id':'jsonrpc'}), 'utf-8')
+         else:
+           postdata = dumps({"method": self.methodName, 'params': args, 'id':'jsonrpc'})
          if self.serviceName:
             if self.addr:
               self.channel.sendto(postdata, self.addr, service=self.serviceName)
