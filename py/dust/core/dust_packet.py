@@ -1,9 +1,11 @@
+import sys
 import time
 import struct
 
 from dust.crypto.dustUtil import encrypt, decrypt, mac
-
 from dust.core.util import splitField, splitFields, encode
+
+v3=(sys.version[0]=='3')
 
 PADDING_RANGE = 32
 
@@ -109,7 +111,10 @@ class DustPacket:
 
   def createDustPacket(self, key, data, entropy):
     self.key=key
-    self.data=data
+    if v3 and type(data)!=bytes:
+      self.data=bytes(data, 'ascii')
+    else:
+      self.data=data
 
     self.padding=makePadding(entropy, PADDING_RANGE)
     payloadLength=TIMESTAMP_SIZE+DATA_LENGTH_SIZE+PADDING_LENGTH_SIZE+len(self.data)
