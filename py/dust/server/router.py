@@ -37,11 +37,15 @@ class PacketRouter:
 
   def start(self):
     self.thread=SafeThread(target=self.run)
+    self.thread.setDaemon(True)
     self.thread.start()
+    return self.thread
 
   def run(self):
     while True:
+      print('Receiving...')
       msg, addr, service=self.msock.mrecvfrom(1024)
+      print('Received from '+str(addr)+' '+str(service))
       if msg and addr and service:
         handler=activeServices[service]
 #        print('Routing to', handler, '...')
@@ -54,7 +58,7 @@ class PacketRouter:
       self.msock.msend(msg)
 
   def sendto(self, msg, addr, service=None):
-    print('router.sendto '+str(addr))
+    print('router.sendto '+str(addr)+' '+str(service))
     if service:
       self.msock.msendto(msg, addr, service=service)
     else:
