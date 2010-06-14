@@ -32,17 +32,14 @@ def getAddress(port):
   return encodeAddress((getPublicIP(), port))
 
 def splitFields(msg, fields):
-  try:
-    values=[]
-    for field in fields:
-      value=msg[:field]
-      msg=msg[field:]
-      values.append(value)
-    if len(msg)>0:
-      values.append(msg)
-    return values
-  except:
-    return None
+  values=[]
+  for field in fields:
+    value=msg[:field]
+    msg=msg[field:]
+    values.append(value)
+  if len(msg)>0:
+    values.append(msg)
+  return values
 
 def splitField(msg, field):
   return msg[:field], msg[field:]
@@ -86,7 +83,7 @@ def xor(a, b):
   else:
     c=''
     for x in range(len(a)):
-      c=c+(a[x] ^ b[x])
+      c=c+chr(ord(a[x]) ^ ord(b[x]))
     return c
 
 if v3:
