@@ -5,6 +5,7 @@ import java.util.Random;
 import dust.crypto.Curve;
 import dust.crypto.Keypair;
 import dust.crypto.Key;
+import dust.core.Util;
 
 public class TestCurve
 {
