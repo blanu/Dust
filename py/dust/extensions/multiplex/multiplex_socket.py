@@ -18,7 +18,6 @@ class multiplex_socket(dust_socket):
     dust_socket.send(self, multiplex.message)
 
   def msendto(self, data, addr, service=None):
-    print('msendto '+str(addr))
     if not service:
       service=self.connectService
     multiplex=MultiplexMessage()
@@ -47,7 +46,4 @@ class multiplex_socket(dust_socket):
       return None, None, None
     multiplex=MultiplexMessage()
     multiplex.decodeMultiplexMessage(data)
-    if service and multiplex.serviceName!=service:
-      print('Bad multiplex service name', multiplex.serviceName, 'should be ', self.connectService)
-      return None, None, None
     return multiplex.data, addr, multiplex.serviceName
