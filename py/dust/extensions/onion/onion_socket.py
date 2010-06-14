@@ -67,7 +67,7 @@ class onion_socket:
 
   def decodePacket(self, endpoint, data):
     packet=OnionPacket()
-    packet.decodeOnionPacket(data)
+    packet.decodeOnionPacket(self.keypair, data)
     if packet.checkMac() and packet.checkTimestamp():
       return packet
     else:
@@ -77,6 +77,6 @@ class onion_socket:
 
   def encodePacket(self, endpoint, data):
     packet=OnionPacket()
-    packet.createOnionPacket(self.keys.getKeypair(), endpoint, data, self.keys.entropy)
+    packet.createOnionPacket(self.keypair, endpoint, data, self.keys.entropy)
     return packet
 
