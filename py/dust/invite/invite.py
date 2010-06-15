@@ -35,9 +35,7 @@ class InvitePackage:
 
   def getInviteForHost(self, tcp, address):
     for invite in self.invites:
-      print('invite: '+str(invite)+' '+str(tcp)+' '+str(address)+' '+str(invite.tcp==tcp)+' '+str(invite.ip==address[0])+' '+str(invite.port==address[1])+' '+str(invite.ip.__class__)+' '+str(address[0].__class__)+' '+str(address[0])+' '+str(invite.ip))
       if invite.tcp==tcp and invite.ip==address[0] and invite.port==address[1]:
-        print('returning '+str(invite))
         return invite
     return None
 

@@ -107,8 +107,7 @@ class dust_socket:
         print('Dust: No packet')
         return None, None
       else:
-        #print('Packet:')
-        #print(packet)
+        print('Received: '+str(packet))
         if packet.remaining:
           self.remaining=(packet.remaining, addr)
         if type(packet)==DataPacket:
@@ -165,6 +164,7 @@ class dust_socket:
 
   def sendto(self, data, addr):
     packet=self.encodePacket(addr, data)
+    print('Sending '+str(packet))
     self.sock.sendto(packet.packet, 0, addr)
 
   def sendtoraw(self, data, addr):

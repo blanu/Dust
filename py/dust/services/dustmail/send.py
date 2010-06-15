@@ -4,10 +4,10 @@ import time
 from dust.crypto.keys import KeyManager
 from dust.crypto.curve import Key
 from dust.core.util import getPublicIP, encode, decode, encodeAddress, decodeAddress
-from dust.core.data_packet import DataPacket
 from dust.server.router import PacketRouter
 from dust.util.safethread import wait
 from dust.invite.invite_packet import InviteMessage
+from dust.extensions.onion.onion_packet import OnionPacket
 
 from dust.services.tracker.trackerClient import TrackerClient
 from dust.services.dustmail.dustmailClient import DustmailClient
@@ -59,16 +59,14 @@ class PendingMessage:
       tracker.getInviteForPeer(addr)
 
   def foundInvite(self, addr, invite):
-    self.sendMessage(invite.pubkey, decodeAddress(addr))
+    self.sendMessage(invite.pubkey.bytes, decodeAddress(addr))
 
   def sendMessage(self, destkey, addr):
     data=self.msg.encode('ascii')
-    sessionKey=self.keypair.createSession(Key(destkey, False))
-    print('session '+str(sessionKey.bytes))
-    packet=DataPacket()
-    packet.createDataPacket(sessionKey.bytes, data, self.keys.entropy)
+    onion=OnionPacket()
+    onion.createOnionPacket(self.keypair, destkey, data, self.keys.entropy)
     dustmail=DustmailClient(self.router, addr)
-    dustmail.sendMessage(encode(self.keypair.public.bytes), encode(destkey), encode(packet.packet))
+    dustmail.sendMessage(encode(onion.packet))
 
 router=PacketRouter(v6, inport, keys, passwd)
 router.connect(dest, outport)
@@ -80,6 +78,6 @@ router.start()
 
 tracker.putPeerForEndpoint(pubkeyhex, [pubkeyhex, encodeAddress((host,inport))])
 
-pending=PendingMessage(keys, router, tracker, trackback, keypair, destpubkey, message)
+pending=PendingMessage(keys, router, tracker, trackback, endpoint, destpubkey, message)
 
 wait()

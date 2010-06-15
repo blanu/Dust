@@ -1,5 +1,6 @@
 from dust.util.ymap import YamlMap
 from dust.invite.invite_packet import InviteMessage
+from dust.core.util import decode
 
 class TrackbackHandler:
   def __init__(self, keys):
