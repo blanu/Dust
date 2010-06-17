@@ -39,7 +39,7 @@ keypair=keys.getKeypair()
 pubkey=keypair.public
 pubkeyhex=encode(pubkey.bytes)
 
-destpubkey=Key(decode(recipient), False)
+endkey=decode(recipient)
 
 class PendingMessage:
   def __init__(self, keys, router, tracker, trackback, keypair, endkey, msg):
@@ -48,8 +48,8 @@ class PendingMessage:
     self.keypair=keypair
     self.endkey=endkey
     self.msg=msg
-    trackback.setPutPeerForEndpointCallback(encode(endkey.bytes), self.foundPeer)
-    tracker.getPeerForEndpoint(encode(endkey.bytes))
+    trackback.setPutPeerForEndpointCallback(encode(endkey), self.foundPeer)
+    tracker.getPeerForEndpoint(encode(endkey))
 
   def foundPeer(self, endkey, peer):
     print('foundPeer!!! '+str(endkey)+' '+str(peer))
@@ -57,18 +57,19 @@ class PendingMessage:
     addr=peer[1]
 
     if keys.isKnown(addr) or self.keys.outgoingInvites.getInviteForHost(False, decodeAddress(addr)):
-      self.sendMessage(destkey, decodeAddress(addr))
+      self.sendMessage(decodeAddress(addr))
     else:
       trackback.setPutInviteForPeerCallback(addr, self.foundInvite)
       tracker.getInviteForPeer(addr)
 
   def foundInvite(self, addr, invite):
-    self.sendMessage(invite.pubkey.bytes, decodeAddress(addr))
+    self.sendMessage(decodeAddress(addr))
 
-  def sendMessage(self, destkey, addr):
+  def sendMessage(self, addr):
+    print('sending message to '+str(addr))
     data=self.msg.encode('ascii')
     onion=OnionPacket()
-    onion.createOnionPacket(self.keypair, destkey, data, self.keys.entropy)
+    onion.createOnionPacket(self.keypair, self.endkey, data, self.keys.entropy)
     dustmail=DustmailClient(self.router, addr)
     dustmail.sendMessage(encode(onion.packet))
 
@@ -82,6 +83,6 @@ router.start()
 
 tracker.putPeerForEndpoint(pubkeyhex, [pubkeyhex, encodeAddress((host,inport))])
 
-pending=PendingMessage(keys, router, tracker, trackback, endpoint, destpubkey, message)
+pending=PendingMessage(keys, router, tracker, trackback, endpoint, endkey, message)
 
 wait()
