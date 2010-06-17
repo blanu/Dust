@@ -126,6 +126,7 @@ class KeyManager:
     self.invitePassword=passwd
 
   def loadIncomingInvites(self, filename, passwd=None):
+    self.incomingFilename=filename
     if not passwd:
       passwd=self.invitePassword
     if passwd:
@@ -134,12 +135,19 @@ class KeyManager:
       print('No invite password')
 
   def saveIncomingInvites(self, filename, passwd=None):
+    self.incomingFilename=filename
     if not passwd:
       passwd=self.invitePassword
     if passwd and self.incomingInvites:
       self.incomingInvites.save(filename, self.invitePassword, self.entropy)
     else:
       print('No invite password or no invites')
+
+  def generateInvite(self, port, v6=True, tcp=False):
+    invites=self.incomingInvites.generate(self.keypair.public, v6, tcp, port, 1, self.entropy)
+    if self.outgoingFilename:
+      self.saveIncomingInvites(self.incomingFilename, self.invitePassword)
+    return invites[0]
 
   def loadOutgoingInvites(self, filename, passwd=None):
     self.outgoingFilename=filename
@@ -158,9 +166,3 @@ class KeyManager:
       self.outgoingInvites.save(filename, self.invitePassword, self.entropy)
     else:
       print('No invite password or no invites')
-
-  def generateInvite(self, port, v6=True, tcp=False):
-    invites=self.outgoingInvites.generate(self.keypair.public, v6, tcp, port, 1, self.entropy)
-    if self.outgoingFilename:
-      self.saveOutgoingInvites(self.outgoingFilename, self.invitePassword)
-    return invites[0]
