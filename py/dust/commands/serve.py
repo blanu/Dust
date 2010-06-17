@@ -34,7 +34,7 @@ keypair=keys.getKeypair()
 pubkey=keypair.public
 
 invite=keys.generateInvite(inport, v6=v6)
-tracker.putInviteForPeer(encode(pubkey.bytes), encode(invite.message))
+tracker.putInviteForPeer(encodeAddress((host, inport)), encode(invite.message))
 
 endpoints=YamlMap('config/endpoints.yaml')
 for key in endpoints.values():
