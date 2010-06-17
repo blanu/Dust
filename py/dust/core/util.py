@@ -91,13 +91,15 @@ if v3:
 
   def getPublicIP(v6=True):
     if v6:
-      text=urlopen("http://ipv6.ip6.me/").read()
-      match=re.search(bytes("\+3>([^<]+)<", 'ascii'), text)
-#      ip=urlopen("http://whatismyv6ip.com/myip").read()
-#      return ip.decode('ascii')
-      ip=match.group(1)
-      ip=ip.decode('ascii')
-      return ip
+      try:
+        text=urlopen("http://ipv6.ip6.me/").read()
+        match=re.search(bytes("\+3>([^<]+)<", 'ascii'), text)
+        ip=match.group(1)
+        ip=ip.decode('ascii')
+        return ip
+      except:
+        ip=urlopen("http://whatismyv6ip.com/myip").read()
+        return ip.decode('ascii')
     else:
       text=urlopen("http://ip4.me/").read()
       match=re.search(bytes("\+3>([^<]+)<", 'ascii'), text)
