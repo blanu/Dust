@@ -8,10 +8,12 @@ print("services:", list(activeServices.keys()))
 
 class PacketRouter:
   def __init__(self, v6, port, keys, passwd):
+    self.v6=v6
     self.host = getPublicIP(v6)
     self.port=port
     self.keys=keys
     self.passwd=passwd
+    self.tcp=True
 
     self.msock=multiplex_socket(self.keys)
     self.msock.bind((self.host, self.port))
@@ -63,3 +65,6 @@ class PacketRouter:
       self.msock.msendto(msg, addr, service=service)
     else:
       self.msock.msendto(msg, addr)
+
+  def generateInvite(self):
+    return self.keys.generateInvite(self.port, v6=self.v6, tcp=self.tcp)
