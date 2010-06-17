@@ -37,3 +37,12 @@ class TrackbackHandler:
 
     callback=self.callbacks[addr]
     callback(addr, i)
+
+  def setPutTrackerInvite(self, callback):
+    self.callbacks['tracker']=callback
+
+  def putTrackerInvite(self, invite):
+    print('putTrackerInvite: '+str(invite))
+
+    callback=self.callbacks['tracker']
+    callback(decode(invite))
