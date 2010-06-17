@@ -17,6 +17,9 @@ class TrackbackService:
   def setPutInviteForPeerCallback(self, key, callback):
     self.handler.setPutInviteForPeer(key, callback)
 
+  def setPutTrackerInviteCallback(self, callback):
+    self.handler.setPutTrackerInvite(callback)
+
   def handle(self, msock, msg, addr):
     print('Trackback message from '+encodeAddress(addr)+':')
     self.trackback.handleRequest(msg.decode('utf-8'))
