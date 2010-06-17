@@ -5,7 +5,7 @@ import glob
 from dust.crypto.curve import Key
 from dust.crypto.keys import KeyManager
 from dust.core.util import getPublicIP, encode, decode
-from dust.core.data_packet import DataPacket
+from dust.extensions.onion.onion_packet import OnionPacket
 from dust.util.ymap import YamlMap
 
 passwd=sys.argv[1]
@@ -16,9 +16,9 @@ keys.loadKnownHosts('config/knownhosts.yaml')
 keys.loadKeypair('config/id.yaml')
 keys.loadIncomingInvites('config/incoming_invites.ip')
 keys.loadOutgoingInvites('config/outgoing_invites.ip')
+endpoint=keys.loadEndpoint(os.path.expanduser('~/.dust/endpoint.yaml'))
 
-keypair=keys.getKeypair()
-pubkey=keypair.public
+pubkey=endpoint.public
 pubkeyhex=encode(pubkey.bytes)
 print('pubkey: '+pubkeyhex)
 maildir='spool/'+pubkeyhex
@@ -53,13 +53,12 @@ def displayMessage(fname):
   msg=f.read()
   f.close()
 
-  destpubkey=Key(decode(fname.split('/')[-1].split('-')[0]), False)
-  sessionKey=keypair.createSession(destpubkey)
-
   data=decode(msg)
-  packet=DataPacket()
-  packet.decodeDataPacket(sessionKey.bytes, data)
-  print(packet.data.decode('ascii'))
+
+  onion=OnionPacket()
+  onion.decodeOnionPacket(endpoint, data)
+#  print(onion)
+  print(onion.data.decode('ascii'))
 
 def parseCommand(command):
   if command=='x':
