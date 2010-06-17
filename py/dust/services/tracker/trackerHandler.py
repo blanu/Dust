@@ -1,4 +1,5 @@
 from dust.util.ymap import YamlMap
+from dust.core.util import encode
 from dust.services.tracker.trackbackClient import TrackbackClient
 
 class TrackerHandler:
@@ -49,3 +50,8 @@ class TrackerHandler:
     except Exception as e:
       map={key: value}
       self.state['invites']=map
+
+  def getTrackerInvite(self):
+    invite=self.router.generateInvite()
+    trackback=TrackbackClient(self.router, self.addr)
+    trackback.putTrackerInvite(encode(invite.message))
