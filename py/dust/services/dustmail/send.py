@@ -8,16 +8,20 @@ from dust.server.router import PacketRouter
 from dust.util.safethread import wait
 from dust.invite.invite_packet import InviteMessage
 from dust.extensions.onion.onion_packet import OnionPacket
+from dust.util.ymap import YamlMap
 
 from dust.services.tracker.trackerClient import TrackerClient
 from dust.services.dustmail.dustmailClient import DustmailClient
 
 passwd=sys.argv[1]
 inport=int(sys.argv[2])
-destAddress=sys.argv[3]
+name=sys.argv[3]
+message=sys.argv[4]
+
+book=YamlMap('config/dustmail-addressbook.yaml')
+destAddress=book[name]['tracker']
 dest, outport, v6=decodeAddress(destAddress)
-recipient=sys.argv[4]
-message=sys.argv[5]
+recipient=book[name]['pubkey']
 
 host=getPublicIP(v6)
 print('Host: '+str(host))

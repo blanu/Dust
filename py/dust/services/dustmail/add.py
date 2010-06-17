@@ -38,4 +38,10 @@ keys.addInvite(invite)
 
 name=input("Name for this endpoint: ")
 book=YamlMap('config/dustmail-addressbook.yaml')
-book[encode(packet.pubkey)]=name
+try:
+  entry=book[name]
+except:
+  entry={}
+entry['pubkey']=encode(packet.pubkey)
+entry['tracker']=encodeAddress((invite.ip, invite.port))
+book[name]=entry
