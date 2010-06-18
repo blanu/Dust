@@ -41,12 +41,18 @@ def displayList():
     date, fname=msgs[x]
     frm=fname.split('/')[-1].split('-')[0]
     modtime=time.strftime("%m/%d/%Y %I:%M%p",date)
-    try:
-      frm=addressBook[frm]
-    except:
-      pass
-    print(str(x+1)+': '+frm+' '+modtime)
+    frmName=nameForPubkey(addressBook, frm)
+    if not frmName:
+      frmName=frm
+    print(str(x+1)+': '+frmName+' '+modtime)
   return msgs
+
+def nameForPubkey(book, pubkey):
+  for name in book.keys():
+    key=book[name]['pubkey']
+    if key==pubkey:
+      return name
+  return None
 
 def displayMessage(fname):
   f=open(fname, 'r')

@@ -1,5 +1,6 @@
 import os
 import time
+import traceback
 
 from dust.util.ymap import YamlMap
 from dust.extensions.onion.onion_packet import OnionPacket
@@ -40,16 +41,23 @@ class DustmailHandler:
       mailAddr=notifyPrefs[to]
 
       addressBook=YamlMap('config/dustmail-addressbook.yaml')
-      try:
-        frmName=addressBook[frm]
-      except:
+      frmName=self.nameForPubkey(addressBook, frm)
+      if not frmName:
         frmName=frm
 
       notifier=Notifier('dustmail@blanu.net')
       notifier.notify(mailAddr, 'New DustMail Message', "You have a DustMail message from "+frmName+".")
     except:
       print('No notification set')
+      traceback.print_exc()
 
   def makeName(self, frm, to):
     timestamp=str(time.time())
     return self.maildir+'/'+to+'/'+frm+'-'+timestamp
+
+  def nameForPubkey(self, book, pubkey):
+    for name in book.keys():
+      key=book[name]['pubkey']
+      if key==pubkey:
+        return name
+    return None
