@@ -1,3 +1,4 @@
+#!/usr/bin/python3.1
 import os
 import sys
 import time

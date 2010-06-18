@@ -1,0 +1,20 @@
+Initial setup:
+
+Generate a server keypair: dust/commands/gen.py
+Generate an endpoint keypair: dust/commands/gen-endpoint.py
+
+To receive mail:
+
+You need an invite from a tracker or you can run your own tracker.
+To run a tracker: dust/commands/tracker.sh
+Generate an invite: dust/services/dustmail/invite.py
+Send the invite to your friends.
+Run the server: dust/commands/go.sh
+To read received messages: dust/services/dustmail/reader.py
+
+To send mail:
+
+You need an DustMail invite from the person to which you want to send mail.
+Add the invite to your addressbook: dust/services/dustmail/add.py
+  During the add process, you will give a name to this person.
+Send a message: dust/services/dustmail/send.py name message
