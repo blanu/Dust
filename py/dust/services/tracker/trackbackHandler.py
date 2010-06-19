@@ -45,4 +45,5 @@ class TrackbackHandler:
     print('putTrackerInvite: '+str(invite))
 
     callback=self.callbacks['tracker']
+    print('callback: '+str(callback))
     callback(decode(invite))

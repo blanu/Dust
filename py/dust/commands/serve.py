@@ -1,5 +1,11 @@
+#!/usr/bin/python3.1
+import os
 import sys
-import time
+
+# python sucks
+sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
+
+from dust.crypto.keys import KeyManager
 
 from dust.server.router import PacketRouter
 from dust.crypto.keys import KeyManager
@@ -18,7 +24,14 @@ host=getPublicIP(v6)
 
 keys=KeyManager()
 keys.setInvitePassword(passwd)
-keys.loadKeypair('config/id.yaml')
+
+try:
+  keys.loadKeypair('config/id.yaml')
+except:
+  print('Generating server keypair...')
+  keys.createKeypair()
+  keys.saveKeypair('config/id.yaml')
+
 keys.loadKnownHosts('config/knownhosts.yaml')
 keys.loadIncomingInvites('config/incoming_invites.ip')
 keys.loadOutgoingInvites('config/outgoing_invites.ip')
