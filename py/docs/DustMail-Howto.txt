@@ -1,9 +1,13 @@
-Initial setup:
+Setup
 
-Generate a server keypair: dust/commands/gen.py
-Generate an endpoint keypair: dust/commands/gen-endpoint.py
+You need an invite to use DustMail. The first time you run the reader (dust/services/dustmail/reader.py), it will prompt
+you for an invite, either pasted in or loaded from a file.
 
-To receive mail:
+The reader will configure your dust client to be capable of receiving DustMail packets.
+
+Commands
+
+
 
 You need an invite from a tracker or you can run your own tracker.
 To run a tracker: dust/commands/tracker.sh

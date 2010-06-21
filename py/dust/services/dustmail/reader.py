@@ -8,7 +8,7 @@ from dust.crypto.curve import Key
 from dust.crypto.keys import KeyManager
 from dust.extensions.onion.onion_packet import OnionPacket
 from dust.util.ymap import YamlMap
-from dust.core.util import getPublicIP, encode, decode, encodeAddress, decodeAddress
+from dust.core.util import getPublicIP, encode, decode, encodeAddress, decodeAddress, randomPort
 from dust.invite.invite_packet import InviteMessage
 from dust.services.dustmail.dustmail_packet import DustmailInvitePacket
 
@@ -18,6 +18,7 @@ from dust.util.safethread import waitForEvent
 from dust.extensions.onion.onion_packet import OnionPacket
 from dust.services.tracker.trackerClient import TrackerClient
 from dust.services.dustmail.dustmailClient import DustmailClient
+from dust.services.dustmail.notify import Notifier
 
 class DustmailReader:
   def __init__(self, router, endpoint):
@@ -31,6 +32,18 @@ class DustmailReader:
     self.commandDone=Event()
 
     self.book=YamlMap('config/dustmail-addressbook.yaml')
+
+    dustmailConfig=YamlMap('config/dustmail-config.yaml')
+
+    try:
+      destAddress=dustmailConfig['tracker']
+    except:
+      entry=self.addInvite()
+      destAddress=entry['tracker']
+      dustmailConfig['tracker']=destAddress
+
+    dest, outport, v6=decodeAddress(destAddress)
+    self.router.connect(dest, outport)
 
   def start(self):
     msgs=self.displayList()
@@ -135,6 +148,8 @@ class DustmailReader:
 
     self.commandDone.set()
 
+    return entry
+
   def makeInvite(self):
     self.tracker=TrackerClient(self.router)
     self.trackback=self.router.getService('trackback')
@@ -145,7 +160,7 @@ class DustmailReader:
     print('gotInvite')
     time.sleep(1)
     print()
-    ps=input("Print or Save [P/s]?")
+    ps=input("Print, Save, or Email [P/s/e]? ")
     passwd=input("Encrypt invite with password: ")
     packet=DustmailInvitePacket()
     packet.createDustmailInvitePacket(passwd, self.endpoint.public.bytes, invite, self.keys.entropy)
@@ -155,6 +170,25 @@ class DustmailReader:
         f=open(filename, 'wb')
         f.write(packet.packet)
         f.close()
+    elif ps=='e':
+      frm=input("Your email: ")
+      to=input("Recipient email: ")
+      name=input("Your name on DustMail: ")
+
+      body="""
+      You have been invited to communicate with %s via DustMail.
+      Use the following invite code: %s
+      """ % (name, encode(packet.packet))
+
+      emailConfig=YamlMap('config/emailServer.yaml')
+      try:
+        smtpHost=emailConfig['smtpHost']
+      except:
+        smtpHost=input("SMTP Host: ")
+        emailConfig['smtpHost']=smtpHost
+
+      notifier=Notifier(frm)
+      notifier.notify(to, 'DustMail Invite', body)
     else:
       print()
       print(encode(packet.packet))
@@ -174,21 +208,13 @@ class DustmailReader:
 if __name__=='__main__':
   passwd=input("Password: ")
 
-  config=YamlMap('config/dustmail-config.yaml')
+  dustmailConfig=YamlMap('config/dustmail-config.yaml')
 
   try:
-    inport=config['port']
+    inport=int(dustmailConfig['port'])
   except:
-    inport=7002
-    config['port']=inport
-
-  try:
-    destAddress=config['tracker']
-  except:
-    destAddress='[2001:470:1f0e:63a::2]:7040'
-    config['tracker']=destAddress
-
-  dest, outport, v6=decodeAddress(destAddress)
+    inport=randomPort()
+    dustmailConfig['port']=inport
 
   keys=KeyManager()
   keys.setInvitePassword(passwd)
@@ -214,8 +240,11 @@ if __name__=='__main__':
       os.mkdir(dustdir)
     keys.saveKeypair(dustdir+'/endpoint.yaml')
 
+  services=YamlMap('config/activeServices.yaml')
+  services['dustmail']=['dust.services.dustmail.dustmailService', 'DustmailService']
+
+  v6=True
   router=PacketRouter(v6, inport, keys, passwd)
-  router.connect(dest, outport)
   router.start()
 
   reader=DustmailReader(router, endpoint)

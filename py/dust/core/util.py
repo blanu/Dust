@@ -108,3 +108,10 @@ if v3:
       ip=match.group(1)
       ip=ip.decode('ascii')
       return ip
+
+def randomPort():
+  import random
+  minPort=5000
+  maxPort=10000
+  port=random.randint(minPort, maxPort)
+  return port
