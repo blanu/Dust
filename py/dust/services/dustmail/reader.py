@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import glob
+import traceback
 
 from dust.crypto.curve import Key
 from dust.crypto.keys import KeyManager
@@ -19,6 +20,36 @@ from dust.extensions.onion.onion_packet import OnionPacket
 from dust.services.tracker.trackerClient import TrackerClient
 from dust.services.dustmail.dustmailClient import DustmailClient
 from dust.services.dustmail.notify import Notifier
+
+class PendingMessage:
+  def __init__(self, reader, endkey, msg):
+    self.reader=reader
+    self.endkey=endkey
+    self.msg=msg
+    self.reader.trackback.setPutPeerForEndpointCallback(encode(self.endkey), self.foundPeer)
+    self.reader.tracker.getPeerForEndpoint(encode(self.endkey))
+
+  def foundPeer(self, endkey, peer):
+    destkey=decode(peer[0])
+    addr=peer[1]
+
+    if self.reader.keys.isKnown(addr) or self.reader.keys.outgoingInvites.getInviteForHost(False, decodeAddress(addr)):
+      self.sendMessage(decodeAddress(addr))
+    else:
+      self.reader.trackback.setPutInviteForPeerCallback(addr, self.foundInvite)
+      self.reader.tracker.getInviteForPeer(addr)
+
+  def foundInvite(self, addr, invite):
+    self.sendMessage(decodeAddress(addr))
+
+  def sendMessage(self, addr):
+    data=self.msg.encode('ascii')
+    onion=OnionPacket()
+    onion.createOnionPacket(self.reader.keys.getEndpoint(), self.endkey, data, self.reader.keys.entropy)
+    dustmail=DustmailClient(self.reader.router, addr)
+    dustmail.sendMessage(encode(onion.packet))
+
+    self.reader.commandDone.set()
 
 class DustmailReader:
   def __init__(self, router, endpoint):
@@ -44,6 +75,17 @@ class DustmailReader:
 
     dest, outport, v6=decodeAddress(destAddress)
     self.router.connect(dest, outport)
+
+    self.tracker=TrackerClient(self.router)
+
+    host=getPublicIP(v6)
+    inport=dustmailConfig['port']
+    self.tracker.putPeerForEndpoint(encode(self.endpoint.public.bytes), [encode(self.endpoint.public.bytes), encodeAddress((host,inport))])
+
+    invite=self.keys.generateInvite(inport, v6=v6)
+    self.tracker.putInviteForPeer(encodeAddress((host, inport)), encode(invite.message))
+
+    self.trackback=self.router.getService('trackback')
 
   def start(self):
     msgs=self.displayList()
@@ -100,8 +142,12 @@ class DustmailReader:
     data=decode(msg)
 
     onion=OnionPacket()
-    onion.decodeOnionPacket(self.endpoint.public.bytes, data)
-    #  print(onion)
+    #print(onion)
+    try:
+      onion.decodeOnionPacket(self.endpoint, data)
+    except:
+      traceback.print_exc()
+    #print(onion)
     print(onion.data.decode('ascii'))
 
   def parseCommand(self, command):
@@ -114,6 +160,8 @@ class DustmailReader:
       self.addInvite()
     elif command=='i':
       self.makeInvite()
+    elif command=='s':
+      self.sendMessage()
     elif command=='?':
       self.printHelp()
     waitForEvent(self.commandDone)
@@ -131,8 +179,6 @@ class DustmailReader:
     passwd=input("Decrypt invite with password: ")
     packet=DustmailInvitePacket()
     packet.decodeDustmailInvitePacket(passwd, data)
-    print("pubkey: "+encode(packet.pubkey))
-    print("invite: "+encode(packet.invite))
     invite=InviteMessage()
     invite.decodeInviteMessage(packet.invite)
     self.keys.addInvite(invite)
@@ -151,13 +197,10 @@ class DustmailReader:
     return entry
 
   def makeInvite(self):
-    self.tracker=TrackerClient(self.router)
-    self.trackback=self.router.getService('trackback')
     self.trackback.setPutTrackerInviteCallback(self.gotInvite)
     self.tracker.getTrackerInvite()
 
   def gotInvite(self, invite):
-    print('gotInvite')
     time.sleep(1)
     print()
     ps=input("Print, Save, or Email [P/s/e]? ")
@@ -196,12 +239,26 @@ class DustmailReader:
 
     self.commandDone.set()
 
+  def sendMessage(self):
+    name=input("To: ")
+    message=input("Message: ")
+
+    destAddress=self.book[name]['tracker']
+    dest, outport, v6=decodeAddress(destAddress)
+    recipient=self.book[name]['pubkey']
+    endkey=decode(recipient)
+
+    router.connect(dest, outport)
+
+    PendingMessage(reader, endkey, message)
+
   def printHelp(self):
     print('num: read message num')
     print('x: quit')
     print('l: list messages')
     print('a: add invite')
     print('i: make invite')
+    print('s: send message')
 
     self.commandDone.set()
 

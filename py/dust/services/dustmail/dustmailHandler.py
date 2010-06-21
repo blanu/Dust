@@ -47,9 +47,8 @@ class DustmailHandler:
 
       notifier=Notifier('dustmail@blanu.net')
       notifier.notify(mailAddr, 'New DustMail Message', "You have a DustMail message from "+frmName+".")
-    except:
+    except KeyError:
       print('No notification set')
-      traceback.print_exc()
 
   def makeName(self, frm, to):
     timestamp=str(time.time())
