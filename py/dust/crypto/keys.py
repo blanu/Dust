@@ -118,7 +118,6 @@ class KeyManager:
     except:
       print('Unknown hosts', addressKey)
       return None
-    print('pubkey:', pubkey)
     sessionKey=hash(self.keypair.createSession(pubkey).bytes)
     return sessionKey
 

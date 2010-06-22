@@ -4,16 +4,17 @@ from dust.core.util import getPublicIP
 from dust.util.safethread import SafeThread
 
 from dust.server.activeServices import activeServices
-print("services:", list(activeServices.keys()))
+#print("services:", list(activeServices.keys()))
 
 class PacketRouter:
-  def __init__(self, v6, port, keys, passwd):
+  def __init__(self, v6, port, keys, passwd, debug=False):
     self.v6=v6
     self.host = getPublicIP(v6)
     self.port=port
     self.keys=keys
     self.passwd=passwd
     self.tcp=True
+    self.debug=debug
 
     self.msock=multiplex_socket(self.keys)
     self.msock.bind((self.host, self.port))
@@ -45,9 +46,9 @@ class PacketRouter:
 
   def run(self):
     while True:
-      print('Receiving...')
       msg, addr, service=self.msock.mrecvfrom(1024)
-      print('Received from '+str(addr)+' '+str(service))
+      if self.debug:
+        print('Received from '+str(addr)+' '+str(service))
       if msg and addr and service:
         handler=activeServices[service]
 #        print('Routing to', handler, '...')
@@ -60,7 +61,8 @@ class PacketRouter:
       self.msock.msend(msg)
 
   def sendto(self, msg, addr, service=None):
-    print('router.sendto '+str(addr)+' '+str(service))
+    if self.debug:
+      print('router.sendto '+str(addr)+' '+str(service))
     if service:
       self.msock.msendto(msg, addr, service=service)
     else:

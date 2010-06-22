@@ -10,6 +10,8 @@ from dust.core.data_packet import DataPacket
 from dust.core.util import encodeAddress, encode
 from dust.intro.intro import Introducer
 
+debug=False
+
 class dust_socket:
   def __init__(self, keys, socket=None):
     self.keys=keys
@@ -107,7 +109,8 @@ class dust_socket:
         print('Dust: No packet')
         return None, None
       else:
-        print('Received: '+str(packet))
+        if debug:
+          print('Received: '+str(packet))
         if packet.remaining:
           self.remaining=(packet.remaining, addr)
         if type(packet)==DataPacket:
@@ -164,7 +167,8 @@ class dust_socket:
 
   def sendto(self, data, addr):
     packet=self.encodePacket(addr, data)
-    print('Sending '+str(packet))
+    if debug:
+      print('Sending '+str(packet))
     self.sock.sendto(packet.packet, 0, addr)
 
   def sendtoraw(self, data, addr):

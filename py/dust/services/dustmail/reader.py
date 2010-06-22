@@ -15,19 +15,26 @@ from dust.services.dustmail.dustmail_packet import DustmailInvitePacket
 
 from threading import Event
 from dust.server.router import PacketRouter
-from dust.util.safethread import waitForEvent
+from dust.util.safethread import wait, waitForEvent
 from dust.extensions.onion.onion_packet import OnionPacket
 from dust.services.tracker.trackerClient import TrackerClient
 from dust.services.dustmail.dustmailClient import DustmailClient
 from dust.services.dustmail.notify import Notifier
 
 class PendingMessage:
-  def __init__(self, reader, endkey, msg):
+  def __init__(self, reader, name, msg):
     self.reader=reader
-    self.endkey=endkey
+    self.name=name
     self.msg=msg
-    self.reader.trackback.setPutPeerForEndpointCallback(encode(self.endkey), self.foundPeer)
-    self.reader.tracker.getPeerForEndpoint(encode(self.endkey))
+
+    destAddress=self.reader.book[self.name]['tracker']
+    dest, outport, v6=decodeAddress(destAddress)
+    recipient=self.reader.book[self.name]['pubkey']
+    self.endkey=decode(recipient)
+
+    self.reader.trackback.setPutPeerForEndpointCallback(recipient, self.foundPeer)
+    self.tracker=TrackerClient(self.reader.router, addr=(dest, outport))
+    self.tracker.getPeerForEndpoint(recipient)
 
   def foundPeer(self, endkey, peer):
     destkey=decode(peer[0])
@@ -37,7 +44,7 @@ class PendingMessage:
       self.sendMessage(decodeAddress(addr))
     else:
       self.reader.trackback.setPutInviteForPeerCallback(addr, self.foundInvite)
-      self.reader.tracker.getInviteForPeer(addr)
+      self.tracker.getInviteForPeer(addr)
 
   def foundInvite(self, addr, invite):
     self.sendMessage(decodeAddress(addr))
@@ -74,9 +81,9 @@ class DustmailReader:
       dustmailConfig['tracker']=destAddress
 
     dest, outport, v6=decodeAddress(destAddress)
-    self.router.connect(dest, outport)
 
-    self.tracker=TrackerClient(self.router)
+    print('Registering with tracker...')
+    self.tracker=TrackerClient(self.router, addr=(dest, outport))
 
     host=getPublicIP(v6)
     inport=dustmailConfig['port']
@@ -88,6 +95,7 @@ class DustmailReader:
     self.trackback=self.router.getService('trackback')
 
   def start(self):
+    print('-'*40)
     msgs=self.displayList()
 
     command=None
@@ -243,14 +251,7 @@ class DustmailReader:
     name=input("To: ")
     message=input("Message: ")
 
-    destAddress=self.book[name]['tracker']
-    dest, outport, v6=decodeAddress(destAddress)
-    recipient=self.book[name]['pubkey']
-    endkey=decode(recipient)
-
-    router.connect(dest, outport)
-
-    PendingMessage(reader, endkey, message)
+    PendingMessage(reader, name, message)
 
   def printHelp(self):
     print('num: read message num')
@@ -263,7 +264,12 @@ class DustmailReader:
     self.commandDone.set()
 
 if __name__=='__main__':
-  passwd=input("Password: ")
+  if len(sys.argv)>1 and sys.argv[1]=='-d':
+    passwd=sys.argv[2]
+    headless=True
+  else:
+    passwd=input("Password: ")
+    headless=False
 
   dustmailConfig=YamlMap('config/dustmail-config.yaml')
 
@@ -273,6 +279,7 @@ if __name__=='__main__':
     inport=randomPort()
     dustmailConfig['port']=inport
 
+  print('Loading keys...')
   keys=KeyManager()
   keys.setInvitePassword(passwd)
   keys.loadKnownHosts('config/knownhosts.yaml')
@@ -305,6 +312,9 @@ if __name__=='__main__':
   router.start()
 
   reader=DustmailReader(router, endpoint)
-  reader.start()
+  if not headless:
+    reader.start()
+  else:
+    print('Running in daemon mode.')
 
   waitForEvent(reader.done)
