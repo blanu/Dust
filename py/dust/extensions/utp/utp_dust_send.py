@@ -41,6 +41,7 @@ class FileSendCallbacks(utp.Callbacks):
 
   def on_error(self, errcode):
     print("on_error", errcode)
+    self.utp_socket.close()
 
   def on_overhead(self, send, count, type):
     #print("on_overhead", send, count, type)
@@ -57,20 +58,23 @@ udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, size)
 
 import sys
 sys.path.append(r'C:\Users\Greg\projects\Dust\py')
-from extensions.lite.lite_socket import lite_socket
-from crypto.keys import KeyManager
+from dust.extensions.lite.lite_socket import lite_socket
+from dust.crypto.keys import KeyManager
 dust = lite_socket(KeyManager())
 dust.setAddress(udp_socket.getsockname())
 print(udp_socket.getsockname())
 
 # dust is the opposite of dirty
 def dustPacket(addr, data):
-  return dust.encodePacket(addr, data).packet
+  print('dust')
+#  return dust.encodePacket(addr, data).packet
+  return data
 
 # dirty is the opposite of dust
 def dirtyPacket(addr, data):
-  return dust.decodePacket(addr, data).data
-
+#  return dust.decodePacket(addr, data).data
+  print('dirty')
+  return data
 
 def send_to(data, addr):
   data = dustPacket(addr, data)
