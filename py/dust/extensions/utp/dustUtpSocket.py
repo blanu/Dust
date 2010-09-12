@@ -51,6 +51,7 @@ class DustUtpSocket(utp.Callbacks):
     if not server:
       self.utp_socket.set_callbacks(self)
       self.utp_socket.connect()
+      self.connected=True
 
   def start(self):
     while self.utp_socket:
@@ -97,6 +98,7 @@ class DustUtpSocket(utp.Callbacks):
     print("got_incoming_connection!", utp_socket, utp_socket.getpeername())
     self.utp_socket=utp_socket
     self.utp_socket.set_callbacks(self)
+    self.connected=True
 
   def udp_select(self, timeout):
     r, w, e = select.select([self.udp_socket], [], [self.udp_socket], timeout)
