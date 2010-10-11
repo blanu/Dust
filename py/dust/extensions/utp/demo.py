@@ -17,12 +17,12 @@ class LineReader:
 
   def run(self):
     while True:
-      line=input('> ').strip()
-      if line=='.':
+      try:
+        line=sys.stdin.readline()
+      except:
         self.outq.put(None)
         return
-      else:
-        self.outq.put(line.encode('ascii'))
+      self.outq.put(line.encode('ascii'))
 
 class LinePrinter:
   def __init__(self, inq):

@@ -1,4 +1,5 @@
 import os
+import gc
 import sys
 import time
 import socket
@@ -16,7 +17,7 @@ class TcpServer:
 
     self.sock=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+#    self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
     bound=False
     while not bound:
       try:
@@ -26,32 +27,27 @@ class TcpServer:
         print('Error binding to port '+str(port))
         time.sleep(30)
 
-    self.sock.listen(1)
+    self.sock.listen(5)
     while(True):
-      conn, addr = self.sock.accept()
-      handler=TcpSocketHandler(conn, addr)
-      handler.start()
-
-class TcpSocketHandler:
-  def __init__(self, conn, addr):
-    self.conn=conn
-    self.addr=addr
-
-    inq=Queue()
-    outq=Queue()
-
-    self.dus=DustUtpSocket(inq, outq)
-    self.proxy=TcpProxy(conn, outq, inq)
-
-  def start(self):
-    self.proxy.start()
-    self.dus.start()
+      try:
+        conn, addr = self.sock.accept()
+        conn.settimeout(1)
+        inq=Queue()
+        outq=Queue()
+        dus=DustUtpSocket(inq, outq)
+        proxy=TcpProxy(conn, outq, inq)
+        conn=None
+        proxy.start()
+        dus.start()
+      except:
+        return
 
 class TcpProxy:
   def __init__(self, sock, inq, outq):
     self.sock=sock
     self.inq=inq
     self.outq=outq
+    self.closed=False
 
   def start(self):
     t=Thread(target=self.processIn)
@@ -63,20 +59,33 @@ class TcpProxy:
     t2.start()
 
   def processIn(self):
-    data=self.inq.get()
-    while data:
-      self.sock.sendall(data)
+    try:
       data=self.inq.get()
-    print('Closing socket!')
-    self.sock.close()
+      while data:
+        print('data: '+str(data)+' '+str(self.sock))
+        self.sock.sendall(data)
+        data=self.inq.get()
+      print('Closing socket! '+str(self.sock))
+      self.sock.close()
+      self.sock=None
+      gc.collect()
+      print('Closed socket')
+    except:
+      if self.sock:
+        self.sock.close()
+      self.sock=None
 
   def processOut(self):
     data=self.sock.recv(1024)
-    while data:
+    while self.sock and data:
       self.outq.put(data)
       try:
         data=self.sock.recv(1024)
       except:
+        if self.sock:
+          self.sock.close()
+        self.sock=None
+        gc.collect()
         return
 
 if __name__=='__main__':

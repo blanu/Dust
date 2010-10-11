@@ -11,7 +11,9 @@ class InetdServer:
   def __init__(self):
     server=DustUtpSocketServer()
     server.start()
-    while True:
+    waiting=True
+    while waiting:
+      print('Accepting')
       try:
         inq=Queue()
         outq=Queue()
@@ -21,6 +23,7 @@ class InetdServer:
         dus.start()
       except Exception as e:
         print('Exception in accept, exiting: '+str(e))
+        waiting=False
         return
 
 class Inetd:
@@ -42,6 +45,7 @@ class Inetd:
   def processIn(self):
     self.proc.poll()
     while not self.proc.returncode:
+      print('pin')
       data=self.inq.get()
       print('inetd -> '+str(data))
       self.proc.stdin.write(data)
@@ -53,6 +57,7 @@ class Inetd:
     print('waiting to read from inetd')
     data=self.proc.stdout.read(1024)
     while data:
+      print('pout')
       print('inetd <- '+str(data))
       self.outq.put(data)
       data=self.proc.stdout.read(1024)
@@ -60,9 +65,12 @@ class Inetd:
 
 if __name__=='__main__':
   server=InetdServer()
-  while True:
+  waiting=True
+  while waiting:
     try:
+      print('Sleeping')
       time.sleep(1)
     except:
       print('Exception waiting')
+      waiting=False
       sys.exit(0)
