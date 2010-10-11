@@ -1,6 +1,9 @@
 import bz2
 import math
 import time
+import traceback
+import http.client as httplib
+from urllib.parse import urlparse
 import urllib.request
 from dust.core.util import encodeAddress
 from dust.services.http.proxyback_packet import ProxybackMessage
@@ -24,9 +27,29 @@ class DustHttpProxyService:
     print('parts: '+str(parts))
     url=parts[1]
     print('url: '+str(url))
-    resp=urllib.request.urlopen(url)
-    result=resp.read()
-    print('result: '+str(result)+' '+str(len(result)))
+
+    try:
+      host=urlparse(url).netloc
+      conn=httplib.HTTPConnection(host)
+      conn.request('GET', url)
+      resp=conn.getresponse()
+      if resp.version==10:
+        result=b"HTTP/1.0"
+      elif resp.version==11:
+        result=b"HTTP/1.1"
+      else:
+        result=b"HTTP/1.1"
+
+      result=result+b' '+bytes(str(resp.status), 'ascii')+b' '+bytes(resp.reason, 'ascii')+b"\r\n"
+      for key, value in resp.getheaders():
+        result=result+bytes(key, 'ascii')+b': '+bytes(value, 'ascii')+b"\r\n"
+      result=result+b"\r\n"
+      result=result+resp.read()
+    except Exception as e:
+      print(e)
+      traceback.print_exc()
+      result=b"HTTP/1.1 500 Error\r\n\r\n"
+
 #    comp=bz2.compress(result)
     chunkSize=512
     n=int(math.ceil(len(result)/chunkSize))
@@ -37,3 +60,4 @@ class DustHttpProxyService:
       packet=ProxybackMessage()
       packet.createProxybackMessage(reqid, i, (i==n-1), result[start:end])
       self.router.sendto(packet.msg, addr, service='httpProxyback')
+      time.sleep(1)
