@@ -1,6 +1,7 @@
 import bz2
 import math
 import time
+import base64
 import traceback
 import http.client as httplib
 from urllib.parse import urlparse
@@ -29,9 +30,25 @@ class DustHttpProxyService:
     print('url: '+str(url))
 
     try:
-      host=urlparse(url).netloc
-      conn=httplib.HTTPConnection(host)
-      conn.request('GET', url)
+      print('connecting to '+str(urlparse(url).netloc))
+      parts=urlparse(url)
+      print(parts)
+      print(parts.username)
+      print(parts.password)
+      host=parts.hostname
+      port=parts.port
+      if not port:
+        port=80
+      if parts.username and parts.password:
+        auth=base64.b64encode(parts.username+':'+parts.password)
+      else:
+        auth=None
+      headers={'Connection': 'close'}
+      if auth:
+        headers['Authentication']=auth
+      print(headers)
+      conn=httplib.HTTPConnection(host, port)
+      conn.request('GET', url, headers=headers)
       resp=conn.getresponse()
       if resp.version==10:
         result=b"HTTP/1.0"
@@ -42,7 +59,10 @@ class DustHttpProxyService:
 
       result=result+b' '+bytes(str(resp.status), 'ascii')+b' '+bytes(resp.reason, 'ascii')+b"\r\n"
       for key, value in resp.getheaders():
-        result=result+bytes(key, 'ascii')+b': '+bytes(value, 'ascii')+b"\r\n"
+        if key!='Connection':
+          result=result+bytes(key, 'ascii')+b': '+bytes(value, 'ascii')+b"\r\n"
+      result=result+b"Connection: close\r\n"
+      result=result+b"Proxy-Connection: close\r\n"
       result=result+b"\r\n"
       result=result+resp.read()
     except Exception as e:
@@ -60,4 +80,4 @@ class DustHttpProxyService:
       packet=ProxybackMessage()
       packet.createProxybackMessage(reqid, i, (i==n-1), result[start:end])
       self.router.sendto(packet.msg, addr, service='httpProxyback')
-      time.sleep(1)
+#      time.sleep(1)
