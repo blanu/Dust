@@ -29,7 +29,7 @@ class MultiplexMessage:
     self.message=self.serviceNameLength+self.serviceName+self.data
 
   def decodeMultiplexMessage(self, message):
-    print('decoding multiplex message')
+#    print('decoding multiplex message')
     self.message=message
     self.serviceNameLength=self.message[0]
     serviceName=self.message[1:self.serviceNameLength+1]
@@ -38,7 +38,7 @@ class MultiplexMessage:
     else:
       self.serviceName=serviceName
     self.data=self.message[self.serviceNameLength+1:]
-    print('decoded multiplex message')
+#    print('decoded multiplex message')
 
 class MultiplexPacket(DataPacket):
   def __init__(self):
