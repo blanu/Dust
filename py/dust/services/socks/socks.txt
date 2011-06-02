@@ -1,0 +1,25 @@
+c -> s # handshake
+0x05 - version
+0x01 - number of auth methods, just one
+0x00 - "no auth" auth method
+
+s -> c # handshake
+0x05 - version
+0x00 - choose "no auth" auth method
+
+c -> s # connection request
+0x05 - version
+0x01 - request TCP connection
+0x00 - reserved, must be 0
+0x01 - IPv4 address # just for testing, add domain name and IPv6 later
+4 bytes - IPv4 IP address
+2 bytes - network byte order port
+
+s -> c # connection response
+0x05 - version
+0x00 - request granted, just for testing, add other error codes later
+0x00 - reserved, must be 0
+0x01 - IPv4 IP address
+4 bytes - IPv4 IP address
+2 bytes - network byte order port
+
