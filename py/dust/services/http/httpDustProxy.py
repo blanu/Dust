@@ -1,4 +1,5 @@
 import os
+import re
 import gc
 import sys
 import bz2
@@ -15,6 +16,9 @@ from dust.core.util import getPublicIP, encode, decode, encodeAddress
 from dust.core.data_packet import DataPacket
 from dust.server.router import PacketRouter
 from dust.services.http.proxy_packet import ProxyMessage
+
+reqlogfile=open('requestlog.txt', 'a+b')
+resplogfile=open('responselog.txt', 'a+b')
 
 class HttpDustServer:
   def __init__(self, router, proxyAddr):
@@ -42,30 +46,36 @@ class HttpDustServer:
     while(True):
       try:
         conn, addr = self.sock.accept()
+        print('Accepted!')
         conn.settimeout(1)
         inq=Queue()
         outq=Queue()
         reqid=self.generateId()
         server=HttpDustHandler(conn, outq, inq)
         proxy=HttpProxyHandler(reqid, self.router, self.proxyAddr, inq, outq)
+        print('s1')
         server.start()
+        print('s2')
         proxy.start()
+        print('starting')
         conn=None
       except:
         return
 
   def generateId(self):
-    t=int(round(time.time()))
-    return struct.pack("I", t)
+    t=int(round(time.time()*1000000))
+    return struct.pack("Q", t)[0:4]
 
 class HttpDustHandler:
   def __init__(self, sock, inq, outq):
+    print('handler')
     self.sock=sock
     self.router=router
     self.proxyAddr=proxyAddr
     self.inq=inq
     self.outq=outq
     self.closed=False
+    self.wrote=0
 
   def start(self):
     t=Thread(target=self.processIn)
@@ -82,10 +92,16 @@ class HttpDustHandler:
       print('Got reponse data!!!')
       while data!=None:
 #        data=bz2.compress(data)
-        print('data: '+str(data)+' '+str(self.sock))
+        #print('data: '+str(data)+' '+str(self.sock))
         self.sock.sendall(data)
+        self.wrote=self.wrote+len(data)
+        resplogfile.write(data)
+        resplogfile.write(b"\n\n-------------------\n\n")
+        resplogfile.flush()
         data=self.inq.get()
       print('Closing socket! '+str(self.sock))
+      print('Wrote: '+str(self.wrote))
+      time.sleep(1)
       self.sock.close()
       self.sock=None
       gc.collect()
@@ -96,26 +112,86 @@ class HttpDustHandler:
       self.sock=None
 
   def processOut(self):
-    data=self.readDestination()
+    maxline=1024
+    preheader=re.compile(b"([A-Z]+) (\S+) (\S+)\r\n")
+    cl=re.compile(b"Content-Length: (\d+)\r\n")
+    header=re.compile(b"([A-Za-z-]+): (\S+)\r\n")
+    endheaders=re.compile(b"\r\n")
+
+    data=b''
+
+    print('reading')
+    buff=b''
+    while not preheader.match(buff):
+      if len(buff)>maxline:
+        print('Line too long, not HTTP')
+        print(buff)
+        self.sock.close()
+        self.closed=True
+        return
+      c=self.sock.recv(1)
+      buff=buff+c
+
+    print('preheader:')
+    print(buff)
+
+    data=data+buff
+
+    buff=b''
+    l=None
+    while not endheaders.match(buff):
+      if cl.match(buff):
+        l=int(cl.match(buff).group(1))
+        data=data+buff
+        print('cl:')
+        print(buff)
+        buff=b''
+      elif header.match(buff):
+        data=data+buff
+        print('preheader:')
+        print(buff)
+        buff=b''
+      elif len(buff)>maxline:
+        print('Line too long, not HTTP')
+        print(buff)
+        self.sock.close()
+        self.closed=True
+        return
+      else:
+        try:
+          c=self.sock.recv(1)
+          buff=buff+c
+        except Exception as e:
+          print('Exception reading. So far:')
+          print(buff)
+          print(e)
+
+    print('End of headers: '+str(len(data)))
+    print(data)
+    print('.')
+
+    pl=len(data)
+    if l:
+      while len(data)<(pl+l):
+        try:
+          c=self.sock.recv(1)
+        except:
+          break
+        buff=buff+c
+
+    print('sending:')
+    print(data)
     self.outq.put(data)
-#    self.readHeaders()
-#    data=self.sock.recv(1024)
-#    while self.sock and data:
-#      self.outq.put(data)
-#      try:
-#        data=self.sock.recv(1024)
-#      except:
-#        if self.sock:
-#          self.sock.close()
-#        self.sock=None
-#        gc.collect()
-#        return
+    reqlogfile.write(data)
+    reqlogfile.write(b"\n\n-------------------\n\n")
+    reqlogfile.flush()
 
   def readDestination(self):
+    print('reading')
     buff=b''
     c=self.sock.recv(1)
     while c!=b"\r" and c!=b"\n":
-      print('c: '+str(c))
+#      print('c: '+str(c))
       buff=buff+c
       c=self.sock.recv(1)
     parts=buff.decode('ascii').split(' ')
@@ -133,7 +209,7 @@ class HttpDustHandler:
     buff=b''
     c=self.sock.recv(1)
     while c!=b"\r" and c!=b"\n":
-      print('c: '+str(c))
+#      print('c: '+str(c))
       buff=buff+c
       c=self.sock.recv(1)
     parts=buff.decode('ascii').split(' ')
@@ -148,6 +224,7 @@ class HttpDustHandler:
 
 class HttpProxyHandler:
   def __init__(self, reqid, router, proxyAddr, inq, outq):
+    print('proxy')
     self.reqid=reqid
     self.router=router
     self.proxyAddr=proxyAddr
@@ -158,6 +235,7 @@ class HttpProxyHandler:
     self.respq=Queue()
     proxyback=self.router.getService('httpProxyback')
     proxyback.setQueue(self.reqid, self.respq)
+    print('proxy init done')
 
   def start(self):
     t=Thread(target=self.processIn)
@@ -195,7 +273,7 @@ if __name__=='__main__':
   passwd='test'
   inport=7001
 #  proxyAddr='udp://[::]:9000'
-  proxyAddr=('2001:0:53aa:64c:14cb:442c:baa2:c211', 7000)
+  proxyAddr=('2001:0:53aa:64c:280b:4cb6:baa2:c211', 7000)
   outport=7000
   v6=True
 
