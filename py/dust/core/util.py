@@ -2,7 +2,14 @@ import re
 import sys
 import binascii
 
+from struct import pack, unpack
+from socket import inet_aton, inet_ntoa
+
 v3=(sys.version[0]=='3')
+
+def uncompact(x):
+    ip, port = unpack("!4sH", x)
+    return inet_ntoa(ip), port
 
 def encode(s):
   return binascii.hexlify(s).decode('ascii')
@@ -31,7 +38,7 @@ def decodeAddress(s):
 def getAddress(port):
   return encodeAddress((getPublicIP(), port))
 
-def splitFields(msg, fields):
+def splitFields(msg, fields, optionalData=False):
   values=[]
   for field in fields:
     value=msg[:field]
@@ -39,6 +46,8 @@ def splitFields(msg, fields):
     values.append(value)
   if len(msg)>0:
     values.append(msg)
+  elif optionalData:
+    values.append(None)
   return values
 
 def splitField(msg, field):
