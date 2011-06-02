@@ -54,14 +54,12 @@ class Encoder:
         except:
           eof=True
           bit=0
-        print('bit: '+str(bit))
         cursor=cursor[bit+1]
         if len(cursor)==2: # leaf
           found=True
           val=cursor[1]
           s=s+chr(val)
           chars.append(val)
-          print('emit: '+str(val))
           if eof:
             done=True
 
