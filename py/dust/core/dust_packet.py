@@ -97,7 +97,7 @@ class DustPacket:
 
     s=s+'  dataLength: '+str(self.dataLength)+"\n"
     s=s+'  paddingLength: '+str(self.paddingLength)+"\n"
-    s=s+'  data: '+str(self.data)+"\n"
+    s=s+'  data: '+str(encode(self.data))+"\n"
     if self.padding:
       s=s+'  padding: '+encode(self.padding)+"\n"
     else:
