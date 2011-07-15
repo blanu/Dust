@@ -10,9 +10,16 @@ else:
   module='curve25519.so'
   funcname='curve25519_athlon'
 
-filename=os.path.join(os.path.dirname(__file__), module)
-ec=cdll.LoadLibrary(filename)
-curve25519=getattr(ec, funcname)
+try:
+  filename=os.path.join(os.path.dirname(__file__), module)
+  ec=cdll.LoadLibrary(filename)
+  curve25519=getattr(ec, funcname)
+except:
+  module='curve25519-donna-c64.so'
+  funcname='curve25519_donna'
+  filename=os.path.join(os.path.dirname(__file__), module)
+  ec=cdll.LoadLibrary(filename)
+  curve25519=getattr(ec, funcname)
 
 def createKeypair(entropy):
   secret=Key(createSecret(entropy), False)
