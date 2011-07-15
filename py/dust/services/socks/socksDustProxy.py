@@ -234,9 +234,9 @@ if __name__=='__main__':
   passwd='test'
   inport=7001
 #  proxyAddr='udp://[::]:9000'
-  proxyAddr=('2001:0:53aa:64c:306f:460a:baa2:c211', 7000)
+  proxyAddr=('99.55.140.166', 7000)
   outport=7000
-  v6=True
+  v6=False
 
   host=getPublicIP(v6)
   print('Host: '+str(host))
