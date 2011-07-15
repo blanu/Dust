@@ -1,0 +1,104 @@
+import monocle
+from monocle import _o
+monocle.init('tornado')
+
+from monocle.core import Callback, Return
+from monocle.stack import eventloop
+
+from monocle.stack.network import Connection, ConnectionLost
+
+class FakeSocket(object):
+  def __init__(self, a=None, b=None):
+    if a==None:
+      self.a=Connection(LoopbackStackConnection())
+    else:
+      self.a=a
+    if b==None:
+      self.b=Connection(LoopbackStackConnection())
+    else:
+      self.b=b
+
+  def invert(self):
+    return FakeSocket(b, a)
+
+  def read(self, x):
+    return self.a.read(x)
+
+  def read_some(self):
+    return self.a.read_some()
+
+  def write(self, bs):
+    return self.b.write(bs)
+
+  def close(self):
+    self.a.close()
+    self.b.close()
+
+class LoopbackStackConnection(object):
+    def __init__(self):
+        self.read_cb = None
+        self.buffer = ''
+        self.open=True
+
+    def write(self, data):
+        print('write')
+        self.buffer += data
+        if self.read_cb:
+            self._fire_read()
+
+#    def read_some(self):
+#        read_cb=self.read_cb
+#        self.read_cb=None
+#        if self.read_cb:
+#          return Return(read_cb)
+#        else:
+#          return Return(b'')
+
+    def _fire_read(self):
+        print('_fire_read')
+        read_cb = self.read_cb
+        self.read_cb = None
+        read_cb(None)
+
+    def resume(self):
+        self.read_cb = Callback()
+        if len(self.buffer) > 0:
+            self._fire_read()
+
+    def reading(self):
+        return self.read_cb is not None
+
+    def closed(self):
+        return not self.open
+
+#    def close(self):
+#        self.open=False
+
+    def disconnect(self):
+        pass
+
+conn=Connection(LoopbackStackConnection())
+
+@_o
+def spew():
+  from monocle.util import sleep
+  while True:
+      print "writing"
+      conn.write("wee, cake!\r\n")
+      yield sleep(1)
+
+
+@_o
+def test_stream():
+    while True:
+        try:
+            message = yield conn.read_until('\r\n')
+        except ConnectionLost:
+            break
+        print "you said: %s\r\n" % message.strip()
+
+
+if __name__=='__main__':
+  monocle.launch(test_stream)
+  monocle.launch(spew)
+  eventloop.run()
