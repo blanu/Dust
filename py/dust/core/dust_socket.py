@@ -41,8 +41,10 @@ class dust_socket:
   def bind(self, address):
     ip=address[0]
     if ':' in ip:
+      print('Binding to v6: '+str(address))
       self.sock=socket(AF_INET6, SOCK_DGRAM)
     else:
+      print('Binding to v4: '+str(address))
       self.sock=socket(AF_INET, SOCK_DGRAM)
     self.sock.bind(address)
     self.setAddress(address)
@@ -128,7 +130,6 @@ class dust_socket:
         return packet
       else:
         print('Integrity failed', packet.checkMac(), packet.checkTimestamp())
-        print(packet)
         return None
     else: # Must be an intro packet
       print('Unknown address', addr)
