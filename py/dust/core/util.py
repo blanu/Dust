@@ -71,14 +71,14 @@ def encodeFlags(bools):
       bits.append(BitString('0b0'))
   return bits.bytes
 
-def fill(bytes, size):
-  while len(bytes)<size:
+def fill(bs, size):
+  while len(bs)<size:
     if v3:
       filler=bytes('\x00', 'ascii')
     else:
       filler='\x00'
-    bytes=bytes+filler
-  return bytes
+    bs=bs+filler
+  return bs
 
 def xor(a, b):
   if len(a)!=len(b):
@@ -97,26 +97,35 @@ def xor(a, b):
 
 if v3:
   from urllib.request import urlopen
+else:
+  from urllib2 import urlopen
 
-  def getPublicIP(v6=True):
-    if v6:
-      try:
-        text=urlopen("http://ipv6.ip6.me/").read()
+def getPublicIP(v6=True):
+  if v6:
+#    try:
+      text=urlopen("http://ipv6.ip6.me/").read()
+      if v3:
         match=re.search(bytes("\+3>([^<]+)<", 'ascii'), text)
-        ip=match.group(1)
-        ip=ip.decode('ascii')
-        return ip
-      except:
-        ip=urlopen("http://whatismyv6ip.com/myip").read()
-        return ip.decode('ascii')
-    else:
-      text=urlopen("http://ip4.me/").read()
-      match=re.search(bytes("\+3>([^<]+)<", 'ascii'), text)
-#      ip=urlopen("http://whatismyv6ip.com/myip").read()
-#      return ip.decode('ascii')
+      else:
+        match=re.search("\+3>([^<]+)<", text)
       ip=match.group(1)
       ip=ip.decode('ascii')
       return ip
+#    except Exception as e:
+#      print(e)
+#      ip=urlopen("http://whatismyv6ip.com/myip").read()
+#      return ip.decode('ascii')
+  else:
+    text=urlopen("http://ip4.me/").read()
+    if v3:
+      match=re.search(bytes("\+3>([^<]+)<", 'ascii'), text)
+    else:
+      match=re.search("\+3>([^<]+)<", text)
+#     ip=urlopen("http://whatismyv6ip.com/myip").read()
+#     return ip.decode('ascii')
+    ip=match.group(1)
+    ip=ip.decode('ascii')
+    return ip
 
 def randomPort():
   import random
