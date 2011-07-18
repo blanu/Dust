@@ -5,6 +5,7 @@ from monocle.stack.network import ConnectionLost
 
 from dust.core.util import encode
 from dust.extensions.lite.lite_socket import lite_socket
+from dust.crypto.keys import KeyManager
 
 @_o
 def pump(input, output, transform):
