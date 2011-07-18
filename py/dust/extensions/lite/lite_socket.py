@@ -4,7 +4,8 @@ from dust.core.util import encodeAddress, xor
 
 class lite_socket(dust_socket):
   def makeSession(self, address, tryInvite):
-    addressKey=encodeAddress(address)
+#    addressKey=encodeAddress(address)
+    addressKey=address[0]
     if addressKey in self.sessionKeys:
       return self.sessionKeys[addressKey]
 
