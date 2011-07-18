@@ -6,6 +6,7 @@ class lite_socket(dust_socket):
   def makeSession(self, address, tryInvite):
 #    addressKey=encodeAddress(address)
     addressKey=address[0]
+    print('addressKey: '+str(addressKey))
     if addressKey in self.sessionKeys:
       return self.sessionKeys[addressKey]
 
