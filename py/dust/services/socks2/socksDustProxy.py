@@ -11,25 +11,14 @@ monocle.init('tornado')
 from monocle.stack import eventloop
 from monocle.stack.network import add_service, Service, Client
 
-from dust.extensions.lite.lite_socket import lite_socket
-from dust.crypto.keys import KeyManager
-
 from shared import pump, DustCoder
-
-myAddr=('localhost', 7050)
-addr='localhost'
-port=7051
-dest=(addr, port)
-
-duster=lite_socket(KeyManager())
-duster.setAddress(myAddr)
-
-coder=DustCoder(duster, dest)
 
 @_o
 def handle_socksDust(conn):
   print('connection')
-  print(conn)
+  myAddr=conn.iostream.socket.getsockname()
+  dest=conn.iostream.socket.getpeername()
+  coder=DustCoder(myAddr, dest)
   client = Client()
   yield client.connect(addr, port)
   monocle.launch(pump, conn, client, coder.dustPacket)

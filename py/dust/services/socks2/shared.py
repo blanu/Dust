@@ -4,6 +4,7 @@ from monocle import _o
 from monocle.stack.network import ConnectionLost
 
 from dust.core.util import encode
+from dust.extensions.lite.lite_socket import lite_socket
 
 @_o
 def pump(input, output, transform):
@@ -44,8 +45,9 @@ def pump(input, output, transform):
         return
 
 class DustCoder(object):
-  def __init__(self, duster, dest):
-    self.duster=duster
+  def __init__(self, myAddr, dest):
+    self.duster=lite_socket(KeyManager())
+    self.duster.setAddress(myAddr)
     self.dest=dest
     self.inbuffer=b''
 
