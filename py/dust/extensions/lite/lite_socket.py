@@ -7,7 +7,7 @@ class lite_socket(dust_socket):
 #    addressKey=encodeAddress(address)
     addressKey=address[0]
     print('addressKey: '+str(addressKey.encode('ascii')))
-    print('myAddressKey: '+str(self.myAddressKey.encode('ascii')))
+    print('myAddressKey: '+str(self.myAddress[0].encode('ascii')))
     if addressKey in self.sessionKeys:
       return self.sessionKeys[addressKey]
 
