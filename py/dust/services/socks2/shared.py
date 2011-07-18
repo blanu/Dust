@@ -47,6 +47,7 @@ def pump(input, output, transform):
 
 class DustCoder(object):
   def __init__(self, myAddr, dest):
+    print('DustCoder: '+str(myAddr)+' '+str(dest))
     self.duster=lite_socket(KeyManager())
     self.duster.setAddress(myAddr)
     self.dest=dest
