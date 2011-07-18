@@ -11,6 +11,8 @@ monocle.init('tornado')
 from monocle.stack import eventloop
 from monocle.stack.network import add_service, Service, Client
 
+from dust.core.util import getPublicIP
+
 from shared import pump, DustCoder
 
 @_o
@@ -20,7 +22,9 @@ def handle_socksDust(conn):
   yield client.connect('blanu.net', 7051)
 
   myAddr=client._stack_conn.iostream.socket.getsockname()
+  myAddr=(getPublicIP(v6=False), myAddr[1])
   dest=client._stack_conn.iostream.socket.getpeername()
+  print('dest: '+str(dest))
   coder=DustCoder(myAddr, dest)
 
   monocle.launch(pump, conn, client, coder.dustPacket)
