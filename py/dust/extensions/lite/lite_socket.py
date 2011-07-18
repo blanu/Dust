@@ -13,6 +13,7 @@ class lite_socket(dust_socket):
     h2=hash(self.myAddressKey.encode('ascii'))
 
     sessionKey=xor(h1, h2)
+    print('Lite Session Key: '+str(sessionKey))
 
     self.sessionKeys[addressKey]=sessionKey
     print('SessionKey:', len(self.sessionKeys[addressKey]))
