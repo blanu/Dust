@@ -18,14 +18,17 @@ from socks import *
 @_o
 def handle_dust(conn):
   print('handle_dust')
-  myAddr=conn.iostream.socket.getsockname()
-  dest=conn.iostream.socket.getpeername()
+  myAddr=conn._stack_conn.iostream.socket.getsockname()
+  dest=conn._stack_conn.iostream.socket.getpeername()
   coder=DustCoder(myAddr, dest)
+
   buffer=FakeSocket()
-  monocle.launch(handle_socks, buffer.invert())
 
   monocle.launch(pump, conn, buffer, coder.dirtyPacket)
+  monocle.launch(handle_socks, buffer.invert())
   yield pump(buffer, conn, coder.dustPacket)
+
+  print('done handling dust')
 
 @_o
 def handle_socks(conn):

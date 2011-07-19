@@ -43,16 +43,23 @@ class FakeSocket(object):
 
   @_o
   def read_some(self):
+    print('FakeSocket read_some')
     if len(self.inBuff)>0:
       data=self.inBuff
       self.inBuff=b''
+      print('returning from buffer '+str(len(data)))
       yield Return(data)
     else:
-      data=yield self.a.recv()
+      data=b''
+      while len(data)==0:
+        data=yield self.a.recv()
       if data:
+        print('returning '+str(len(data)))
         yield Return(data)
       else:
+        print('returning error')
         yield ConnectionLost()
+    print('did not return')
 
   @_o
   def write(self, bs):
