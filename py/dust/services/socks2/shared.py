@@ -8,7 +8,7 @@ from dust.extensions.lite.lite_socket import lite_socket
 from dust.crypto.keys import KeyManager
 
 @_o
-def pump(input, output, transform):
+def pump(input, output, transform, debug=False):
   while True:
     try:
       message = yield input.read_some()
@@ -17,7 +17,8 @@ def pump(input, output, transform):
         print('0 from '+str(input)+' '+str(type(message)))
         raise(Exception())
 #        message=yield input.read(1)
-      print('receive '+str(len(message)))
+      if debug:
+        print('receive '+str(len(message)))
     except ConnectionLost:
       print('Client connection closed')
       output.close()
@@ -33,7 +34,8 @@ def pump(input, output, transform):
 
     for x in range(len(messages)):
       message=messages[x]
-      print('sending '+str(len(message))+' - '+str(x+1)+'/'+str(len(messages)))
+      if debug:
+        print('sending '+str(len(message))+' - '+str(x+1)+'/'+str(len(messages)))
       try:
         yield output.write(message)
       except ConnectionLost:
