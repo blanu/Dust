@@ -79,19 +79,18 @@ class DustCoder(object):
 
   def dirtyPacket(self, data):
     self.inbuffer=self.inbuffer+data
+    results=[]
+
     try:
       packet=self.duster.decodePacket(self.dest, data)
     except:
       packet=None
-    if packet: # packet decoded and passed MAC and timestamp check
-      result=packet.data
-      if packet.remaining:
-        self.inbuffer=packet.remaining
-#        print('Good packet: '+str(len(data)-len(packet.remaining))+' - '+str(len(result)))
-      else:
-        self.inbuffer=b''
-#        print('Good packet: '+str(len(data))+' - '+str(len(result)))
-      return [result]
-    else:
-      print('Partial or corrupted packet: '+str(len(data)))
-      return []
+
+    if packet:
+      results.append(packet.data)
+      self.inbuffer=b''
+
+      if packet.remaining and len(packet.remaining)>0:
+        results=results+self.dirtyPacket(packet.remaining)
+
+    return results
