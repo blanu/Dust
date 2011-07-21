@@ -28,7 +28,7 @@ def handle_socksDust(conn):
   coder=DustCoder(myAddr, dest)
 
   monocle.launch(pump, conn, client, coder.dustPacket)
-  yield pump(client, conn, coder.dirtyPacket)
+  yield pump(client, conn, coder.dirtyPacket, True)
 
 add_service(Service(handle_socksDust, port=7050))
 eventloop.run()
