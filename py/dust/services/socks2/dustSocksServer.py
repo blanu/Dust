@@ -26,7 +26,7 @@ def handle_dust(conn):
 
   monocle.launch(pump, conn, buffer, coder.dirtyPacket)
   monocle.launch(handle_socks, buffer.invert())
-  yield pump(buffer, conn, coder.dustPacket)
+  yield pump(buffer, conn, coder.dustPacket, True)
 
   print('done handling dust')
 
