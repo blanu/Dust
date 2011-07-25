@@ -33,6 +33,9 @@ class dust_socket:
       address=self.sock.getsockname()
       self.setAddress(address)
 
+  def setIV(self, iv):
+    self.iv=iv
+
   def setAddress(self, address):
     self.introducer=Introducer(self.keys, address)
     self.myAddress=address

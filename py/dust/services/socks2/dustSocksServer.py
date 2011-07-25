@@ -12,6 +12,8 @@ from monocle.stack import eventloop
 from monocle.stack.network import add_service, Service, Client, ConnectionLost
 from loopback import FakeSocket
 
+from dust.core.dust_packet import IV_SIZE
+
 from shared import *
 from socks import *
 
@@ -20,15 +22,25 @@ def handle_dust(conn):
   print('handle_dust')
   myAddr=conn._stack_conn.iostream.socket.getsockname()
   dest=conn._stack_conn.iostream.socket.getpeername()
-  coder=DustCoder(myAddr, dest)
+
+  sessionKey=makeSession(myAddr, dest)
+  coder=lite_socket(sessionKey)
+
+  handshake(coder, conn)
 
   buffer=FakeSocket()
 
-  monocle.launch(pump, conn, buffer, coder.dirtyPacket)
+  monocle.launch(pump, conn, buffer, coder.decrypt)
   monocle.launch(handle_socks, buffer.invert())
-  yield pump(buffer, conn, coder.dustPacket, True)
+  yield pump(buffer, conn, coder.encrypt, True)
 
   print('done handling dust')
+
+def handshake(coder, conn):
+  ivIn=yield conn.read(IV_SIZE)
+  coder.setIV(ivIn)
+
+  yield conn.write(coder.ivOut)
 
 @_o
 def handle_socks(conn):

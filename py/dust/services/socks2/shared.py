@@ -5,7 +5,6 @@ from monocle.stack.network import ConnectionLost
 
 from dust.core.util import encode
 from dust.extensions.lite.lite_socket import lite_socket
-from dust.crypto.keys import KeyManager
 
 @_o
 def pump(input, output, transform, debug=False):
@@ -53,12 +52,24 @@ def pump(input, output, transform, debug=False):
         return
 
 class DustCoder(object):
-  def __init__(self, myAddr, dest):
+  def __init__(self, myAddr, dest, iv):
     print('DustCoder: '+str(myAddr)+' '+str(dest))
-    self.duster=lite_socket(KeyManager())
+    self.duster=lite_socket(KeyManager(), iv)
     self.duster.setAddress(myAddr)
     self.dest=dest
     self.inbuffer=b''
+    self.iv=None
+
+  def getIV(self):
+
+  def newIV(self):
+    self.iv=makeIV(self.duster.keys.entropy)
+    self.duster.setIV(iv)
+    return self.iv
+
+  def setIV(self, iv):
+    self.iv=iv
+    self.duster.setIV(iv)
 
   def dustPacket(self, message):
     if len(message)<1024:
