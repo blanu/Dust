@@ -8,6 +8,7 @@ from dust.core.util import splitField, splitFields, encode
 v3=(sys.version[0]=='3')
 
 IV_SIZE = 16
+KEY_SIZE = 32
 
 # 16 bytes
 def makeIV(entropy):

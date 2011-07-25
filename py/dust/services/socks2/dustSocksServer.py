@@ -12,7 +12,9 @@ from monocle.stack import eventloop
 from monocle.stack.network import add_service, Service, Client, ConnectionLost
 from loopback import FakeSocket
 
-from dust.core.dust_packet import IV_SIZE
+from dust.core.dust_packet import IV_SIZE, KEY_SIZE
+
+from dust.extensions.lite.lite_socket2 import makeEphemeralSession
 
 from shared import *
 from socks import *
@@ -26,7 +28,7 @@ def handle_dust(conn):
   sessionKey=makeSession(myAddr, dest)
   coder=lite_socket(sessionKey)
 
-  handshake(coder, conn)
+  coder=handshake(coder, conn)
 
   buffer=FakeSocket()
 
@@ -41,6 +43,18 @@ def handshake(coder, conn):
   coder.setIV(ivIn)
 
   yield conn.write(coder.ivOut)
+
+  ekeypair=coder.createEphemeralKeypair()
+
+  yield conn.write(ekeypair.public)
+  epub=yield conn.read(KEY_SIZE)
+
+  esession=makeEphemeralSession(ekeypair, epub)
+
+  newCoder=lite_socket(esession)
+  newCoder.setIV(ivIn)
+
+  yield Return(newCoder)
 
 @_o
 def handle_socks(conn):
