@@ -24,8 +24,7 @@ def readHandshake(input):
 
 @_o
 def sendHandshake(output):
-  yield output.write(b"\x05")
-  yield output.write(b"\x00")
+  yield output.write(b"\x05\x00")
 
 @_o
 def readRequest(input):
@@ -39,8 +38,4 @@ def readRequest(input):
 
 @_o
 def sendResponse(dest, output):
-  yield output.write(b"\x05")
-  yield output.write(b"\x00")
-  yield output.write(b"\x00")
-  yield output.write(b"\x01")
-  yield output.write(dest)
+  yield output.write(b"\x05\x00\x00\x01"+dest)
