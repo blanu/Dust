@@ -52,5 +52,5 @@ def handle_socks(conn):
   monocle.launch(pump, conn, client, None)
   yield pump(client, conn, None)
 
-add_service(Service(handle_dust, port=7051))
+add_service(Service(handle_dust, port=7050))
 eventloop.run()
