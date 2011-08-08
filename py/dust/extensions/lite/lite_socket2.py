@@ -19,28 +19,15 @@ def makeEphemeralSession(keypair, pub):
   pub=Key(pub, False)
   return keypair.createSession(pub)
 
+def createEphemeralKeypair():
+  return KeyManager().createKeypair()
+
 class lite_socket(object):
-  def __init__(self, key, ivIn=None, ivOut=None):
+  def __init__(self, key):
     self.keys=KeyManager()
     self.key=key
-    self.ivIn=ivIn
-    self.ivOut=ivOut
-    if self.ivIn:
-      self.cipherIn=DustCipher(key, self.ivIn)
-    if not self.ivOut:
-      self.ivOut=self.newIV()
-    self.cipherOut=DustCipher(key, self.ivOut)
-
-  def newIV(self):
-    return makeIV(self.keys.entropy)
-
-  def setIVIn(self, iv):
-    self.ivIn=iv
-    self.cipherIn=DustCipher(self.key, self.ivIn)
-
-  def setIVOut(self, iv):
-    self.ivOut=iv
-    self.cipherOut=DustCipher(self.key, self.ivOut)
+    self.cipherIn=DustCipher(key, "\x00")
+    self.cipherOut=DustCipher(key, "\x00")
 
   def encrypt(self, data):
     data=self.cipherOut.encrypt(data)

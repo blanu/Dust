@@ -14,7 +14,7 @@ from loopback import FakeSocket
 
 from dust.core.dust_packet import IV_SIZE, KEY_SIZE
 
-from dust.extensions.lite.lite_socket2 import lite_socket, makeSession, makeEphemeralSession
+from dust.extensions.lite.lite_socket2 import lite_socket, makeSession, makeEphemeralSession, createEphemeralKeypair
 from dust.core.util import encode
 
 from shared import *
@@ -34,19 +34,13 @@ def handle_dust(conn):
 
 @_o
 def handshake(coder, conn):
-  ivIn=yield conn.read(IV_SIZE)
+  ekeypair=createEphemeralKeypair()
 
-  yield conn.write(coder.ivOut)
-
-  ekeypair=coder.createEphemeralKeypair()
-
-  yield conn.write(ekeypair.public.bytes)
   epub=yield conn.read(KEY_SIZE)
-
   esession=makeEphemeralSession(ekeypair, epub).bytes
-  coder=lite_socket(esession, ivIn=coder.ivIn, ivOut=coder.ivOut)
+  coder=lite_socket(esession)
+  yield conn.write(ekeypair.public.bytes)
 
-#  yield Return(coder)
   yield Return(coder)
 
 add_service(Service(handle_dust, port=7051))
