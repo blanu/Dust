@@ -47,6 +47,7 @@ class KeyManager:
 
   def createKeypair(self):
     self.keypair=createKeypair(self.entropy)
+    return self.keypair
 
   def createEphemeralKeypair(self):
     return createKeypair(self.entropy)

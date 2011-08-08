@@ -14,7 +14,8 @@ from loopback import FakeSocket
 
 from dust.core.dust_packet import IV_SIZE, KEY_SIZE
 
-from dust.extensions.lite.lite_socket2 import makeEphemeralSession
+from dust.extensions.lite.lite_socket2 import lite_socket, makeSession, makeEphemeralSession
+from dust.core.util import encode
 
 from shared import *
 from socks import *
@@ -28,45 +29,38 @@ def handle_dust(conn):
   sessionKey=makeSession(myAddr, dest)
   coder=lite_socket(sessionKey)
 
-  coder=handshake(coder, conn)
+  coder=yield handshake(coder, conn)
 
   buffer=FakeSocket()
 
   monocle.launch(pump, conn, buffer, coder.decrypt)
   monocle.launch(handle_socks, buffer.invert())
-  yield pump(buffer, conn, coder.encrypt, True)
+  yield pump(buffer, conn, coder.encrypt)
 
-  print('done handling dust')
-
+@_o
 def handshake(coder, conn):
   ivIn=yield conn.read(IV_SIZE)
-  coder.setIV(ivIn)
+  coder.setIVIn(ivIn)
 
   yield conn.write(coder.ivOut)
 
   ekeypair=coder.createEphemeralKeypair()
 
-  yield conn.write(ekeypair.public)
+  yield conn.write(ekeypair.public.bytes)
   epub=yield conn.read(KEY_SIZE)
 
-  esession=makeEphemeralSession(ekeypair, epub)
+  esession=makeEphemeralSession(ekeypair, epub).bytes
+  newCoder=lite_socket(esession, ivIn=coder.ivIn, ivOut=coder.ivOut)
 
-  newCoder=lite_socket(esession)
-  newCoder.setIV(ivIn)
-
+#  yield Return(coder)
   yield Return(newCoder)
 
 @_o
 def handle_socks(conn):
-  print('handle_socks')
   yield readHandshake(conn)
-  print('read handshake')
   yield sendHandshake(conn)
-  print('send handshake')
   dest=yield readRequest(conn)
-  print('read request: '+str(dest))
   yield sendResponse(dest, conn)
-  print('sent response')
 
   addr, port=uncompact(dest)
   print(addr)
@@ -74,7 +68,6 @@ def handle_socks(conn):
 
   client = Client()
   yield client.connect(addr, port)
-  print('connected '+str(addr)+', '+str(port))
   monocle.launch(pump, conn, client, None)
   yield pump(client, conn, None)
 

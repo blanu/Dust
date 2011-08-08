@@ -83,6 +83,7 @@ class SkeinCipherOFB:
   def __init__(self, key, iv, pers=None):
     self.key=key
     self.iv=iv
+    self.count=0
     if v3:
       self.entropy=bytes('', 'ascii')
     else:
@@ -90,12 +91,11 @@ class SkeinCipherOFB:
     self.pers=pers
 
   def getBytes(self, n):
+    self.count=self.count+n
     while len(self.entropy)<n:
       if self.pers:
-#        result=skein512(nonce=self.iv, mac=self.key, pers=self.pers, digest_bits=(BLOCK_SIZE)*8)
         result=skein512(self.iv, mac=self.key, pers=self.pers, digest_bits=(BLOCK_SIZE)*8)
       else:
-#        result=skein512(nonce=self.iv, mac=self.key, digest_bits=(BLOCK_SIZE)*8)
         result=skein512(self.iv, mac=self.key, digest_bits=(BLOCK_SIZE)*8)
       self.entropy=self.entropy+result
       self.iv=result
