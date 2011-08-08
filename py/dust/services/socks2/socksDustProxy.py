@@ -19,10 +19,22 @@ from dust.extensions.lite.lite_socket2 import lite_socket, makeSession, makeEphe
 from dust.core.dust_packet import IV_SIZE, KEY_SIZE
 
 @_o
-def handle_socksDust(conn):
-  client = Client()
-  yield client.connect('blanu.net', 7051)
+def handle_socks(conn):
+  yield readHandshake(conn)
+  yield sendHandshake(conn)
+  dest=yield readRequest(conn)
+  yield sendResponse(dest, conn)
 
+  addr, port=uncompact(dest)
+  print(addr)
+  print(port)
+
+  client = Client()
+  yield client.connect(addr, port)
+
+  handle_socksDust(conn, client)
+
+def handle_socksDust(conn, client):
   myAddr=client._stack_conn.iostream.socket.getsockname()
 #  myAddr=(getPublicIP(v6=False), myAddr[1])
   dest=client._stack_conn.iostream.socket.getpeername()
@@ -52,5 +64,5 @@ def handshake(coder, client):
 
   yield Return(newCoder)
 
-add_service(Service(handle_socksDust, port=7050))
+add_service(Service(handle_socks, port=7050))
 eventloop.run()

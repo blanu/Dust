@@ -33,9 +33,11 @@ def handle_dust(conn):
 
   buffer=FakeSocket()
 
-  monocle.launch(pump, conn, buffer, coder.decrypt)
-  monocle.launch(handle_socks, buffer.invert())
-  yield pump(buffer, conn, coder.encrypt)
+  client = Client()
+  yield client.connect('localhost', 9050)
+
+  monocle.launch(pump, conn, client, coder.decrypt)
+  yield pump(client, conn, coder.encrypt)
 
 @_o
 def handshake(coder, conn):
@@ -55,21 +57,5 @@ def handshake(coder, conn):
 #  yield Return(coder)
   yield Return(newCoder)
 
-@_o
-def handle_socks(conn):
-  yield readHandshake(conn)
-  yield sendHandshake(conn)
-  dest=yield readRequest(conn)
-  yield sendResponse(dest, conn)
-
-  addr, port=uncompact(dest)
-  print(addr)
-  print(port)
-
-  client = Client()
-  yield client.connect(addr, port)
-  monocle.launch(pump, conn, client, None)
-  yield pump(client, conn, None)
-
-add_service(Service(handle_dust, port=7050))
+add_service(Service(handle_dust, port=7051))
 eventloop.run()
