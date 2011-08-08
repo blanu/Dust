@@ -11,23 +11,21 @@ monocle.init('tornado')
 from monocle.stack import eventloop
 from monocle.stack.network import add_service, Service, Client
 
-from dust.core.util import getPublicIP
+from dust.core.util import getPublicIP, encode
 
 from shared import pump
 
 from dust.extensions.lite.lite_socket2 import lite_socket, makeSession, makeEphemeralSession
-from dust.core.dust_packet import IV_SIZE
+from dust.core.dust_packet import IV_SIZE, KEY_SIZE
 
 @_o
 def handle_socksDust(conn):
-  print('connection')
   client = Client()
-  yield client.connect('blanu.net', 7051)
+  yield client.connect('localhost', 7051)
 
   myAddr=client._stack_conn.iostream.socket.getsockname()
-  myAddr=(getPublicIP(v6=False), myAddr[1])
+#  myAddr=(getPublicIP(v6=False), myAddr[1])
   dest=client._stack_conn.iostream.socket.getpeername()
-  print('dest: '+str(dest))
 
   sessionKey=makeSession(myAddr, dest)
   coder=lite_socket(sessionKey)
@@ -39,20 +37,18 @@ def handle_socksDust(conn):
 
 @_o
 def handshake(coder, client):
-  yield client.write(coder.outIv)
+  yield client.write(coder.ivOut)
 
   iv=yield client.read(IV_SIZE)
-  coder.setIV(iv)
+  coder.setIVIn(iv)
 
   ekeypair=coder.createEphemeralKeypair()
 
-  yield conn.write(ekeypair.public)
-  epub=yield conn.read(KEY_SIZE)
+  yield client.write(ekeypair.public.bytes)
+  epub=yield client.read(KEY_SIZE)
 
   esession=makeEphemeralSession(ekeypair, epub)
-
-  newCoder=lite_socket(esession)
-  newCoder.setIV(ivIn)
+  newCoder=lite_socket(esession, ivIn=coder.ivIn, ivOut=coder.ivOut)
 
   yield Return(newCoder)
 

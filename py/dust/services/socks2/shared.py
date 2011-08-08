@@ -4,7 +4,6 @@ from monocle import _o, Return
 from monocle.stack.network import ConnectionLost
 
 from dust.core.util import encode
-from dust.extensions.lite.lite_socket import lite_socket
 
 @_o
 def pump(input, output, transform, debug=False):
@@ -27,26 +26,22 @@ def pump(input, output, transform, debug=False):
       break
 
     if transform:
-      messages=transform(message)
-    else:
-      messages=[message]
+      message=transform(message)
 
-    for x in range(len(messages)):
-      message=messages[x]
-      if debug:
-        print('sending '+str(len(message))+' - '+str(x+1)+'/'+str(len(messages)))
-      try:
-        yield output.write(message)
-      except ConnectionLost:
-        print('Connection lost')
-        input.close()
-        return
-      except IOError:
-        print('IOError')
-        input.close()
-        return
-      except Exception, e:
-        print('Exception')
-        print(e)
-        input.close()
-        return
+    if debug:
+      print('sending '+str(len(message)))
+    try:
+      yield output.write(message)
+    except ConnectionLost:
+      print('Connection lost')
+      input.close()
+      return
+    except IOError:
+      print('IOError')
+      input.close()
+      return
+    except Exception, e:
+      print('Exception')
+      print(e)
+      input.close()
+      return

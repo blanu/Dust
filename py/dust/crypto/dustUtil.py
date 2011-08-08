@@ -3,6 +3,7 @@ import random
 import struct
 
 import dust.crypto.skeinUtil as skeinUtil
+from dust.core.util import encode
 
 v3=(sys.version[0]=='3')
 
@@ -48,4 +49,9 @@ def decrypt(k, iv, data):
 
 class DustCipher(skeinUtil.SkeinCipherOFB):
   def __init__(self, key, iv):
+    if type(key)!=str:
+      key=key.bytes
     skeinUtil.SkeinCipherOFB.__init__(self, key, iv, pers=CIPHER_PERS)
+
+  def __str__(self):
+    return 'DustCipher('+encode(self.key)+','+encode(self.iv)+','+str(self.count)+')'
