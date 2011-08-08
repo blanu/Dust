@@ -18,6 +18,8 @@ from shared import pump
 from dust.extensions.lite.lite_socket2 import lite_socket, makeSession, makeEphemeralSession
 from dust.core.dust_packet import IV_SIZE, KEY_SIZE
 
+from socks import *
+
 @_o
 def handle_socks(conn):
   yield readHandshake(conn)
@@ -32,16 +34,11 @@ def handle_socks(conn):
   client = Client()
   yield client.connect(addr, port)
 
-  handle_socksDust(conn, client)
+  yield handle_socksDust(conn, client)
 
+@_o
 def handle_socksDust(conn, client):
-  myAddr=client._stack_conn.iostream.socket.getsockname()
-#  myAddr=(getPublicIP(v6=False), myAddr[1])
-  dest=client._stack_conn.iostream.socket.getpeername()
-
-  sessionKey=makeSession(myAddr, dest)
-  coder=lite_socket(sessionKey)
-
+  print('handle socks dust')
   coder=yield handshake(coder, client)
 
   monocle.launch(pump, conn, client, coder.encrypt)
