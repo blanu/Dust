@@ -48,6 +48,9 @@ class KeyManager:
   def createKeypair(self):
     self.keypair=createKeypair(self.entropy)
 
+  def createEphemeralKeypair(self):
+    return createKeypair(self.entropy)
+
   def saveKeypair(self, filename):
     pubkey=encode(self.keypair.public.bytes)
     privkey=encode(self.keypair.secret.bytes)
