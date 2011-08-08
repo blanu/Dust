@@ -39,13 +39,13 @@ def handle_socks(conn):
 @_o
 def handle_socksDust(conn, client):
   print('handle socks dust')
-  coder=yield handshake(coder, client)
+  coder=yield handshake(client)
 
   monocle.launch(pump, conn, client, coder.encrypt)
   yield pump(client, conn, coder.decrypt)
 
 @_o
-def handshake(coder, client):
+def handshake(client):
   ekeypair=createEphemeralKeypair()
 
   yield client.write(ekeypair.public.bytes)

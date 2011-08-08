@@ -23,7 +23,7 @@ from socks import *
 @_o
 def handle_dust(conn):
   print('handle_dust')
-  coder=yield handshake(coder, conn)
+  coder=yield handshake(conn)
 
   client = Client()
 #  yield client.connect('localhost', 9050)
@@ -33,7 +33,7 @@ def handle_dust(conn):
   yield pump(client, conn, coder.encrypt)
 
 @_o
-def handshake(coder, conn):
+def handshake(conn):
   ekeypair=createEphemeralKeypair()
 
   epub=yield conn.read(KEY_SIZE)
