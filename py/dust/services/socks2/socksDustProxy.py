@@ -21,7 +21,7 @@ from dust.core.dust_packet import IV_SIZE, KEY_SIZE
 @_o
 def handle_socksDust(conn):
   client = Client()
-  yield client.connect('localhost', 7051)
+  yield client.connect('blanu.net', 7051)
 
   myAddr=client._stack_conn.iostream.socket.getsockname()
 #  myAddr=(getPublicIP(v6=False), myAddr[1])
