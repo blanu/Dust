@@ -26,8 +26,7 @@ def handle_dust(conn):
   coder=yield handshake(conn)
 
   client = Client()
-#  yield client.connect('localhost', 9050)
-  yield client.connect('blanu.net', 80)
+  yield client.connect('localhost', 9050)
 
   monocle.launch(pump, conn, client, coder.decrypt)
   yield pump(client, conn, coder.encrypt)
