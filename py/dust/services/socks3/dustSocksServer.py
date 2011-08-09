@@ -32,10 +32,10 @@ def handle_dust(conn):
 
   print('done handling dust')
 
-def handshake(coder, conn):
+def handshake(conn):
   ekeypair=createEphemeralKeypair()
 
-  yield conn.write(ekeypair.public)
+  yield conn.write(ekeypair.public.bytes)
   epub=yield conn.read(KEY_SIZE)
 
   esession=makeEphemeralSession(ekeypair, epub)

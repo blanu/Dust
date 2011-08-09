@@ -39,7 +39,7 @@ def handshake(conn):
   epub=yield conn.read(KEY_SIZE)
   esession=makeEphemeralSession(ekeypair, epub).bytes
   print('esssion: '+encode(esession))
-  coder=lite_socket(esession)
+  coder=lite_socket(esession.bytes)
   yield conn.write(ekeypair.public.bytes)
 
   yield Return(coder)

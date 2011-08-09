@@ -52,7 +52,7 @@ def handshake(client):
   epub=yield client.read(KEY_SIZE)
 
   esession=makeEphemeralSession(ekeypair, epub)
-  print('esession: '+encode(esession))
+  print('esession: '+encode(esession.bytes))
   coder=lite_socket(esession)
 
   yield Return(coder)
