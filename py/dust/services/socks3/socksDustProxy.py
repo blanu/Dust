@@ -16,7 +16,7 @@ from dust.core.util import getPublicIP
 from shared import pump
 
 from dust.extensions.lite.lite_socket2 import lite_socket, makeSession, makeEphemeralSession, createEphemeralKeypair
-from dust.core.dust_packet import IV_SIZE
+from dust.core.dust_packet import IV_SIZE, KEY_SIZE
 
 @_o
 def handle_socksDust(conn):
@@ -30,10 +30,10 @@ def handle_socksDust(conn):
   yield pump(client, conn, coder.decrypt)
 
 @_o
-def handshake(client):
+def handshake(conn):
   ekeypair=createEphemeralKeypair()
 
-  yield conn.write(ekeypair.public)
+  yield conn.write(ekeypair.public.bytes)
   epub=yield conn.read(KEY_SIZE)
 
   esession=makeEphemeralSession(ekeypair, epub)
