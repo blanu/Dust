@@ -14,7 +14,7 @@ from loopback import FakeSocket
 
 from dust.core.dust_packet import IV_SIZE, KEY_SIZE
 
-from dust.extensions.lite.lite_socket2 import makeEphemeralSession
+from dust.extensions.lite.lite_socket2 import makeEphemeralSession, createEphemeralKeypair
 
 from shared import *
 from socks import *
@@ -22,13 +22,7 @@ from socks import *
 @_o
 def handle_dust(conn):
   print('handle_dust')
-  myAddr=conn._stack_conn.iostream.socket.getsockname()
-  dest=conn._stack_conn.iostream.socket.getpeername()
-
-  sessionKey=makeSession(myAddr, dest)
-  coder=lite_socket(sessionKey)
-
-  coder=handshake(coder, conn)
+  coder=handshake(conn)
 
   buffer=FakeSocket()
 
@@ -39,22 +33,16 @@ def handle_dust(conn):
   print('done handling dust')
 
 def handshake(coder, conn):
-  ivIn=yield conn.read(IV_SIZE)
-  coder.setIV(ivIn)
-
-  yield conn.write(coder.ivOut)
-
-  ekeypair=coder.createEphemeralKeypair()
+  ekeypair=createEphemeralKeypair()
 
   yield conn.write(ekeypair.public)
   epub=yield conn.read(KEY_SIZE)
 
   esession=makeEphemeralSession(ekeypair, epub)
 
-  newCoder=lite_socket(esession)
-  newCoder.setIV(ivIn)
+  coder=lite_socket(esession)
 
-  yield Return(newCoder)
+  yield Return(coder)
 
 @_o
 def handle_socks(conn):
