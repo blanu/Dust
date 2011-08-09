@@ -22,7 +22,7 @@ from socks import *
 @_o
 def handle_dust(conn):
   print('handle_dust')
-  coder=handshake(conn)
+  coder=yield handshake(conn)
 
   buffer=FakeSocket()
 
@@ -32,6 +32,7 @@ def handle_dust(conn):
 
   print('done handling dust')
 
+@_o
 def handshake(conn):
   ekeypair=createEphemeralKeypair()
 
