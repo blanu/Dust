@@ -26,7 +26,7 @@ def pump(input, output, transform, debug=False):
       break
 
     if transform:
-      message=transform(message)
+      message=yield transform(message)
 
     if debug:
       print('sending '+str(len(message)))
