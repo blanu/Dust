@@ -6,6 +6,9 @@ from dust.crypto.keys import KeyManager
 from dust.crypto.curve import Key
 from dust.crypto.dustUtil import DustCipher
 
+import monocle
+from monocle import _o, Return
+
 def makeSession(myAddress, address):
   addressKey=address[0]
 
@@ -29,13 +32,15 @@ class lite_socket(object):
     self.cipherIn=DustCipher(key, "\x00")
     self.cipherOut=DustCipher(key, "\x00")
 
+  @_o
   def encrypt(self, data):
     data=self.cipherOut.encrypt(data)
-    return data
+    yield Return(data)
 
+  @_o
   def decrypt(self, data):
     data=self.cipherIn.decrypt(data)
-    return data
+    yield Return(data)
 
   def createEphemeralKeypair(self):
     return self.keys.createKeypair()
