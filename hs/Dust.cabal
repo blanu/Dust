@@ -1,0 +1,50 @@
+Name:                Dust
+Version:             2.0
+Description:         Dust is an Internet protocol designed to resist a number of attacks currently in active use to censor Internet communication. While adherence to the theoretical maxims of cryptographic security are observed where possible, the focus of Dust is on real solutions to real attacks.
+License:             GPL
+License-file:        LICENSE
+Author:              Brandon Wiley
+Maintainer:          brandon@ischool.utexas.edu
+Build-Type:          Simple
+Cabal-Version:       >=1.8
+
+Library
+  Exposed-modules:   Dust.Crypto.DustCipher, Dust.Core.DustPacket
+  Build-Depends:     base >= 3 && < 5, bytestring, AES
+
+Executable dust
+  Main-is:           Main.hs
+  Build-Depends:     base >= 3 && < 5, bytestring, AES
+
+test-suite crypto
+  type: exitcode-stdio-1.0
+  main-is: TestCrypto.hs
+  ghc-options: -w -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: tests
+
+  build-depends:
+    base,
+    Dust,
+    HUnit >= 1.2,
+    test-framework       >= 0.6,
+    test-framework-hunit >= 0.2,
+    test-framework-th,
+    bytestring,
+    AES
+
+test-suite core
+  type: exitcode-stdio-1.0
+  main-is: TestCore.hs
+  ghc-options: -w -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: tests
+
+  build-depends:
+    base,
+    Dust,
+    HUnit >= 1.2,
+    test-framework       >= 0.6,
+    test-framework-hunit >= 0.2,
+    test-framework-th,
+    bytestring,
+    AES
+
