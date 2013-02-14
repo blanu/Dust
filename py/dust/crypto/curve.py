@@ -6,15 +6,20 @@ from ctypes import *
 if os.name=='nt':
   module='curve25519-donna.dll'
   funcname='curve25519_donna'
+elif os.name=='posix':
+  module='curve25519-donna.dylib'
+  funcname='curve25519_donna'
 else:
   module='curve25519.so'
   funcname='curve25519_athlon'
 
 try:
   filename=os.path.join(os.path.dirname(__file__), module)
+  print('filename: '+str(filename))
   ec=cdll.LoadLibrary(filename)
   curve25519=getattr(ec, funcname)
-except:
+except Exception as e:
+  print('e: '+str(e))
   module='curve25519-donna-c64.so'
   funcname='curve25519_donna'
   filename=os.path.join(os.path.dirname(__file__), module)
