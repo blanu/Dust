@@ -1,25 +1,41 @@
+{-# LANGUAGE DeriveGeneric, DefaultSignatures #-} -- For automatic generation of cereal put and get
+
 module Dust.Crypto.DustCipher
 (
-  Key(..),
+  EncryptionKey(..),
   IV(..),
   Plaintext(..),
   Ciphertext(..),
 
   encrypt,
-  decrypt
-
+  decrypt,
+  createIV
 ) where
 
+import GHC.Generics
 import Data.ByteString
+import Data.Serialize
 import Codec.Crypto.AES
+import System.Entropy
 
-newtype Key = Key { keyBytes :: ByteString } deriving (Show, Eq)
-newtype IV = IV { ivBytes :: ByteString } deriving (Show, Eq)
-newtype Plaintext = Plaintext { plainBytes :: ByteString } deriving (Show, Eq)
-newtype Ciphertext = Ciphertext { cipherBytes :: ByteString } deriving (Show, Eq)
+import Dust.Crypto.Keys
 
-encrypt :: Key -> IV -> Plaintext -> Ciphertext
-encrypt key iv plaintext = Ciphertext (crypt' CTR (keyBytes key) (ivBytes iv) Encrypt (plainBytes plaintext))
+data EncryptionKey = EncryptionKey ByteString deriving (Show, Eq)
+newtype IV = IV ByteString deriving (Show, Eq, Generic)
+newtype Plaintext = Plaintext ByteString deriving (Show, Eq, Generic)
+newtype Ciphertext = Ciphertext ByteString deriving (Show, Eq, Generic)
 
-decrypt :: Key -> IV -> Ciphertext -> Plaintext
-decrypt key iv ciphertext = Plaintext (crypt' CTR (keyBytes key) (ivBytes iv) Decrypt (cipherBytes ciphertext))
+instance Serialize IV
+instance Serialize Plaintext
+instance Serialize Ciphertext
+
+encrypt :: EncryptionKey -> IV -> Plaintext -> Ciphertext
+encrypt (EncryptionKey key) (IV iv) (Plaintext plaintext) = Ciphertext (crypt' CTR key iv Encrypt plaintext)
+
+decrypt :: EncryptionKey -> IV -> Ciphertext -> Plaintext
+decrypt (EncryptionKey key) (IV iv) (Ciphertext ciphertext) = Plaintext (crypt' CTR key iv Decrypt ciphertext)
+
+createIV :: IO (IV)
+createIV = do
+    entropy <- getEntropy 16
+    return (IV entropy)

@@ -1,29 +1,57 @@
+{-# LANGUAGE DeriveGeneric, DefaultSignatures #-} -- For automatic generation of cereal put and get
+
 module Dust.Core.DustPacket
 (
-    DustPacketHeader(..),
-    CipherDataPacket(..),
-    PlainDataPacket(..),
-
-    encryptData,
-    decryptData,
+ PlainHeader(..),
+ CipherHeader(..),
+ PlainDataPacket(..),
+ CipherDataPacket(..),
+ makePlainPacket,
+ makeCipherPacket,
+ encryptData,
+ decryptData,
+ length32
 ) where
 
+import GHC.Generics
 import Dust.Crypto.DustCipher
 import Data.ByteString
+import qualified Data.ByteString as B
+import Data.Serialize
+import Data.Int
 
-data DustPacketHeader = DustPacketHeader {
-    iv :: IV
-} deriving (Show, Eq)
+data PlainHeader = PlainHeader {
+    payloadLength :: Int32
+} deriving (Show, Eq, Generic)
 
-data PlainDataPacket = PlainDataPacket DustPacketHeader Plaintext deriving (Show, Eq)
-data CipherDataPacket = CipherDataPacket DustPacketHeader Ciphertext deriving (Show, Eq)
+data CipherHeader = CipherHeader {
+    encryptedPayloadLength :: Ciphertext
+} deriving (Show, Eq, Generic)
 
-encryptData :: Key -> PlainDataPacket -> CipherDataPacket
-encryptData key (PlainDataPacket header plaintext) = let packetIV = iv header
-                                                         ciphertext = encrypt key packetIV plaintext
-                                                     in CipherDataPacket (DustPacketHeader packetIV) ciphertext
+data PlainDataPacket = PlainDataPacket PlainHeader Plaintext deriving (Show, Eq, Generic)
+data CipherDataPacket = CipherDataPacket CipherHeader Ciphertext deriving (Show, Eq, Generic)
 
-decryptData :: Key -> CipherDataPacket -> PlainDataPacket
-decryptData key (CipherDataPacket header ciphertext) = let packetIV = iv header
-                                                           plaintext = decrypt key packetIV ciphertext
-                                                       in PlainDataPacket (DustPacketHeader packetIV) plaintext
+instance Serialize PlainHeader
+instance Serialize CipherHeader
+instance Serialize PlainDataPacket
+instance Serialize CipherDataPacket
+
+makePlainPacket :: Plaintext -> PlainDataPacket
+makePlainPacket (Plaintext bs) = PlainDataPacket (PlainHeader (length32 bs)) (Plaintext bs)
+
+makeCipherPacket :: Ciphertext -> Ciphertext -> CipherDataPacket
+makeCipherPacket lengthCiphertext ciphertext = CipherDataPacket (CipherHeader lengthCiphertext) ciphertext
+
+encryptData :: (Plaintext -> Ciphertext) -> PlainDataPacket -> CipherDataPacket
+encryptData cipher (PlainDataPacket header plaintext) =
+    let cipherheader = cipher (Plaintext (encode header))
+        ciphertext = cipher plaintext
+    in CipherDataPacket (CipherHeader cipherheader) ciphertext
+
+decryptData :: (Ciphertext -> Plaintext) -> CipherDataPacket -> PlainDataPacket
+decryptData cipher (CipherDataPacket header ciphertext) =
+    let plaintext@(Plaintext bs) = cipher ciphertext
+    in PlainDataPacket (PlainHeader (length32 bs)) plaintext
+
+length32 :: ByteString -> Int32
+length32 bs = (fromIntegral (B.length bs)) :: Int32
