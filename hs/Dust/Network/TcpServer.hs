@@ -5,32 +5,32 @@ module Dust.Network.TcpServer
 
 import Network (listenOn, PortID(PortNumber))
 import Network.Socket
-import Network.Socket.ByteString (sendAll)
-import Data.ByteString (ByteString)
+import qualified Network.Socket.ByteString as NSB
+import qualified Network.Socket.ByteString.Lazy as NSBL
+import Network.Socket.ByteString.Lazy (getContents, sendAll)
+import Data.ByteString.Lazy (ByteString, fromChunks)
 import Control.Monad (forever)
 
 import Dust.Network.Util
 
 type Host = SockAddr
 
-server :: String -> PortNumber -> (ByteString -> IO(ByteString)) -> IO()
-server host port transform = withSocketsDo $ do
+server :: String -> PortNumber -> (Socket -> IO()) -> IO()
+server host port handleRequest = withSocketsDo $ do
         sock <- initSocket host port
-        forever $ acceptAndProcess sock transform
+        forever $ acceptAndProcess sock handleRequest
         sClose sock
 
-initSocket host port = do
-        sock <- listenOn $ PortNumber port
-        return sock
+initSocket :: String -> PortNumber -> IO(Socket)
+initSocket host port = listenOn $ PortNumber port
 
-acceptAndProcess :: Socket -> (ByteString -> IO(ByteString)) -> IO()
-acceptAndProcess sock processor = do
+acceptAndProcess :: Socket -> (Socket-> IO()) -> IO()
+acceptAndProcess sock handleRequest = do
     (s, _) <- accept sock
-    process processor s
+    process handleRequest s
 
-process :: (ByteString -> IO(ByteString)) -> Socket -> IO()
-process transform sock = do
-        input <- recvAll sock
-        output <- transform input
-        sendAll sock output
+process :: (Socket -> IO()) -> Socket -> IO()
+process handleRequest sock = do
+        handleRequest sock
+        sClose sock
         return ()

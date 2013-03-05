@@ -3,21 +3,17 @@ module Dust.Network.TcpClient
  client
 ) where
 
-import Network (connectTo, PortID(PortNumber))
 import Network.Socket
-import Network.Socket.ByteString (sendAll)
-import Data.ByteString (ByteString)
-import Control.Monad (forever)
-import Control.Concurrent
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
 
 import Dust.Network.Util
+import Dust.Crypto.DustCipher
 
-client :: String -> PortNumber -> ByteString -> IO(ByteString)
-client host port msg = withSocketsDo $ do
+client :: String -> PortNumber -> (Socket -> IO(Plaintext)) -> IO(Plaintext)
+client host port handleRequest = withSocketsDo $ do
         sock <- socket AF_INET Stream defaultProtocol
         addr <- inet_addr host
         connect sock (SockAddrInet port addr)
-        sendAll sock msg
-        result <- recvAll sock
-        sClose sock
-        return(result)
+
+        handleRequest sock

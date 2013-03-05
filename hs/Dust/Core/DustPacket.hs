@@ -10,6 +10,7 @@ module Dust.Core.DustPacket
  makeCipherPacket,
  encryptData,
  decryptData,
+ decryptHeader,
  length32
 ) where
 
@@ -41,6 +42,18 @@ makePlainPacket (Plaintext bs) = PlainDataPacket (PlainHeader (length32 bs)) (Pl
 
 makeCipherPacket :: Ciphertext -> Ciphertext -> CipherDataPacket
 makeCipherPacket lengthCiphertext ciphertext = CipherDataPacket (CipherHeader lengthCiphertext) ciphertext
+
+decryptHeader :: (Ciphertext -> Plaintext) -> CipherHeader -> PlainHeader
+decryptHeader cipher (CipherHeader ciphertext) =
+    let (Plaintext lengthBytes) = cipher ciphertext
+        lengthValue = decodeHeader lengthBytes
+    in PlainHeader lengthValue
+
+decodeHeader :: ByteString -> Int32
+decodeHeader bs =
+    case (decode bs)::(Either String Int32) of
+        Left _ -> 0
+        Right value -> value
 
 encryptData :: (Plaintext -> Ciphertext) -> PlainDataPacket -> CipherDataPacket
 encryptData cipher (PlainDataPacket header plaintext) =
