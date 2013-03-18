@@ -24,15 +24,16 @@ main = do
         []      -> putStrLn "Usage: dust-client [arg]"
 
 fetch arg = do
-    let msg = processArgs arg
+    msg <- processArgs arg
     response <- dustClient msg
     let result = handler response
     putStrLn $ "Response:" ++ (toHex result)
 
-processArgs :: String -> Plaintext
-processArgs arg =
-    let message = encode $ PutMessage $ pack arg
-    in Plaintext message
+processArgs :: String -> IO(Plaintext)
+processArgs arg = do
+    payload <- B.readFile arg
+    let message = encode $ PutMessage $ payload
+    return $ Plaintext message
 
 handler :: Plaintext -> B.ByteString
 handler (Plaintext plaintext) = plaintext

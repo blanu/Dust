@@ -39,11 +39,16 @@ putMessage inputBytes = do
     putStrLn "hashing"
     let filehash = digest inputBytes
 
+    tempDir <- getTemporaryDirectory
+    (tempfilename,tempfile) <- openTempFile tempDir "post.markdown"
+
     putStrLn "writing"
     let filepath = "sneakermesh"
     createDirectoryIfMissing False filepath
     let filename = filepath </> toHex filehash
-    B.writeFile filename inputBytes
+    B.hPut tempfile inputBytes
+    hClose tempfile
+    renameFile tempfilename filename
 
     let indexpath = filepath </> "index"
     B.appendFile indexpath filehash
