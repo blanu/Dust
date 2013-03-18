@@ -23,17 +23,24 @@ main = do
         (filepath:idpath:_) -> post filepath idpath
         otherwise      -> putStrLn "Usage: post [message-file] [server-id]"
 
+<<<<<<< HEAD
 post filepath idpath = do
     contents <- readFile filepath
     let msg = processArgs contents
     response <- dustClient idpath msg
+=======
+fetch arg = do
+    msg <- processArgs arg
+    response <- dustClient msg
+>>>>>>> 2102c005d3e660dcf879c169c7450d3ece13b23c
     let result = handler response
     putStrLn $ "Response:" ++ (toHex result)
 
-processArgs :: String -> Plaintext
-processArgs arg =
-    let message = encode $ PutMessage $ pack arg
-    in Plaintext message
+processArgs :: String -> IO(Plaintext)
+processArgs arg = do
+    payload <- B.readFile arg
+    let message = encode $ PutMessage $ payload
+    return $ Plaintext message
 
 handler :: Plaintext -> B.ByteString
 handler (Plaintext plaintext) = plaintext

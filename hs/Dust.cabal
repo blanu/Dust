@@ -38,7 +38,7 @@ Executable fetch
 
 -- Executable octopress-post
 --   Main-is:           OctopressPoster.hs
---   Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, hinotify
+--   Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, hinotify, directory, filepath
 
 --test-suite crypto
 --  type: exitcode-stdio-1.0
