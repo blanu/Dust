@@ -23,16 +23,10 @@ main = do
         (filepath:idpath:_) -> post filepath idpath
         otherwise      -> putStrLn "Usage: post [message-file] [server-id]"
 
-<<<<<<< HEAD
 post filepath idpath = do
     contents <- readFile filepath
     let msg = processArgs contents
     response <- dustClient idpath msg
-=======
-fetch arg = do
-    msg <- processArgs arg
-    response <- dustClient msg
->>>>>>> 2102c005d3e660dcf879c169c7450d3ece13b23c
     let result = handler response
     putStrLn $ "Response:" ++ (toHex result)
 
