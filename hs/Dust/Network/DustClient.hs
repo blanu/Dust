@@ -19,13 +19,13 @@ import Dust.Crypto.DustCipher
 import Dust.Core.DustPacket
 import Dust.Network.TcpClient
 
-dustClient :: Plaintext -> IO(Plaintext)
-dustClient payload = do
+dustClient :: FilePath -> Plaintext -> IO(Plaintext)
+dustClient idpath payload = do
     let host = "127.0.0.1"
     let port = 9001
 
     keypair <- createEphemeral
-    public <- loadPublic "id.pub"
+    public <- loadPublic idpath
     iv <- createIV
     let session = makeSession keypair public iv
 

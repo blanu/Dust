@@ -32,13 +32,13 @@ handleIndex (Plaintext plaintext) =
 fetchIndex :: IO([MessageID])
 fetchIndex = do
     let msg = Plaintext $ encode $ GetIndex
-    response <- dustClient msg
+    response <- dustClient "id.pub" msg
     return $ handleIndex response
 
 fetchMessages :: [MessageID] -> IO([Message])
 fetchMessages ids = do
     let msg = Plaintext $ encode $ GetMessages ids
-    response <- dustClient msg
+    response <- dustClient "id.pub" msg
     return $ handleMessages response
 
 handleMessages :: Plaintext -> [Message]

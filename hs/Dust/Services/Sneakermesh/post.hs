@@ -20,12 +20,13 @@ main = do
     args <- getArgs
 
     case args of
-        (arg:_) -> fetch arg
-        []      -> putStrLn "Usage: dust-client [arg]"
+        (filepath:idpath:_) -> post filepath idpath
+        otherwise      -> putStrLn "Usage: post [message-file] [server-id]"
 
-fetch arg = do
-    let msg = processArgs arg
-    response <- dustClient msg
+post filepath idpath = do
+    contents <- readFile filepath
+    let msg = processArgs contents
+    response <- dustClient idpath msg
     let result = handler response
     putStrLn $ "Response:" ++ (toHex result)
 
