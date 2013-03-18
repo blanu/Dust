@@ -30,11 +30,10 @@ post filepath idpath = do
     let result = handler response
     putStrLn $ "Response:" ++ (toHex result)
 
-processArgs :: String -> IO(Plaintext)
-processArgs arg = do
-    payload <- B.readFile arg
-    let message = encode $ PutMessage $ payload
-    return $ Plaintext message
+processArgs :: String -> Plaintext
+processArgs arg =
+    let message = encode $ PutMessage $ pack arg
+    in Plaintext message
 
 handler :: Plaintext -> B.ByteString
 handler (Plaintext plaintext) = plaintext
