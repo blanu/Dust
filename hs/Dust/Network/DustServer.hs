@@ -29,7 +29,7 @@ dustServer proxyAction = do
         then putStrLn "Generating new keys..."
         else putStrLn "Loaded keys."
 
-    let host = "127.0.0.1"
+    let host = "0.0.0.0"
     let port = 9001
 
     iv <- createIV
