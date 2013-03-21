@@ -30,7 +30,7 @@ dustServer proxyAction = do
         else putStrLn "Loaded keys."
 
     let host = "0.0.0.0"
-    let port = 9001
+    let port = 6885
 
     iv <- createIV
 

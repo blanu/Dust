@@ -22,7 +22,7 @@ import Dust.Network.TcpClient
 dustClient :: FilePath -> Plaintext -> IO(Plaintext)
 dustClient idpath payload = do
     let host = "166.78.129.122"
-    let port = 9001
+    let port = 6885
 
     keypair <- createEphemeral
     public <- loadPublic idpath
