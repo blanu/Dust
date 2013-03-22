@@ -17,10 +17,30 @@ import Dust.Network.DustClient
 import Dust.Services.Sneakermesh.Message
 
 main = do
-    ids <- fetchIndex
-    putStrLn $ "Response:" ++ (show ids)
-    msgs <- fetchMessages ids
-    putStrLn $ "Response:" ++ (show msgs)
+    args <- getArgs
+
+    case args of
+        (idpath:_) -> fetch idpath
+        otherwise      -> putStrLn "Usage: fetch [server-id]"
+
+fetch :: String -> IO()
+fetch idpath = do
+    ids <- fetchIndex idpath
+    putStrLn $ "Ids:" ++ (show ids)
+--    msgs <- fetchMessages idpath ids
+--    printMessages msgs
+
+fetchIndex :: String -> IO([MessageID])
+fetchIndex idpath = do
+    let msg = Plaintext $ encode $ GetIndex
+    response <- dustClient idpath msg
+
+    let (Plaintext plaintext) = response
+    let result = (decode plaintext)::(Either String ResultMessage)
+    putStrLn $ "Result: " ++ (show result)
+    putStrLn $ "Length: " ++ (show (B.length plaintext))
+
+    return $ handleIndex response
 
 handleIndex :: Plaintext -> [MessageID]
 handleIndex (Plaintext plaintext) =
@@ -29,17 +49,29 @@ handleIndex (Plaintext plaintext) =
         Right (IndexResult msgids) -> msgids
         otherwise -> []
 
-fetchIndex :: IO([MessageID])
-fetchIndex = do
-    let msg = Plaintext $ encode $ GetIndex
-    response <- dustClient "id.pub" msg
-    return $ handleIndex response
+printMessages :: [Message] -> IO()
+printMessages [] = return ()
+printMessages (id:ids) = do
+    printMessage id
+    printMessages ids
 
-fetchMessages :: [MessageID] -> IO([Message])
-fetchMessages ids = do
-    let msg = Plaintext $ encode $ GetMessages ids
-    response <- dustClient "id.pub" msg
-    return $ handleMessages response
+printMessage :: Message -> IO()
+printMessage msg = do
+    putStrLn $ "Messages:" ++ (show msg)
+
+fetchMessages :: String -> [MessageID] -> IO([Message])
+fetchMessages idpath [] = return ([])
+fetchMessages idpath (id:ids) = do
+    msg <- fetchMessage idpath id
+    msgs <- fetchMessages idpath ids
+    return (msg:msgs)
+
+fetchMessage :: String -> MessageID -> IO(Message)
+fetchMessage idpath id = do
+    let msg = Plaintext $ encode $ GetMessages [id]
+    response <- dustClient idpath msg
+    let (msg:_) = handleMessages response
+    return msg
 
 handleMessages :: Plaintext -> [Message]
 handleMessages (Plaintext plaintext) =

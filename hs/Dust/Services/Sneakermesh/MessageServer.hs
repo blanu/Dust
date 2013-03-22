@@ -60,7 +60,9 @@ getIndex = do
     let filepath = "sneakermesh"
     let indexpath = filepath </> "index"
     index <- B.readFile indexpath
-    return $ parseIndex index
+    let result@(IndexResult ids) = parseIndex index
+    putStrLn $ "Returning index of " ++ (show $ length ids) ++ " messages"
+    return result
 
 parseIndex :: B.ByteString -> ResultMessage
 parseIndex bytes =
