@@ -20,7 +20,7 @@ data Command =
     | GetMessages [MessageID]
     deriving (Show, Read, Generic)
 
-newtype MessageID = MessageID ByteString deriving (Show, Read, Generic)
+newtype MessageID = MessageID ByteString deriving (Eq, Show, Read, Generic)
 type Message = ByteString
 
 instance Serialize Command

@@ -7,6 +7,7 @@ import Crypto.Classes
 import Crypto.Skein
 import Data.Serialize
 import Text.Printf (printf)
+import Data.List as L
 
 import Dust.Crypto.DustCipher
 import Dust.Network.DustServer
@@ -66,7 +67,7 @@ getIndex = do
 
 parseIndex :: B.ByteString -> ResultMessage
 parseIndex bytes =
-    let messages = parseMessageIDs bytes
+    let messages = L.nub $ parseMessageIDs bytes
     in IndexResult messages
 
 parseMessageIDs :: B.ByteString -> [MessageID]
