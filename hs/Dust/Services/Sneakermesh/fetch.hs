@@ -27,8 +27,8 @@ fetch :: String -> IO()
 fetch idpath = do
     ids <- fetchIndex idpath
     putStrLn $ "Ids:" ++ (show ids)
---    msgs <- fetchMessages idpath ids
---    printMessages msgs
+    msgs <- fetchMessages idpath ids
+    printMessages msgs
 
 fetchIndex :: String -> IO([MessageID])
 fetchIndex idpath = do
