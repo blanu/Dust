@@ -75,11 +75,21 @@ getPacket session sock = do
     let cipher = makeDecrypt session
     let plainPacketHeader = decryptHeader cipher cipherHeader
     let PlainHeader packetLength = plainPacketHeader
+    let packetLen = (fromIntegral packetLength)::Int
 
---    payloadBytes <- recv sock ((fromIntegral packetLength)::Int64)
-    payloadBytes <- recv sock ((fromIntegral packetLength)::Int)
+    payloadBytes <- readBytes sock packetLen
     let ciphertext = Ciphertext payloadBytes
     return (cipher ciphertext)
+
+readBytes :: Socket -> Int -> IO(B.ByteString)
+readBytes sock maxLen = do
+    bs <- recv sock maxLen
+    let readLen = B.length bs
+    if readLen == maxLen
+      then return bs
+      else do
+        rest <- readBytes sock (maxLen-readLen)
+        return $ B.append bs rest
 
 putSession :: Session -> Socket -> IO()
 putSession (Session (Keypair (PublicKey myPublic) _) _ (IV iv)) sock = do
