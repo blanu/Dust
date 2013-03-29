@@ -13,8 +13,7 @@ module Dust.Core.Protocol
  makeEncoder,
  getSession,
  getPacket,
- putSession,
- putPacket
+ putSessionPacket
 ) where
 
 import qualified Data.ByteString as B
@@ -28,8 +27,9 @@ import Network.Socket.ByteString (recv, sendAll)
 
 import Dust.Core.DustPacket
 import Dust.Crypto.DustCipher
-import Dust.Crypto.Curve
+import Dust.Crypto.ECDH
 import Dust.Crypto.Keys
+import Dust.Model.PacketLength
 
 data Session = Session Keypair PublicKey IV deriving (Show)
 data Stream = Stream StreamHeader CipherDataPacket deriving (Show)
@@ -91,17 +91,40 @@ readBytes sock maxLen = do
         rest <- readBytes sock (maxLen-readLen)
         return $ B.append bs rest
 
-putSession :: Session -> Socket -> IO()
-putSession (Session (Keypair (PublicKey myPublic) _) _ (IV iv)) sock = do
-    sendAll sock myPublic
-    sendAll sock iv
-    return ()
+encodeSession :: Session -> B.ByteString
+encodeSession (Session (Keypair (PublicKey myPublic) _) _ (IV iv)) = B.append myPublic iv
 
-putPacket :: Session -> Plaintext -> Socket -> IO()
-putPacket session plaintext sock = do
+encodePacket :: Session -> Plaintext -> B.ByteString
+encodePacket session plaintext =
     let packet = makePlainPacket plaintext
-    let cipher = makeEncrypt session
-    let (CipherDataPacket (CipherHeader (Ciphertext header)) (Ciphertext payload)) = encryptData cipher packet
-    sendAll sock header
-    sendAll sock payload
-    return()
+        cipher = makeEncrypt session
+        (CipherDataPacket (CipherHeader (Ciphertext header)) (Ciphertext payload)) = encryptData cipher packet
+    in B.append header payload
+
+encodeSessionPacket :: Session -> Plaintext -> B.ByteString
+encodeSessionPacket session plaintext = B.append (encodeSession session) (encodePacket session plaintext)
+
+putSessionPacket :: Session -> Plaintext -> Socket -> IO()
+putSessionPacket session plaintext sock = do
+    let bytes = encodeSessionPacket session plaintext
+    sendBytes bytes sock
+
+sendBytes :: B.ByteString -> Socket -> IO()
+sendBytes msg sock = do
+    let msgLength = toInteger $ B.length msg
+    targetPacketLength <- nextLength
+
+    let bs = case compare targetPacketLength msgLength of
+                GT -> pad msg $ fromIntegral (targetPacketLength - msgLength)
+                otherwise -> msg
+
+    let (part, rest) = B.splitAt (fromIntegral targetPacketLength) msg
+
+    sendAll sock part
+
+    if not $ B.null rest
+        then sendBytes rest sock
+        else return ()
+
+pad :: B.ByteString -> Int -> B.ByteString
+pad bs amount = B.append bs $ B.replicate amount 0

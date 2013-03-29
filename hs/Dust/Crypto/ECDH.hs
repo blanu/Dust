@@ -1,4 +1,4 @@
-module Dust.Crypto.Curve
+module Dust.Crypto.ECDH
 (
   splitSecret,
   createPrivate,

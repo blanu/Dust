@@ -14,7 +14,7 @@ import Dust.Crypto.DustCipher
 import Dust.Core.DustPacket
 import Dust.Core.Protocol
 import Dust.Crypto.Keys
-import Dust.Crypto.Curve
+import Dust.Crypt.ECDH
 
 case_encode_decode = do
     let iv = IV (pack "1234567890123456")

@@ -11,8 +11,8 @@ import Test.HUnit hiding (test)
 import Data.ByteString.Char8 (pack, useAsCString, packCString)
 
 import Dust.Crypto.DustCipher
-import Dust.Crypto.Curve25519
-import Dust.Crypto.Curve
+import Dust.Crypt.Curve25519
+import Dust.Crypt.ECDH
 import Dust.Crypto.Keys
 
 case_keypair_save_load = do

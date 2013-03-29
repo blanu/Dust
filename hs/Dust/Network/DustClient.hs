@@ -13,7 +13,7 @@ import System.IO.Error
 import Network.Socket
 
 import Dust.Crypto.Keys
-import Dust.Crypto.Curve
+import Dust.Crypto.ECDH
 import Dust.Core.Protocol
 import Dust.Crypto.DustCipher
 import Dust.Core.DustPacket
@@ -35,8 +35,7 @@ handleRequest :: Session -> Plaintext -> Socket -> IO(Plaintext)
 handleRequest session@(Session keypair _ _) payload sock = do
     putStrLn $ "Request:" ++ (show payload)
 
-    putSession session sock
-    putPacket session payload sock
+    putSessionPacket session payload sock
 
     otherSession <- getSession keypair sock
     plaintext <- getPacket otherSession sock

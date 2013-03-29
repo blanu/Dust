@@ -9,32 +9,32 @@ Build-Type:          Simple
 Cabal-Version:       >=1.8
 
 Library
-  Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.Curve, Dust.Crypto.Curve25519, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.Protocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, entropy, network, cereal, ghc-prim, binary
+  Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.Protocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, entropy, network, cereal, ghc-prim, binary, random
   Extensions:
     ForeignFunctionInterface
-  C-sources: lib/curve25519-donna.c
+  C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
   Include-Dirs: lib
 
 Executable echo-server
   Main-is:           Dust/Services/Example/EchoServer.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random
 
 Executable twitter-search-server
   Main-is:           Dust/Services/Example/TwitterSearchServer.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, HTTP, cereal, ghc-prim, binary
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, HTTP, cereal, ghc-prim, binary, random
 
 Executable message-server
   Main-is:           Dust/Services/Sneakermesh/MessageServer.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, HTTP, cereal, ghc-prim, binary, crypto-api, skein, filepath, directory
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, HTTP, cereal, ghc-prim, binary, crypto-api, skein, filepath, directory, random
 
 Executable post
   Main-is:           Dust/Services/Sneakermesh/post.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random
 
 Executable fetch
   Main-is:           Dust/Services/Sneakermesh/fetch.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random
 
 -- Executable octopress-post
 --   Main-is:           OctopressPoster.hs

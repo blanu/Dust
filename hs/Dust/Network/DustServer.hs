@@ -15,7 +15,7 @@ import qualified Data.ByteString.Lazy as BL
 import Network.Socket
 
 import Dust.Crypto.Keys
-import Dust.Crypto.Curve
+import Dust.Crypto.ECDH
 import Dust.Core.Protocol
 import Dust.Network.TcpServer
 import Dust.Crypto.DustCipher
@@ -60,7 +60,6 @@ reencode keypair iv proxyAction sock = do
     putStrLn $ "Response:" ++ (show (B.length resultBytes))
 
     let otherSession = makeSession keypair otherPublic iv
-    putSession otherSession sock
-    putPacket otherSession result sock
+    putSessionPacket otherSession result sock
 
     return ()
