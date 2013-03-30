@@ -64,8 +64,8 @@ makeEncoder session@(Session (Keypair myPublic _) _ iv) =
 
 getSession :: Keypair -> Socket -> IO Session
 getSession keypair sock = do
-    public <- recv sock 32
-    iv <- recv sock 16
+    public <- readBytes sock 32
+    iv <- readBytes sock 16
     return (Session keypair (PublicKey public) (IV iv))
 
 getPacket :: Session -> Socket -> IO Plaintext
@@ -114,12 +114,15 @@ sendBytes msg sock = do
     let msgLength = toInteger $ B.length msg
     targetPacketLength <- nextLength
 
+    putStrLn $ "Lengths: " ++ (show msgLength) ++ " " ++ (show targetPacketLength)
+
     let bs = case compare targetPacketLength msgLength of
                 GT -> pad msg $ fromIntegral (targetPacketLength - msgLength)
                 otherwise -> msg
 
-    let (part, rest) = B.splitAt (fromIntegral targetPacketLength) msg
+    let (part, rest) = B.splitAt (fromIntegral targetPacketLength) bs
 
+    putStrLn $ "Sending with target packet length of " ++ (show $ B.length part)
     sendAll sock part
 
     if not $ B.null rest
