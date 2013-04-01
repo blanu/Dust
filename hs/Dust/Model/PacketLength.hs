@@ -8,4 +8,4 @@ import System.Random
 
 nextLength :: IO Integer
 nextLength = do
-    randomRIO (1, 1500)
+    randomRIO (1, 1448)

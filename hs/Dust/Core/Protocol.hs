@@ -24,6 +24,7 @@ import Data.Binary.Put (Put, putByteString)
 import Data.Binary.Get (Get, getLazyByteString, runGet, runGetState)
 import Network.Socket (Socket)
 import Network.Socket.ByteString (recv, sendAll)
+import System.IO (appendFile)
 
 import Dust.Core.DustPacket
 import Dust.Crypto.DustCipher
@@ -123,6 +124,7 @@ sendBytes msg sock = do
     let (part, rest) = B.splitAt (fromIntegral targetPacketLength) bs
 
     putStrLn $ "Sending with target packet length of " ++ (show $ B.length part)
+    appendFile "targetLenths.txt" $ show targetPacketLength ++ "\n"
     sendAll sock part
 
     if not $ B.null rest
