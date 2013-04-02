@@ -27,6 +27,7 @@ initSocket host port = listenOn $ PortNumber port
 acceptAndProcess :: Socket -> (Socket-> IO()) -> IO()
 acceptAndProcess sock handleRequest = do
     (s, _) <- accept sock
+    setSocketOption s NoDelay 1
     process handleRequest s
 
 process :: (Socket -> IO()) -> Socket -> IO()

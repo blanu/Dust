@@ -15,5 +15,6 @@ client host port handleRequest = withSocketsDo $ do
         sock <- socket AF_INET Stream defaultProtocol
         addr <- inet_addr host
         connect sock (SockAddrInet port addr)
+        setSocketOption sock NoDelay 1
 
         handleRequest sock
