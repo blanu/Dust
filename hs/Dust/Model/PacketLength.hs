@@ -1,47 +1,50 @@
---{-# LANGUAGE DeriveGeneric, DefaultSignatures #-} -- For automatic generation of cereal put and get
+{-# LANGUAGE DeriveGeneric, DefaultSignatures #-} -- For automatic generation of cereal put and get
 
 module Dust.Model.PacketLength
 (
---    PacketLengthModel(..),
---    loadLengthModel,
+    PacketLengthModel(..),
+    loadLengthModel,
+    probsToCDF,
     nextLength
 )
 where
 
 import System.Random
---import GHC.Generics
---import Data.Serialize
---import Data.Random.Shuffle.Weighted
---import Data.Random.RVar
---import Data.Random
---import Data.Random.Source.DevRandom
---import Data.Map
---import qualified Data.ByteString as B
+import GHC.Generics
+import Data.Serialize
+import Data.Random.Shuffle.Weighted
+import Data.Random.RVar
+import Data.Random
+import Data.Random.Source.DevRandom
+import Data.Map
+import qualified Data.ByteString as B
 
--- data PacketLengthModel = PacketLengthModel [Double] deriving (Eq, Show, Generic)
+data PacketLengthModel = PacketLengthModel [Double] deriving (Eq, Show, Generic)
 
--- loadLengthModel :: FilePath -> IO (Map Double Int)
--- loadLengthModel path = do
---    probs <- loadProbs path
---    return $ probToCDF probs
+instance Serialize PacketLengthModel
 
--- loadProbs :: FilePath -> IO [Double]
--- loadProbs path = do
---     s <- B.readFile path
---     let result = (decode s)::Either String [Double]
---     case result of
---         Left error -> return ([])
---         Right arr -> return(arr)
+loadLengthModel :: FilePath -> IO (Map Double Int)
+loadLengthModel path = do
+   probs <- loadProbs path
+   return $ probsToCDF probs
 
--- probToCDF :: [Double] -> Map Double Int
--- probToCDF probs = cdfMapFromList $ zip probs [1..(length probs)]
+loadProbs :: FilePath -> IO [Double]
+loadProbs path = do
+    s <- B.readFile path
+    let result = (decode s)::(Either String [Double])
+    case result of
+        Left error -> return ([])
+        Right arr -> return(arr)
 
---nextLength :: Map Double Int -> IO Int
---nextLength cdf = do
---    let dist = weightedSampleCDF 1 cdf
---    arr <- runRVar dist DevRandom :: IO [Int]
---    return (head arr)
+probsToCDF :: [Double] -> Map Double Int
+probsToCDF probs = cdfMapFromList $ zip probs [1..(length probs)]
 
-nextLength :: IO Integer
-nextLength = do
-   randomRIO (1, 1448)
+nextLength :: Map Double Int -> IO Int
+nextLength cdf = do
+    let dist = weightedSampleCDF 1 cdf
+    arr <- runRVar dist DevRandom :: IO [Int]
+    return (head arr)
+
+--nextLength :: IO Integer
+--nextLength = do
+--   randomRIO (1, 1448)

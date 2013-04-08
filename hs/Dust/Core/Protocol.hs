@@ -30,7 +30,7 @@ import Dust.Core.DustPacket
 import Dust.Crypto.DustCipher
 import Dust.Crypto.ECDH
 import Dust.Crypto.Keys
-import Dust.Model.PacketLength
+import Dust.Model.TrafficModel
 
 data Session = Session Keypair PublicKey IV deriving (Show)
 data Stream = Stream StreamHeader CipherDataPacket deriving (Show)
@@ -105,15 +105,15 @@ encodePacket session plaintext =
 encodeSessionPacket :: Session -> Plaintext -> B.ByteString
 encodeSessionPacket session plaintext = B.append (encodeSession session) (encodePacket session plaintext)
 
-putSessionPacket :: Session -> Plaintext -> Socket -> IO()
-putSessionPacket session plaintext sock = do
+putSessionPacket :: TrafficGenerator -> Session -> Plaintext -> Socket -> IO()
+putSessionPacket gen session plaintext sock = do
     let bytes = encodeSessionPacket session plaintext
-    sendBytes bytes sock
+    sendBytes gen bytes sock
 
-sendBytes :: B.ByteString -> Socket -> IO()
-sendBytes msg sock = do
-    let msgLength = toInteger $ B.length msg
-    targetPacketLength <- nextLength
+sendBytes :: TrafficGenerator -> B.ByteString -> Socket -> IO()
+sendBytes gen msg sock = do
+    let msgLength = B.length msg
+    targetPacketLength <- generateLength gen
 
     putStrLn $ "Lengths: " ++ (show msgLength) ++ " " ++ (show targetPacketLength)
 
@@ -128,7 +128,7 @@ sendBytes msg sock = do
     sendAll sock part
 
     if not $ B.null rest
-        then sendBytes rest sock
+        then sendBytes gen rest sock
         else return ()
 
 pad :: B.ByteString -> Int -> B.ByteString

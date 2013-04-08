@@ -19,6 +19,7 @@ import Dust.Crypto.ECDH
 import Dust.Core.Protocol
 import Dust.Network.TcpServer
 import Dust.Crypto.DustCipher
+import Dust.Model.TrafficModel
 
 dustServer :: (Plaintext -> IO(Plaintext)) -> IO()
 dustServer proxyAction = do
@@ -29,12 +30,17 @@ dustServer proxyAction = do
         then putStrLn "Generating new keys..."
         else putStrLn "Loaded keys."
 
-    let host = "0.0.0.0"
-    let port = 6885
+    eitherModel <- loadModel "traffic.model"
+    case eitherModel of
+        Left error -> putStrLn "Error loading model"
+        Right model -> do
+            let gen  = makeGenerator model
+            let host = "0.0.0.0"
+            let port = 6885
 
-    iv <- createIV
+            iv <- createIV
 
-    server host port (reencode keypair iv proxyAction)
+            server host port (reencode keypair iv gen proxyAction)
 
 ensureKeys :: IO (Keypair, Bool)
 ensureKeys = do
@@ -47,8 +53,8 @@ ensureKeys = do
             return (keys, True)
         Right keypair -> return (keypair, False)
 
-reencode :: Keypair -> IV -> (Plaintext -> IO(Plaintext)) -> Socket -> IO()
-reencode keypair iv proxyAction sock = do
+reencode :: Keypair -> IV -> TrafficGenerator -> (Plaintext -> IO(Plaintext)) -> Socket -> IO()
+reencode keypair iv gen proxyAction sock = do
     session@(Session _ otherPublic _) <- getSession keypair sock
     plaintext <- getPacket session sock
 
@@ -60,6 +66,6 @@ reencode keypair iv proxyAction sock = do
     putStrLn $ "Response:" ++ (show (B.length resultBytes))
 
     let otherSession = makeSession keypair otherPublic iv
-    putSessionPacket otherSession result sock
+    putSessionPacket gen otherSession result sock
 
     return ()
