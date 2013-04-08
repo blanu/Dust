@@ -21,6 +21,8 @@ import Foreign.Ptr
 import Foreign.ForeignPtr (withForeignPtr)
 import Data.Word
 
+type WordSize = Word32 --Set to Word32 or Word64 depending on 32-bit or 64-bit platform
+
 withByteStringPtr :: ByteString -> (Ptr Word8 -> IO a) -> IO a
 withByteStringPtr b f =
     withForeignPtr fptr $ \ptr -> f (ptr `plusPtr` off)
@@ -47,7 +49,7 @@ unsafe_ed25519_sign_open msg pubkey signature = do
     withByteStringPtr msg $ \cmsg -> do
         withByteStringPtr pubkey $ \cpubkey -> do
             withByteStringPtr signature $ \csignature -> do
-                let msgSize = CSize ((fromIntegral $ B.length msg)::Word64)
+                let msgSize = CSize ((fromIntegral $ B.length msg)::WordSize)
                 result <- c_ed25519_sign_open cmsg msgSize cpubkey csignature
                 case result of
                     0 -> return (True)
@@ -59,7 +61,7 @@ unsafe_ed25519_sign msg secret pubkey = do
         withByteStringPtr msg $ \cmsg -> do
             withByteStringPtr secret $ \csecret -> do
                 withByteStringPtr pubkey $ \cpubkey -> do
-                    let msgSize = CSize ((fromIntegral $ B.length msg)::Word64)
+                    let msgSize = CSize ((fromIntegral $ B.length msg)::WordSize)
                     c_ed25519_sign cmsg msgSize csecret cpubkey signature
                     unsafePackCStringFinalizer signature 64 emptyFinalizer
 
