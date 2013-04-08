@@ -15,7 +15,9 @@ import Dust.Crypto.DustCipher
 import Dust.Core.DustPacket
 import Dust.Network.DustClient
 import Dust.Services.Sneakermesh.Message
+import Dust.Model.TrafficModel
 
+main :: IO()
 main = do
     args <- getArgs
 
@@ -23,10 +25,29 @@ main = do
         (filepath:idpath:_) -> post filepath idpath
         otherwise      -> putStrLn "Usage: post [message-file] [server-id]"
 
+post :: FilePath -> FilePath -> IO()
 post filepath idpath = do
     contents <- readFile filepath
     let msg = processArgs contents
-    response <- dustClient idpath msg
+
+    eitherModel <- loadModel "traffic.model"
+    case eitherModel of
+        Left error -> do
+            putStrLn "Error loading model"
+            return ()
+        Right model -> do
+            let gen  = makeGenerator model
+            lots 1000 (doPost idpath msg handler gen)
+
+lots :: Int -> IO() -> IO()
+lots 0 f = return ()
+lots x f = do
+    result <- f
+    lots (x-1) f
+
+doPost :: FilePath -> Plaintext -> (Plaintext -> B.ByteString) -> TrafficGenerator -> IO()
+doPost idpath msg handler gen = do
+    response <- dustClient gen idpath msg
     let result = handler response
     putStrLn $ "Response:" ++ (toHex result)
 

@@ -21,8 +21,8 @@ import Dust.Network.TcpServer
 import Dust.Crypto.DustCipher
 import Dust.Model.TrafficModel
 
-dustServer :: (Plaintext -> IO(Plaintext)) -> IO()
-dustServer proxyAction = do
+dustServer :: TrafficGenerator -> (Plaintext -> IO(Plaintext)) -> IO()
+dustServer gen proxyAction = do
     putStrLn "Loading keys..."
     (keypair, newKeys) <- ensureKeys
 
@@ -30,17 +30,12 @@ dustServer proxyAction = do
         then putStrLn "Generating new keys..."
         else putStrLn "Loaded keys."
 
-    eitherModel <- loadModel "traffic.model"
-    case eitherModel of
-        Left error -> putStrLn "Error loading model"
-        Right model -> do
-            let gen  = makeGenerator model
-            let host = "0.0.0.0"
-            let port = 6885
+    let host = "0.0.0.0"
+    let port = 6885
 
-            iv <- createIV
+    iv <- createIV
 
-            server host port (reencode keypair iv gen proxyAction)
+    server host port (reencode keypair iv gen proxyAction)
 
 ensureKeys :: IO (Keypair, Bool)
 ensureKeys = do

@@ -12,9 +12,16 @@ import Data.List as L
 import Dust.Crypto.DustCipher
 import Dust.Network.DustServer
 import Dust.Services.Sneakermesh.Message
+import Dust.Model.TrafficModel
 
 main :: IO()
-main = dustServer messageServer
+main = do
+    eitherModel <- loadModel "traffic.model"
+    case eitherModel of
+        Left error -> putStrLn "Error loading model"
+        Right model -> do
+            let gen  = makeGenerator model
+            dustServer gen messageServer
 
 messageServer :: Plaintext -> IO(Plaintext)
 messageServer (Plaintext inputBytes) = do

@@ -20,25 +20,17 @@ import Dust.Core.DustPacket
 import Dust.Network.TcpClient
 import Dust.Model.TrafficModel
 
-dustClient :: FilePath -> Plaintext -> IO(Plaintext)
-dustClient idpath payload = do
-    eitherModel <- loadModel "traffic.model"
-    case eitherModel of
-        Left error -> do
-            putStrLn "Error loading model"
-            return (Plaintext (pack ""))
-        Right model -> do
-            let gen  = makeGenerator model
+dustClient :: TrafficGenerator -> FilePath -> Plaintext -> IO(Plaintext)
+dustClient gen idpath payload = do
+    let host = "166.78.129.122"
+    let port = 6885
 
-            let host = "166.78.129.122"
-            let port = 6885
+    keypair <- createEphemeral
+    public <- loadPublic idpath
+    iv <- createIV
+    let session = makeSession keypair public iv
 
-            keypair <- createEphemeral
-            public <- loadPublic idpath
-            iv <- createIV
-            let session = makeSession keypair public iv
-
-            client host port (handleRequest gen session payload)
+    client host port (handleRequest gen session payload)
 
 handleRequest :: TrafficGenerator -> Session -> Plaintext -> Socket -> IO(Plaintext)
 handleRequest gen session@(Session keypair _ _) payload sock = do
