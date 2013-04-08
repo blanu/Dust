@@ -5,6 +5,7 @@ import System.Environment (getArgs)
 import System.IO.Error
 import Data.Serialize
 import Text.CSV
+import Data.List as L
 
 import Dust.Model.TrafficModel
 import Dust.Model.PacketLength
@@ -21,17 +22,13 @@ compile lengthpath modelpath = do
     result <- parseCSVFromFile lengthpath
     case result of
         Left error -> putStrLn "Error parsing CSV"
-        Right contents -> putStrLn $ show $ process contents
+        Right contents -> do
+            let model = TrafficModel $ PacketLengthModel $ process contents
+            putStrLn $ show model
+            B.writeFile modelpath (encode model)
 
-process :: CSV -> [(Int,Int)]
+process :: CSV -> [Double]
 process [] = []
-process (row:rows) = processRow row ++ process rows
-
-processRow :: Record -> [(Int,Int)]
-processRow (indexStr:countStr:_) =
-    let index = (read indexStr) :: Int
-        count = (read countStr) :: Int
-    in [(index,count)]
-processRow (_:[]) = []
-processRow [] = []
-
+process ((countStr:_):rest) =
+    let count = (read countStr) :: Double
+    in [count] ++ process rest
