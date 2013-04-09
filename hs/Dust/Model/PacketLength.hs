@@ -16,7 +16,7 @@ import Data.Random.Shuffle.Weighted
 import Data.Random.RVar
 import Data.Random
 import Data.Random.Source.DevRandom
-import Data.Random.Source.StdGen
+import Data.Random.Source.Std
 import Data.Map
 import qualified Data.ByteString as B
 
@@ -44,7 +44,8 @@ nextLength :: Map Double Int -> IO Int
 nextLength cdf = do
     putStrLn "R0"
     let dist = weightedSampleCDF 1 cdf
-    arr <- runRVar dist DevRandom :: IO [Int]
+--    arr <- runRVar dist DevRandom :: IO [Int]
+    arr <- runRVar dist StdRandom :: IO [Int]
     putStrLn "R1"
     return (head arr)
 
