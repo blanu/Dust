@@ -42,7 +42,9 @@ post filepath idpath = do
 lots :: Int -> IO() -> IO()
 lots 0 f = return ()
 lots x f = do
+    putStrLn "P0"
     result <- f
+    putStrLn "P1"
     lots (x-1) f
 
 doPost :: FilePath -> Plaintext -> (Plaintext -> B.ByteString) -> TrafficGenerator -> IO()
