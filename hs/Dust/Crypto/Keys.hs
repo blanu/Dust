@@ -9,6 +9,9 @@ module Dust.Crypto.Keys
    loadKeypair,
    saveKeypair,
    loadPublic,
+
+   loadSigningKeypair,
+   saveSigningKeypair
 ) where
 
 import GHC.Generics
@@ -60,3 +63,14 @@ savePublic path (PublicKey bs) = do
 
 saveKey :: FilePath -> ByteString -> IO ()
 saveKey path bs = Data.ByteString.writeFile path bs
+
+loadSigningKeypair :: IO (Keypair)
+loadSigningKeypair = do
+    public <- loadPublic "sign.pub"
+    private <- loadPrivate "sign.priv"
+    return (Keypair public private)
+
+saveSigningKeypair :: Keypair -> IO ()
+saveSigningKeypair (Keypair public private) = do
+    savePublic "sign.pub" public
+    savePrivate "sign.priv" private

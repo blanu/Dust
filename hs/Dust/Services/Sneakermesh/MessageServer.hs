@@ -3,7 +3,7 @@ import System.FilePath
 import System.Directory
 import qualified Data.ByteString as B
 import Data.ByteString.Char8 (pack)
-import Crypto.Classes
+import Crypto.Classes hiding (verify)
 import Crypto.Skein
 import Data.Serialize
 import Text.Printf (printf)
@@ -13,6 +13,7 @@ import Dust.Crypto.DustCipher
 import Dust.Network.DustServer
 import Dust.Services.Sneakermesh.Message
 import Dust.Model.TrafficModel
+import Dust.Crypto.ECDSA
 
 main :: IO()
 main = do
@@ -25,22 +26,34 @@ main = do
 
 messageServer :: Plaintext -> IO(Plaintext)
 messageServer (Plaintext inputBytes) = do
-    let command = (decode inputBytes)::(Either String Command)
-    case command of
+    let maybeSigned = (decode inputBytes)::(Either String Signedtext)
+    case maybeSigned of
         Left error -> do
-            putStrLn $ "Error!" ++ show(error)
-            return $ Plaintext (pack "Error!")
-        Right cmd -> do
-            case cmd of
-                PutMessage msg -> do
-                    result <- putMessage msg
-                    return $ Plaintext result
-                GetIndex -> do
-                    result <- getIndex
-                    return $ Plaintext $ encode result
-                GetMessages msgids -> do
-                    msgs <- getMessages msgids
-                    return $ Plaintext $ encode $ MessagesResult msgs
+            putStrLn "Could not decode signed message"
+            return $ Plaintext $ B.empty
+        Right signed@(Signedtext _ _ msgBytes) -> do
+            if (not $ verify signed)
+                then do
+                    putStrLn "Verification failed"
+                    return $ Plaintext $ B.empty
+                else do
+                    putStrLn "Verification passed"
+                    let command = (decode msgBytes)::(Either String Command)
+                    case command of
+                        Left error -> do
+                            putStrLn $ "Error!" ++ show(error)
+                            return $ Plaintext (pack "Error!")
+                        Right cmd -> do
+                            case cmd of
+                                PutMessage msg -> do
+                                    result <- putMessage msg
+                                    return $ Plaintext result
+                                GetIndex -> do
+                                    result <- getIndex
+                                    return $ Plaintext $ encode result
+                                GetMessages msgids -> do
+                                    msgs <- getMessages msgids
+                                    return $ Plaintext $ encode $ MessagesResult msgs
 
 putMessage :: B.ByteString -> IO(B.ByteString)
 putMessage inputBytes = do

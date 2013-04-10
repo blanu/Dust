@@ -7,11 +7,13 @@ import System.IO.Error
 import Network.Socket
 import Data.Serialize
 import Text.Printf (printf)
+import System.Entropy
 
 import Dust.Crypto.Keys
 import Dust.Crypto.ECDH
 import Dust.Core.Protocol
 import Dust.Crypto.DustCipher
+import Dust.Crypto.ECDSA
 import Dust.Core.DustPacket
 import Dust.Network.DustClient
 import Dust.Services.Sneakermesh.Message
@@ -21,14 +23,27 @@ main :: IO()
 main = do
     args <- getArgs
 
+    (keys, newkeys) <- ensureKeys
+
     case args of
-        (filepath:idpath:_) -> post filepath idpath
+        (filepath:idpath:_) -> post keys filepath idpath
         otherwise      -> putStrLn "Usage: post [message-file] [server-id]"
 
-post :: FilePath -> FilePath -> IO()
-post filepath idpath = do
+ensureKeys :: IO (Keypair, Bool)
+ensureKeys = do
+    result <- try loadSigningKeypair
+    case result of
+        Left e -> do
+            entropy <- getEntropy 32
+            let keys = createSigningKeypair entropy
+            saveSigningKeypair keys
+            return (keys, True)
+        Right keypair -> return (keypair, False)
+
+post :: Keypair -> FilePath -> FilePath -> IO()
+post keys filepath idpath = do
     contents <- readFile filepath
-    let msg = processArgs contents
+    let msg = processArgs keys contents
 
     eitherModel <- loadModel "traffic.model"
     case eitherModel of
@@ -53,10 +68,11 @@ doPost idpath msg handler gen = do
     let result = handler response
     putStrLn $ "Response:" ++ (toHex result)
 
-processArgs :: String -> Plaintext
-processArgs arg =
-    let message = encode $ PutMessage $ pack arg
-    in Plaintext message
+processArgs :: Keypair -> String -> Plaintext
+processArgs keys arg =
+    let plainMessage = encode $ PutMessage $ pack arg
+        signedMessage = encode $ sign plainMessage keys
+    in Plaintext signedMessage
 
 handler :: Plaintext -> B.ByteString
 handler (Plaintext plaintext) = plaintext

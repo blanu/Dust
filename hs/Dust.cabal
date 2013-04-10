@@ -15,6 +15,7 @@ Library
     ForeignFunctionInterface
   C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
   Include-Dirs: lib
+  extra-libraries: crypto
 
 -- Executable echo-server
 --   Main-is:           Dust/Services/Example/EchoServer.hs

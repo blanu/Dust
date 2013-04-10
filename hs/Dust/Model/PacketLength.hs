@@ -44,11 +44,6 @@ nextLength :: Map Double Int -> IO Int
 nextLength cdf = do
     putStrLn "R0"
     let dist = weightedSampleCDF 1 cdf
---    arr <- runRVar dist DevRandom :: IO [Int]
     arr <- runRVar dist StdRandom :: IO [Int]
     putStrLn "R1"
     return (head arr)
-
---nextLength :: IO Integer
---nextLength = do
---   randomRIO (1, 1448)

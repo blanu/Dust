@@ -3,9 +3,10 @@
 module Dust.Crypto.ECDSA
 (
   Signature,
+  Signedtext(..),
   createPrivate,
   createPublic,
-  createKeypair,
+  createSigningKeypair,
   sign,
   verify
 ) where
@@ -23,19 +24,23 @@ import Dust.Crypto.Ed25519
 newtype Signature = Signature { signatureBytes :: ByteString } deriving (Show, Eq, Generic)
 instance Serialize Signature
 
+data Signedtext = Signedtext PublicKey Signature ByteString deriving (Eq, Show, Generic)
+instance Serialize Signedtext
+
 createPrivate :: ByteString -> PrivateKey
 createPrivate bs = PrivateKey bs
 
 createPublic :: PrivateKey -> PublicKey
 createPublic private = PublicKey $ ed25519_publickey $ privateBytes private
 
-createKeypair :: ByteString -> Keypair
-createKeypair entropy = let private = createPrivate entropy
-                            public = createPublic private
-                        in Keypair public private
+createSigningKeypair :: ByteString -> Keypair
+createSigningKeypair entropy =
+    let private = createPrivate entropy
+        public = createPublic private
+    in Keypair public private
 
-sign :: ByteString -> PrivateKey -> PublicKey -> Signature
-sign msg private pubkey = Signature $ ed25519_sign msg (privateBytes private) (publicBytes pubkey)
+sign :: ByteString -> Keypair -> Signedtext
+sign msg (Keypair pubkey private) = Signedtext pubkey (Signature $ ed25519_sign msg (privateBytes private) (publicBytes pubkey)) msg
 
-verify :: ByteString -> PublicKey -> Signature -> Bool
-verify msg pubkey signature = ed25519_sign_open msg (publicBytes pubkey) (signatureBytes signature)
+verify :: Signedtext -> Bool
+verify (Signedtext pubkey signature msg) = ed25519_sign_open msg (publicBytes pubkey) (signatureBytes signature)
