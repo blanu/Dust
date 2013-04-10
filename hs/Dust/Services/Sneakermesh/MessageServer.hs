@@ -38,22 +38,26 @@ messageServer (Plaintext inputBytes) = do
                     return $ Plaintext $ B.empty
                 else do
                     putStrLn "Verification passed"
-                    let command = (decode msgBytes)::(Either String Command)
-                    case command of
-                        Left error -> do
-                            putStrLn $ "Error!" ++ show(error)
-                            return $ Plaintext (pack "Error!")
-                        Right cmd -> do
-                            case cmd of
-                                PutMessage msg -> do
-                                    result <- putMessage msg
-                                    return $ Plaintext result
-                                GetIndex -> do
-                                    result <- getIndex
-                                    return $ Plaintext $ encode result
-                                GetMessages msgids -> do
-                                    msgs <- getMessages msgids
-                                    return $ Plaintext $ encode $ MessagesResult msgs
+                    parseCommand msgBytes
+
+parseCommand :: B.ByteString -> IO(Plaintext)
+parseCommand msgBytes = do
+    let command = (decode msgBytes)::(Either String Command)
+    case command of
+        Left error -> do
+            putStrLn $ "Error!" ++ show(error)
+            return $ Plaintext (pack "Error!")
+        Right cmd -> do
+            case cmd of
+                PutMessage msg -> do
+                    result <- putMessage msg
+                    return $ Plaintext result
+                GetIndex -> do
+                    result <- getIndex
+                    return $ Plaintext $ encode result
+                GetMessages msgids -> do
+                    msgs <- getMessages msgids
+                    return $ Plaintext $ encode $ MessagesResult msgs
 
 putMessage :: B.ByteString -> IO(B.ByteString)
 putMessage inputBytes = do
