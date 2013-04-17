@@ -1,8 +1,21 @@
-{-# LANGUAGE BangPatterns #-}
-module Dust.Model.Huffman where
+{-# LANGUAGE BangPatterns, DeriveGeneric, DefaultSignatures #-}
+module Dust.Model.Huffman
 (
+   HuffmanTree,
+   encode,
+   decode,
+   bitpack,
+   bitunpack,
+   padToEight,
+   codes,
+   fileToTree
 )
+where
 
+import GHC.Generics
+import Data.Serialize hiding (encode, decode)
+
+import Data.Word
 import Data.Char (intToDigit)
 import Data.List (insertBy, foldl', sortBy)
 import Data.Maybe (fromJust)
@@ -18,7 +31,8 @@ import qualified Data.Map                  as M
 data HuffmanTree a
   = LeafNode a Int
   | InternalNode Int (HuffmanTree a) (HuffmanTree a)
-  deriving (Eq)
+  deriving (Generic)
+instance (Serialize a) => Serialize (HuffmanTree a)
 
 -- build a multiline string representation of a huffman tree
 instance Show a => Show (HuffmanTree a) where
@@ -131,40 +145,13 @@ padToEight xs0 =
     go (x:xs) !n = x : go xs (n+1)
     go [] !n = replicate (8 - n `mod` 8) False
 
-main :: IO ()
-main = do
-    contents <- readFile "/usr/share/dict/words"
-    let l = lines contents
+fileToTree :: FilePath -> IO (HuffmanTree Word8)
+fileToTree path = do
+    contents <- B.readFile path
+    return $ bytesToTree $ B.unpack contents
 
-    let frequencies = histogram (concat l)
-    putStrLn "occurrences"
-    mapM_ print frequencies
-
-    let sortedFrequencies = sortBy (comparing swap) frequencies
-    putStrLn "sorted by number of occurrences"
-    mapM_ print sortedFrequencies
-
-    let huffmanTree = sortedHuffman sortedFrequencies
-    putStrLn "huffman tree"
-    print huffmanTree
-
-    putStrLn "codes"
-    let codez = codes huffmanTree
-    let showCode (s,bits) = show s ++ " -> " ++ showBits bits
-    mapM_ (putStrLn . showCode) (M.toList codez)
-
-    putStrLn "encoded"
-    let encoded = map (encode codez) l
-    mapM_ (print . showBits) encoded
-    putStrLn "writing encoded bits to 'huffman.bin'"
-
-    let encBits0 = padToEight (concat encoded)
-    let bits = bitpack encBits0
-    B.writeFile "huffman.bin" bits
-
-    let Right encBits1 = bitunpack . S.pack . B.unpack $ bits
-    print (encBits0 == encBits1)
-
-    putStrLn "decoded"
-    let decoded = map (decode huffmanTree) encoded
-    mapM_ print decoded
+bytesToTree :: [Word8] -> (HuffmanTree Word8)
+bytesToTree text =
+    let frequencies = histogram text
+        sortedFrequencies = sortBy (comparing swap) frequencies
+    in sortedHuffman sortedFrequencies
