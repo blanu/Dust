@@ -9,22 +9,24 @@ import Data.List as L
 
 import Dust.Model.TrafficModel
 import Dust.Model.PacketLength
+import Dust.Model.Content
 
 main = do
     args <- getArgs
 
     case args of
-        (lengthpath:modelpath:_) -> compile lengthpath modelpath
-        otherwise      -> putStrLn "Usage: compile [lengths-file] [model-file]"
+        (lengthpath:contentpath:modelpath:_) -> compile lengthpath contentpath modelpath
+        otherwise      -> putStrLn "Usage: compile [lengths-file] [content-file] [model-file]"
 
-compile :: FilePath -> FilePath -> IO()
-compile lengthpath modelpath = do
+compile :: FilePath -> FilePath -> FilePath -> IO()
+compile lengthpath contentPath modelpath  = do
     result <- parseCSVFromFile lengthpath
     case result of
         Left error -> putStrLn "Error parsing CSV"
         Right contents -> do
-            let model = TrafficModel $ PacketLengthModel $ process contents
-            putStrLn $ show model
+            let lengthModel = PacketLengthModel $ process contents
+            contentModel <- loadContentModel contentPath
+            let model = TrafficModel lengthModel contentModel
             B.writeFile modelpath (encode model)
 
 process :: CSV -> [Double]

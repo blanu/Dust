@@ -9,20 +9,25 @@ module Dust.Model.TrafficModel
 )
 where
 
-import Dust.Model.PacketLength
 import GHC.Generics
 import Data.Serialize
+import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 
+import Dust.Model.PacketLength
+import qualified Dust.Model.Content as C
+
 data TrafficModel = TrafficModel {
-    lengths :: PacketLengthModel
-} deriving (Eq, Show, Generic)
+    lengths :: PacketLengthModel,
+    content :: C.ContentModel
+} deriving (Generic)
+instance Serialize TrafficModel
 
 data TrafficGenerator = TrafficGenerator {
-    generateLength :: IO Int
+    generateLength :: IO Int,
+    encodeContent :: (ByteString -> ByteString),
+    decodeContent :: (ByteString -> ByteString)
 }
-
-instance Serialize TrafficModel
 
 loadModel :: FilePath -> IO (Either String TrafficModel)
 loadModel path = do
@@ -34,4 +39,7 @@ makeGenerator model =
     let (PacketLengthModel probs) = lengths model
         cdf = probsToCDF probs
         lengthGen = nextLength cdf
-    in TrafficGenerator lengthGen
+        (C.ContentModel tree) = content model
+        enc = C.encodeContent tree
+        dec = C.decodeContent tree
+    in TrafficGenerator lengthGen enc dec

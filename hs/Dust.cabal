@@ -9,8 +9,8 @@ Build-Type:          Simple
 Cabal-Version:       >=1.8
 
 Library
-  Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.Protocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers
+  Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.Protocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Core.Invite
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict
   Extensions:
     ForeignFunctionInterface
   C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
@@ -27,15 +27,15 @@ Library
 
 Executable message-server
   Main-is:           Dust/Services/Sneakermesh/MessageServer.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, HTTP, cereal, ghc-prim, binary, crypto-api, skein, filepath, directory, random, random-extras, random-source, random-fu, containers
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, HTTP, cereal, ghc-prim, binary, crypto-api, skein, filepath, directory, random, random-extras, random-source, random-fu, containers, binary-strict
 
 Executable post
   Main-is:           Dust/Services/Sneakermesh/post.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict
 
 Executable compile
   Main-is:           Dust/Model/compile.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict
 
 -- Executable fetch
 --   Main-is:           Dust/Services/Sneakermesh/fetch.hs
