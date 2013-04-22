@@ -63,51 +63,71 @@ makeEncoder session@(Session (Keypair myPublic _) _ iv) =
         stream = makeStream header
     in stream . encrypter . makePlainPacket
 
-getSession :: Keypair -> Socket -> IO Session
-getSession keypair sock = do
-    public <- readBytes sock 32
-    iv <- readBytes sock 16
+getSession :: TrafficGenerator -> Keypair -> Socket -> IO Session
+getSession gen keypair sock = do
+    public <- readBytes gen sock 32 B.empty
+    iv <- readBytes gen sock 16 B.empty
     return (Session keypair (PublicKey public) (IV iv))
 
-getPacket :: Session -> Socket -> IO Plaintext
-getPacket session sock = do
-    packetBytes <- recv sock 4
+getPacket :: TrafficGenerator -> Session -> Socket -> IO Plaintext
+getPacket gen session sock = do
+    packetBytes <- readBytes gen sock 4 B.empty
     let cipherHeader = CipherHeader (Ciphertext packetBytes)
     let cipher = makeDecrypt session
     let plainPacketHeader = decryptHeader cipher cipherHeader
     let PlainHeader packetLength = plainPacketHeader
     let packetLen = (fromIntegral packetLength)::Int
 
-    payloadBytes <- readBytes sock packetLen
+    payloadBytes <- readBytes gen sock packetLen B.empty
     let ciphertext = Ciphertext payloadBytes
     return (cipher ciphertext)
 
-readBytes :: Socket -> Int -> IO(B.ByteString)
-readBytes sock maxLen = do
+readBytes :: TrafficGenerator -> Socket -> Int -> B.ByteString -> IO(B.ByteString)
+readBytes gen sock maxLen buffer = do
     bs <- recv sock maxLen
-    let readLen = B.length bs
-    if readLen == maxLen
-      then return bs
+    let buff = B.append buffer bs
+    let decoder = decodeContent gen
+    let decoded = decoder buff
+    let decodedLen = B.length decoded
+    if decodedLen == maxLen
+      then return decoded
       else do
-        rest <- readBytes sock (maxLen-readLen)
-        return $ B.append bs rest
+        result <- readMoreBytes gen sock maxLen buff
+        return result
 
-encodeSession :: Session -> B.ByteString
-encodeSession (Session (Keypair (PublicKey myPublic) _) _ (IV iv)) = B.append myPublic iv
+readMoreBytes :: TrafficGenerator -> Socket -> Int -> B.ByteString -> IO B.ByteString
+readMoreBytes gen sock maxLen buffer = do
+    bs <- recv sock 1
+    let buff = B.append buffer bs
+    let decoder = decodeContent gen
+    let decoded = decoder buff
+    let decodedLen = B.length decoded
+    if decodedLen == maxLen
+      then return decoded
+      else do
+        result <- readBytes gen sock maxLen buff
+        return result
 
-encodePacket :: Session -> Plaintext -> B.ByteString
-encodePacket session plaintext =
+encodeSession :: TrafficGenerator -> Session -> B.ByteString
+encodeSession gen (Session (Keypair (PublicKey myPublic) _) _ (IV iv)) =
+    let encoder = encodeContent gen
+    in B.append (encoder myPublic) (encoder iv) -- 32 bytes, 16 bytes
+
+encodePacket :: TrafficGenerator -> Session -> Plaintext -> B.ByteString
+encodePacket gen session plaintext =
     let packet = makePlainPacket plaintext
         cipher = makeEncrypt session
         (CipherDataPacket (CipherHeader (Ciphertext header)) (Ciphertext payload)) = encryptData cipher packet
-    in B.append header payload
+        encoder = encodeContent gen
+    in B.append (encoder header) (encoder payload) -- 4 bytes, variable
 
-encodeSessionPacket :: Session -> Plaintext -> B.ByteString
-encodeSessionPacket session plaintext = B.append (encodeSession session) (encodePacket session plaintext)
+encodeSessionPacket :: TrafficGenerator -> Session -> Plaintext -> B.ByteString
+encodeSessionPacket gen session plaintext =
+    B.append (encodeSession gen session) (encodePacket gen session plaintext)
 
 putSessionPacket :: TrafficGenerator -> Session -> Plaintext -> Socket -> IO()
 putSessionPacket gen session plaintext sock = do
-    let bytes = encodeSessionPacket session plaintext
+    let bytes = encodeSessionPacket gen session plaintext
     sendBytes gen bytes sock
 
 sendBytes :: TrafficGenerator -> B.ByteString -> Socket -> IO()

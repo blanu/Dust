@@ -50,8 +50,8 @@ ensureKeys = do
 
 reencode :: Keypair -> IV -> TrafficGenerator -> (Plaintext -> IO(Plaintext)) -> Socket -> IO()
 reencode keypair iv gen proxyAction sock = do
-    session@(Session _ otherPublic _) <- getSession keypair sock
-    plaintext <- getPacket session sock
+    session@(Session _ otherPublic _) <- getSession gen keypair sock
+    plaintext <- getPacket gen session sock
 
     putStrLn $ "Request:" ++ (show plaintext)
 

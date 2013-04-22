@@ -38,8 +38,8 @@ handleRequest gen session@(Session keypair _ _) payload sock = do
 
     putSessionPacket gen session payload sock
 
-    otherSession <- getSession keypair sock
-    plaintext <- getPacket otherSession sock
+    otherSession <- getSession gen keypair sock
+    plaintext <- getPacket gen otherSession sock
 
     putStrLn $ "Response:" ++ (show plaintext)
 

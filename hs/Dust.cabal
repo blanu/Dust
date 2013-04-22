@@ -81,3 +81,18 @@ Executable compile
 --    cereal,
 --    ghc-prim,
 --    binary
+
+test-suite model
+  type: exitcode-stdio-1.0
+  main-is: TestModel.hs
+  ghc-options: -w -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: tests
+
+  build-depends:
+    base,
+    Dust,
+    HUnit >= 1.2,
+    test-framework       >= 0.6,
+    test-framework-hunit >= 0.2,
+    test-framework-th,
+    base >= 3 && < 5, bytestring, AES, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict
