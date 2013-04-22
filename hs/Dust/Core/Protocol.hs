@@ -93,7 +93,7 @@ readBytes gen sock maxLen buffer = do
     putStrLn $ "Decoded :" ++ (show decodedLen)
     if decodedLen >= maxLen
       then do
-        putStrLn $ "Read result:\n" ++ (show buff) ++ "\n/\n" ++ (show decoded)
+        putStrLn $ "Read result:" ++ (show maxLen) ++ " " ++ (show buff) ++ " -> " ++ (show decoded)
         return $ B.take maxLen decoded
       else do
         result <- readMoreBytes gen sock maxLen buff
@@ -109,7 +109,7 @@ readMoreBytes gen sock maxLen buffer = do
     let decodedLen = B.length decoded
     if decodedLen >= maxLen
       then do
-        putStrLn $ "Read result:\n" ++ (show buff) ++ "\n/\n" ++ (show decoded)
+        putStrLn $ "Read result:" ++ (show maxLen) ++ " " ++ (show buff) ++ " -> " ++ (show decoded)
         return decoded
       else do
         result <- readBytes gen sock maxLen buff
@@ -132,7 +132,12 @@ putSessionPacket gen session plaintext sock = do
 
     let bytes = B.append encSession encPacket
 
-    putStrLn $ "Sending encoded bytes:\n" ++ (show encPub) ++ "\n" ++ (show encIV) ++ "\n" ++ (show encHeader) ++ "\n" ++ (show encPayload)
+    putStrLn $ "Sending encoded bytes:"
+    putStrLn $ (show myPublic) ++ " -> " ++ (show encPub)
+    putStrLn $ (show iv) ++ " -> " ++ (show encIV)
+    putStrLn $ (show header) ++ " -> " ++ (show encHeader)
+    putStrLn $ (show payload) ++ " -> " ++ (show encPayload)
+    putStrLn "---------------------"
     sendBytes gen bytes sock
 
 sendBytes :: TrafficGenerator -> B.ByteString -> Socket -> IO()
