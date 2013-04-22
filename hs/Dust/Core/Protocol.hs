@@ -133,6 +133,7 @@ encodeSessionPacket gen session plaintext =
 putSessionPacket :: TrafficGenerator -> Session -> Plaintext -> Socket -> IO()
 putSessionPacket gen session plaintext sock = do
     let bytes = encodeSessionPacket gen session plaintext
+    putStrLn $ "Sending encoded bytes: " ++ (show bytes)
     sendBytes gen bytes sock
 
 sendBytes :: TrafficGenerator -> B.ByteString -> Socket -> IO()
