@@ -115,27 +115,24 @@ readMoreBytes gen sock maxLen buffer = do
         result <- readBytes gen sock maxLen buff
         return result
 
-encodeSession :: TrafficGenerator -> Session -> B.ByteString
-encodeSession gen (Session (Keypair (PublicKey myPublic) _) _ (IV iv)) =
-    let encoder = encodeContent gen
-    in B.append (encoder myPublic) (encoder iv) -- 32 bytes, 16 bytes
-
-encodePacket :: TrafficGenerator -> Session -> Plaintext -> B.ByteString
-encodePacket gen session plaintext =
-    let packet = makePlainPacket plaintext
-        cipher = makeEncrypt session
-        (CipherDataPacket (CipherHeader (Ciphertext header)) (Ciphertext payload)) = encryptData cipher packet
-        encoder = encodeContent gen
-    in B.append (encoder header) (encoder payload) -- 4 bytes, variable
-
-encodeSessionPacket :: TrafficGenerator -> Session -> Plaintext -> B.ByteString
-encodeSessionPacket gen session plaintext =
-    B.append (encodeSession gen session) (encodePacket gen session plaintext)
-
 putSessionPacket :: TrafficGenerator -> Session -> Plaintext -> Socket -> IO()
 putSessionPacket gen session plaintext sock = do
-    let bytes = encodeSessionPacket gen session plaintext
-    putStrLn $ "Sending encoded bytes: " ++ (show bytes)
+    let (Session (Keypair (PublicKey myPublic) _) _ (IV iv)) = session
+    let encoder = encodeContent gen
+    let encPub = encoder myPublic
+    let encIV = encoder iv
+    let encSession = B.append encPub encIV
+
+    let packet = makePlainPacket plaintext
+    let cipher = makeEncrypt session
+    let (CipherDataPacket (CipherHeader (Ciphertext header)) (Ciphertext payload)) = encryptData cipher packet
+    let encHeader = encoder header
+    let encPayload = encoder payload
+    let encPacket = B.append encHeader encPayload -- 4 bytes, variable
+
+    let bytes = B.append encSession encPacket
+
+    putStrLn $ "Sending encoded bytes:\n" ++ (show encPub) ++ "\n" ++ (show encIV) ++ "\n" ++ (show encHeader) ++ "\n" ++ (show encPayload)
     sendBytes gen bytes sock
 
 sendBytes :: TrafficGenerator -> B.ByteString -> Socket -> IO()
