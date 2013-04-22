@@ -93,7 +93,7 @@ readBytes gen sock maxLen buffer = do
     putStrLn $ "Decoded :" ++ (show decodedLen)
     if decodedLen >= maxLen
       then do
-        putStrLn $ "Read result: " ++ (show buff) ++ " / " ++ (show decoded)
+        putStrLn $ "Read result:\n" ++ (show buff) ++ "\n/\n" ++ (show decoded)
         return $ B.take maxLen decoded
       else do
         result <- readMoreBytes gen sock maxLen buff
@@ -109,7 +109,7 @@ readMoreBytes gen sock maxLen buffer = do
     let decodedLen = B.length decoded
     if decodedLen >= maxLen
       then do
-        putStrLn $ "Read result: " ++ (show buff) ++ " / " ++ (show decoded)
+        putStrLn $ "Read result:\n" ++ (show buff) ++ "\n/\n" ++ (show decoded)
         return decoded
       else do
         result <- readBytes gen sock maxLen buff
