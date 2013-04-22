@@ -85,6 +85,7 @@ getPacket gen session sock = do
 readBytes :: TrafficGenerator -> Socket -> Int -> B.ByteString -> IO(B.ByteString)
 readBytes gen sock maxLen buffer = do
     bs <- recv sock maxLen
+    putStrLn $ "Read: " ++ (show $ B.length bs) ++ "/" ++ (show maxLen)
     let buff = B.append buffer bs
     let decoder = decodeContent gen
     let decoded = decoder buff
@@ -98,6 +99,7 @@ readBytes gen sock maxLen buffer = do
 readMoreBytes :: TrafficGenerator -> Socket -> Int -> B.ByteString -> IO B.ByteString
 readMoreBytes gen sock maxLen buffer = do
     bs <- recv sock 1
+    putStrLn $ "Read more: " ++ (show $ B.length bs) ++ "+" ++ (show $ B.length buffer) ++ "/" ++ (show maxLen)
     let buff = B.append buffer bs
     let decoder = decodeContent gen
     let decoded = decoder buff
