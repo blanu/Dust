@@ -92,7 +92,7 @@ readBytes gen sock maxLen buffer = do
     let decodedLen = B.length decoded
     putStrLn $ "Decoded :" ++ (show decodedLen)
     if decodedLen >= maxLen
-      then return decoded
+      then return $ B.take maxLen decoded
       else do
         result <- readMoreBytes gen sock maxLen buff
         return $ B.take maxLen result
@@ -106,10 +106,12 @@ readMoreBytes gen sock maxLen buffer = do
     let decoded = decoder buff
     let decodedLen = B.length decoded
     if decodedLen >= maxLen
-      then return decoded
+      then do
+        putStrLn $ "Read result: " ++ (show buff) ++ " / " ++ (show decoded)
+        return decoded
       else do
         result <- readBytes gen sock maxLen buff
-        return $ B.take maxLen result
+        return result
 
 encodeSession :: TrafficGenerator -> Session -> B.ByteString
 encodeSession gen (Session (Keypair (PublicKey myPublic) _) _ (IV iv)) =
