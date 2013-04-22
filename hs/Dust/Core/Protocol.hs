@@ -133,10 +133,10 @@ putSessionPacket gen session plaintext sock = do
     let bytes = B.append encSession encPacket
 
     putStrLn $ "Sending encoded bytes:"
-    putStrLn $ (show myPublic) ++ " -> " ++ (show encPub)
-    putStrLn $ (show iv) ++ " -> " ++ (show encIV)
-    putStrLn $ (show header) ++ " -> " ++ (show encHeader)
-    putStrLn $ (show payload) ++ " -> " ++ (show encPayload)
+    putStrLn $ (show $ B.length myPublic) ++ " " ++ (show myPublic) ++ " -> " ++ (show encPub)
+    putStrLn $ (show $ B.length iv) ++ " " ++ (show iv) ++ " -> " ++ (show encIV)
+    putStrLn $ (show $ B.length header) ++ " " ++ (show header) ++ " -> " ++ (show encHeader)
+    putStrLn $ (show $ B.length payload) ++ " " ++ (show payload) ++ " -> " ++ (show encPayload)
     putStrLn "---------------------"
     sendBytes gen bytes sock
 
