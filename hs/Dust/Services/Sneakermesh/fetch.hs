@@ -15,25 +15,58 @@ import Dust.Crypto.DustCipher
 import Dust.Core.DustPacket
 import Dust.Network.DustClient
 import Dust.Services.Sneakermesh.Message
+import Dust.Model.TrafficModel
 
 main = do
-    args <- getArgs
+    eitherModel <- loadModel "traffic.model"
+    case eitherModel of
+        Left error -> do
+            putStrLn "Error loading model"
+            return ()
+        Right model -> do
+            let gen  = makeGenerator model
+            args <- getArgs
+            case args of
+                ("--themes":idpath:_) -> fetchThemes gen idpath
+                ("--themes":_) -> usage
+                (idpath:_) -> fetch gen idpath
+                otherwise      -> usage
 
-    case args of
-        (idpath:_) -> fetch idpath
-        otherwise      -> putStrLn "Usage: fetch [server-id]"
+usage :: IO()
+usage = do
+    putStrLn "Usage: fetch <--themes> [server-id]"
 
-fetch :: String -> IO()
-fetch idpath = do
-    ids <- fetchIndex idpath
+fetchThemes :: TrafficGenerator -> String -> IO()
+fetchThemes gen idpath = do
+    putStrLn "Fetching themes..."
+    let msg = Plaintext $ encode $ GetThemes
+    response <- dustClient gen idpath msg
+
+    let (Plaintext plaintext) = response
+    let result = (decode plaintext)::(Either String ResultMessage)
+    putStrLn $ "Result: " ++ (show result)
+    putStrLn $ "Length: " ++ (show (B.length plaintext))
+
+    putStrLn $ show $ handleThemes response
+
+handleThemes :: Plaintext -> [Theme]
+handleThemes (Plaintext plaintext) =
+    let result = (decode plaintext)::(Either String ResultMessage)
+    in case result of
+        Right (ThemesResult themes) -> themes
+        otherwise -> []
+
+fetch :: TrafficGenerator -> String -> IO()
+fetch gen idpath = do
+    ids <- fetchIndex gen idpath
     putStrLn $ "Ids:" ++ (show ids)
-    msgs <- fetchMessages idpath ids
+    msgs <- fetchMessages gen idpath ids
     printMessages msgs
 
-fetchIndex :: String -> IO([MessageID])
-fetchIndex idpath = do
+fetchIndex :: TrafficGenerator -> String -> IO([MessageID])
+fetchIndex gen idpath = do
     let msg = Plaintext $ encode $ GetIndex
-    response <- dustClient idpath msg
+    response <- dustClient gen idpath msg
 
     let (Plaintext plaintext) = response
     let result = (decode plaintext)::(Either String ResultMessage)
@@ -59,17 +92,17 @@ printMessage :: Message -> IO()
 printMessage msg = do
     putStrLn $ "Messages:" ++ (show msg)
 
-fetchMessages :: String -> [MessageID] -> IO([Message])
-fetchMessages idpath [] = return ([])
-fetchMessages idpath (id:ids) = do
-    msg <- fetchMessage idpath id
-    msgs <- fetchMessages idpath ids
+fetchMessages :: TrafficGenerator -> String -> [MessageID] -> IO([Message])
+fetchMessages gen idpath [] = return ([])
+fetchMessages gen idpath (id:ids) = do
+    msg <- fetchMessage gen idpath id
+    msgs <- fetchMessages gen idpath ids
     return (msg:msgs)
 
-fetchMessage :: String -> MessageID -> IO(Message)
-fetchMessage idpath id = do
+fetchMessage :: TrafficGenerator -> String -> MessageID -> IO(Message)
+fetchMessage gen idpath id = do
     let msg = Plaintext $ encode $ GetMessages [id]
-    response <- dustClient idpath msg
+    response <- dustClient gen idpath msg
     let (msg:_) = handleMessages response
     return msg
 

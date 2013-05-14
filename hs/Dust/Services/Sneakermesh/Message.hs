@@ -5,7 +5,8 @@ module Dust.Services.Sneakermesh.Message
  Command(..),
  ResultMessage(..),
  MessageID(..),
- Message(..)
+ Message(..),
+ Theme(..)
 )
 where
 
@@ -18,10 +19,13 @@ data Command =
       PutMessage Message
     | GetIndex
     | GetMessages [MessageID]
+    | GetThemes
+    | SetTheme Theme
     deriving (Show, Read, Generic)
 
 newtype MessageID = MessageID ByteString deriving (Eq, Show, Read, Generic)
 type Message = ByteString
+type Theme = ByteString
 
 instance Serialize Command
 instance Serialize MessageID
@@ -29,6 +33,7 @@ instance Serialize MessageID
 data ResultMessage =
       IndexResult [MessageID]
     | MessagesResult [Message]
+    | ThemesResult [Theme]
     deriving (Show, Read, Generic)
 
 instance Serialize ResultMessage

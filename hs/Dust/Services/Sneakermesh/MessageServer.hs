@@ -58,6 +58,12 @@ parseCommand msgBytes = do
                 GetMessages msgids -> do
                     msgs <- getMessages msgids
                     return $ Plaintext $ encode $ MessagesResult msgs
+                SetTheme theme -> do
+                    putStrLn $ "Setting theme to " ++ (show theme)
+                    return $ Plaintext $ encode $ theme
+                GetThemes -> do
+                    putStrLn "List of themes requested"
+                    return $ Plaintext $ encode $ ThemesResult []
 
 putMessage :: B.ByteString -> IO(B.ByteString)
 putMessage inputBytes = do

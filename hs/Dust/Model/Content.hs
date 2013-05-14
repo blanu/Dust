@@ -36,13 +36,15 @@ loadContentModel path = do
 
 encodeContent :: (HuffmanTree Word8) -> B.ByteString -> B.ByteString
 encodeContent tree input =
-    let codez = H.codes tree
-        bytes = B.unpack input
-        bits = H.padToEight $ H.encode codez bytes
-    in (B.concat . BL.toChunks) $ H.bitpack bits
+--    let codez = H.codes tree
+--        bytes = B.unpack input
+--        bits = H.padToEight $ H.encode codez bytes
+--    in (B.concat . BL.toChunks) $ H.bitpack bits
+    input
 
 decodeContent :: (HuffmanTree Word8) -> B.ByteString -> B.ByteString
 decodeContent tree input =
-    let Right bits = H.bitunpack input
-        bytes = H.decode tree bits
-    in B.pack bytes
+--    let Right bits = H.bitunpack input
+--        bytes = H.decode tree bits
+--    in B.pack bytes
+    input

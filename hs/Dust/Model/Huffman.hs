@@ -139,11 +139,12 @@ bitunpack bs0 =
 --------------------------------------------------
 
 padToEight :: [Bool] -> [Bool]
-padToEight xs0 =
-    go xs0 0
-  where
-    go (x:xs) !n = x : go xs (n+1)
-    go [] !n = replicate (8 - n `mod` 8) False
+padToEight bits =
+    let len = length bits
+        rem = len `mod` 8
+        extra = 8-rem
+        padding = replicate extra False
+    in bits ++ padding
 
 fileToTree :: FilePath -> IO (HuffmanTree Word8)
 fileToTree path = do
