@@ -16,7 +16,7 @@ import Data.Serialize
 import Data.Random.Shuffle.Weighted
 import Data.Random.RVar
 import Data.Random
-import Data.Random.Source.DevRandom
+import Data.Random.Source.IO
 import Data.Random.Source.Std
 import qualified Data.Map as M
 import qualified Data.ByteString as B

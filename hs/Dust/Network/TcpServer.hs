@@ -7,7 +7,7 @@ import Network (listenOn, PortID(PortNumber))
 import Network.Socket
 import qualified Network.Socket.ByteString as NSB
 import qualified Network.Socket.ByteString.Lazy as NSBL
-import Network.Socket.ByteString.Lazy (getContents, sendAll)
+import Network.Socket.ByteString (sendAll)
 import Data.ByteString.Lazy (ByteString, fromChunks)
 import Control.Monad (forever)
 
