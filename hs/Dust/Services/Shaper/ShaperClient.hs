@@ -8,9 +8,11 @@ import Control.Concurrent
 import Network.Socket hiding (recv)
 import Network.Socket.ByteString (recv, sendAll)
 import System.Entropy
+import Control.Exception
 
 import Dust.Network.Util
 import Dust.Model.TrafficModel
+import Dust.Services.Shaper.Shaper
 
 main :: IO()
 main = do
@@ -42,18 +44,3 @@ shape gen sock = do
     putStrLn "Shaping..."
     putBytes gen sock
     getShapedBytes sock
-
-getShapedBytes :: Socket -> IO()
-getShapedBytes sock = do
-    putStrLn "getting"
-    bs <- recv sock 4096
-    putStrLn $ "got " ++ (show (B.length bs))
-    getShapedBytes sock
-
-putBytes :: TrafficGenerator -> Socket -> IO()
-putBytes gen sock = do
-    putStrLn "putting"
-    len <- generateLength gen
-    putStrLn $ (show len) ++ " to write"
-    bytes <- getEntropy len
-    sendAll sock bytes
