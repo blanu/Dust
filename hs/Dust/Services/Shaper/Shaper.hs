@@ -27,6 +27,7 @@ getShapedBytes sock = do
     case bsTry of
         Left error -> do
             putStrLn "Socket closed"
+            putStrLn "Closing socket"
             sClose sock
         Right bs -> do
             putStrLn $ "got " ++ (show (B.length bs))
@@ -42,10 +43,8 @@ putBytes gen sock = do
     case sendTry of
         Left error -> do
             putStrLn "Socket closed"
+            putStrLn "Closing socket"
             sClose sock
         Right _ -> do
             putStrLn $ "sent " ++ (show (B.length bytes))
             putBytes gen sock
-
-    sClose sock
-

@@ -25,7 +25,7 @@ main = do
 
 shaperClient :: TrafficGenerator -> IO()
 shaperClient gen = do
-    let host = "127.0.0.1"
+    let host = "166.78.129.122"
     let port = 6995
 
     client host port (shape gen)
@@ -42,5 +42,5 @@ client host port handleRequest = withSocketsDo $ do
 shape :: TrafficGenerator -> Socket -> IO()
 shape gen sock = do
     putStrLn "Shaping..."
-    putBytes gen sock
+    forkIO $ putBytes gen sock
     getShapedBytes sock
