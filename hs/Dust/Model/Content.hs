@@ -4,6 +4,7 @@ module Dust.Model.Content
 (
     ContentModel(..),
     loadContentModel,
+    makeContentModel,
     encodeContent,
     decodeContent
 )
@@ -22,7 +23,6 @@ import qualified Data.Map as M
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 
-
 import Dust.Model.Huffman (HuffmanTree)
 import Dust.Model.Huffman as H
 
@@ -33,6 +33,11 @@ loadContentModel :: FilePath -> IO ContentModel
 loadContentModel path = do
     tree <- H.fileToTree path
     return $ ContentModel $ tree
+
+makeContentModel :: [(Word8, Integer)] -> ContentModel
+makeContentModel counts =
+    let tree = H.countsToTree counts
+    in return $ ContentModel $ tree
 
 encodeContent :: (HuffmanTree Word8) -> B.ByteString -> B.ByteString
 encodeContent tree input =

@@ -21,8 +21,8 @@ import Foreign.Ptr
 import Foreign.ForeignPtr (withForeignPtr)
 import Data.Word
 
---type WordSize = Word64 --Set to Word32 or Word64 depending on 32-bit or 64-bit platform
-type WordSize = Word32 --Set to Word32 or Word64 depending on 32-bit or 64-bit platform
+type WordSize = Word64 --Set to Word32 or Word64 depending on 32-bit or 64-bit platform
+--type WordSize = Word32 --Set to Word32 or Word64 depending on 32-bit or 64-bit platform
 
 withByteStringPtr :: ByteString -> (Ptr Word8 -> IO a) -> IO a
 withByteStringPtr b f =

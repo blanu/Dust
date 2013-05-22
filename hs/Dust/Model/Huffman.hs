@@ -8,7 +8,8 @@ module Dust.Model.Huffman
    bitunpack,
    padToEight,
    codes,
-   fileToTree
+   fileToTree,
+   countsToTree
 )
 where
 
@@ -155,4 +156,9 @@ bytesToTree :: [Word8] -> (HuffmanTree Word8)
 bytesToTree text =
     let frequencies = histogram text
         sortedFrequencies = sortBy (comparing swap) frequencies
+    in sortedHuffman sortedFrequencies
+
+countsToTree :: [(Word8, Integer)] -> (HuffmanTree Word8)
+countsToTree frequencies =
+    let sortedFrequencies = sortBy (comparing swap) frequencies
     in sortedHuffman sortedFrequencies
