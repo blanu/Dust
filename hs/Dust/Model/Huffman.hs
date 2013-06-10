@@ -158,7 +158,7 @@ bytesToTree text =
         sortedFrequencies = sortBy (comparing swap) frequencies
     in sortedHuffman sortedFrequencies
 
-countsToTree :: [(Word8, Integer)] -> (HuffmanTree Word8)
+countsToTree :: [(Word8, Int)] -> (HuffmanTree Word8)
 countsToTree frequencies =
     let sortedFrequencies = sortBy (comparing swap) frequencies
     in sortedHuffman sortedFrequencies
