@@ -34,10 +34,10 @@ loadContentModel path = do
     tree <- H.fileToTree path
     return $ ContentModel $ tree
 
-makeContentModel :: [(Word8, Integer)] -> ContentModel
+makeContentModel :: [(Word8, Int)] -> ContentModel
 makeContentModel counts =
     let tree = H.countsToTree counts
-    in return $ ContentModel $ tree
+    in ContentModel $ tree
 
 encodeContent :: (HuffmanTree Word8) -> B.ByteString -> B.ByteString
 encodeContent tree input =

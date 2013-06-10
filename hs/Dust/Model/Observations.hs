@@ -24,9 +24,13 @@ data Observations = Observations {
     lengths :: LengthObservations,
     content :: ContentObservations
 } deriving (Generic)
+instance Serialize Observations
 
-data LengthObservations = LengthObservations [(Int16, Integer)] deriving Generic
-data ContentObservations = ContentObservations [(Word8, Integer)] deriving Generic
+data LengthObservations = LengthObservations [(Int16, Int)] deriving Generic
+instance Serialize LengthObservations
+
+data ContentObservations = ContentObservations [(Word8, Int)] deriving Generic
+instance Serialize ContentObservations
 
 emptyObservations :: Observations
 emptyObservations = Observations emptyLengthObservations emptyContentObservations
@@ -59,16 +63,12 @@ makeLengthModel (LengthObservations obs) =
   let (lengths, counts) = unzip obs
       total = sum counts
       probs = map (divideBy total) counts
-  in PacketLengthModel $ zip lengths probs
+  in PacketLengthModel probs
 
 makeContentModel :: ContentObservations -> C.ContentModel
-makeContentModel (ContentObservations obs) =
-  let (bytes, counts) = unzip obs
-      total = sum counts
-      probs = map (divideBy total) counts  
-  in C.makeContentModel $ zip bytes probs
+makeContentModel (ContentObservations obs) = C.makeContentModel obs
 
-divideBy :: Integer -> Int -> Double
+divideBy :: Int -> Int -> Double
 divideBy d n = 
     let fd = (fromIntegral d)::Double
         fn = (fromIntegral n)::Double
