@@ -12,14 +12,16 @@ import Control.Exception
 
 import Dust.Network.Util
 import Dust.Model.TrafficModel
+import Dust.Model.Observations
 import Dust.Services.Shaper.Shaper
 
 main :: IO()
 main = do
-    eitherModel <- loadModel "traffic.model"
-    case eitherModel of
+    eitherObs <- loadObservations "traffic.model"
+    case eitherObs of
         Left error -> putStrLn "Error loading model"
-        Right model -> do
+        Right obs -> do
+            let model = makeModel obs
             let gen  = makeGenerator model
             shaperClient gen
 

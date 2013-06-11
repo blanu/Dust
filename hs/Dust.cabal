@@ -36,9 +36,9 @@ Executable update
   Main-is:           Dust/Model/update.hs
   Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
 
-Executable compile
-  Main-is:           Dust/Model/compile.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, directory
+--Executable compile
+--  Main-is:           Dust/Model/compile.hs
+--  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, directory
 
 -- Executable echo-server
 --   Main-is:           Dust/Services/Example/EchoServer.hs
