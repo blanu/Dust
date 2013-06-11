@@ -5,16 +5,20 @@ module Dust.Model.Observations
     Observations(..),
     emptyObservations,
     loadObservations,
+    saveObservations,
+    ensureObservations,
+    observePacket,
     makeModel
 )
 where
 
 import GHC.Generics
 import Data.Serialize
-import Data.ByteString (ByteString)
+import Data.ByteString (ByteString, unpack)
 import qualified Data.ByteString as B
 import Data.Int
 import Data.Word
+import System.Directory
 
 import Dust.Model.PacketLength
 import qualified Dust.Model.Content as C
@@ -23,34 +27,76 @@ import Dust.Model.TrafficModel
 data Observations = Observations {
     lengths :: LengthObservations,
     content :: ContentObservations
-} deriving (Generic)
+} deriving (Generic, Show)
 instance Serialize Observations
 
-data LengthObservations = LengthObservations [(Int16, Int)] deriving Generic
+data LengthObservations = LengthObservations [Int] deriving (Generic, Show)
 instance Serialize LengthObservations
 
-data ContentObservations = ContentObservations [(Word8, Int)] deriving Generic
+data ContentObservations = ContentObservations [Int] deriving (Generic, Show)
 instance Serialize ContentObservations
+
+observePacket :: Observations -> ByteString -> Observations
+observePacket (Observations lobs cobs) bs =
+  let bsl = (fromIntegral $ B.length bs)::Int
+      lobs' = observeLengths lobs (bsl, 1)
+      cobs' = observeByteString cobs bs
+  in Observations lobs' cobs'
+
+observeLengths :: LengthObservations -> (Int, Int) -> LengthObservations
+observeLengths (LengthObservations items) item = LengthObservations $ updateCounts items item
+
+updateCounts :: [Int] -> (Int, Int) -> [Int]
+updateCounts items (index,count) = 
+    let (a, (item:b)) = splitAt index items
+    in  a ++ ((item+count):b)
+
+observeByteString :: ContentObservations -> ByteString -> ContentObservations
+observeByteString obs bs = observeBytes obs $ unpack bs
+
+observeBytes :: ContentObservations -> [Word8] -> ContentObservations
+observeBytes obs [] = obs
+observeBytes obs (b:rest) =
+  let bint = (fromIntegral b)::Int
+      newObs = observeByte obs (bint,1)
+  in  observeBytes newObs rest
+
+observeByte :: ContentObservations -> (Int, Int) -> ContentObservations
+observeByte (ContentObservations items) item = ContentObservations $ updateCounts items item
 
 emptyObservations :: Observations
 emptyObservations = Observations emptyLengthObservations emptyContentObservations
 
 emptyLengthObservations :: LengthObservations
-emptyLengthObservations =
-    let lengths = [1..1448]::[Int16]
-        counts  = take 1448 $ repeat 0
-     in LengthObservations $ zip lengths counts
+emptyLengthObservations = LengthObservations (take 1520 $ repeat 0)
 
 emptyContentObservations :: ContentObservations
-emptyContentObservations =
-    let lengths = [0..255]::[Word8]
-        counts  = take 256 $ repeat 0
-     in ContentObservations $ zip lengths counts
+emptyContentObservations = ContentObservations (take 256 $ repeat 0)
 
 loadObservations :: FilePath -> IO (Either String Observations)
 loadObservations path = do
     s <- B.readFile path
     return ((decode s)::(Either String Observations))
+
+saveObservations :: FilePath -> Observations -> IO()
+saveObservations path obs@(Observations lobs cobs) = do
+    putStrLn "Saving observations..."
+    putStrLn $ show cobs
+    let s = encode obs
+    putStrLn $ "Writing " ++ (show $ B.length s) ++ " bytes"
+    B.writeFile path s
+    putStrLn "Done."
+
+ensureObservations :: FilePath -> IO Observations
+ensureObservations path = do
+    exists <- doesFileExist path
+    case exists of
+      True -> do
+        eitherObs <- loadObservations path
+        case eitherObs of
+            Right obs -> return obs
+            Left _ -> return emptyObservations
+      False -> return emptyObservations
 
 makeModel :: Observations -> TrafficModel
 makeModel (Observations lengthObs contentObs) =
@@ -59,14 +105,14 @@ makeModel (Observations lengthObs contentObs) =
     in TrafficModel lengthModel contentModel
 
 makeLengthModel :: LengthObservations -> PacketLengthModel
-makeLengthModel (LengthObservations obs) =
-  let (lengths, counts) = unzip obs
-      total = sum counts
+makeLengthModel (LengthObservations counts) =
+  let total = sum counts
       probs = map (divideBy total) counts
   in PacketLengthModel probs
 
 makeContentModel :: ContentObservations -> C.ContentModel
-makeContentModel (ContentObservations obs) = C.makeContentModel obs
+makeContentModel (ContentObservations obs) =
+  C.makeContentModel $ zip ([0..255]::[Word8]) obs
 
 divideBy :: Int -> Int -> Double
 divideBy d n = 

@@ -9,7 +9,7 @@ Build-Type:          Simple
 Cabal-Version:       >=1.8
 
 Library
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict, directory
   Extensions:
     ForeignFunctionInterface
   if os(windows)
@@ -26,15 +26,19 @@ Library
 
 Executable shaper-server
   Main-is: Dust/Services/Shaper/ShaperServer.hs
-  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras
+  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory
 
 Executable shaper-client
   Main-is: Dust/Services/Shaper/ShaperClient.hs
-  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras
+  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory
     
---Executable update
---  Main-is:           Dust/Model/update.hs
---  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap
+Executable update
+  Main-is:           Dust/Model/update.hs
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
+
+Executable compile
+  Main-is:           Dust/Model/compile.hs
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, directory
 
 -- Executable echo-server
 --   Main-is:           Dust/Services/Example/EchoServer.hs
@@ -51,10 +55,6 @@ Executable shaper-client
 --  Executable post
 --    Main-is:           Dust/Services/Sneakermesh/post.hs
 --    Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict
-
---  Executable compile
---    Main-is:           Dust/Model/compile.hs
---    Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict
 
 --  Executable fetch
 --    Main-is:           Dust/Services/Sneakermesh/fetch.hs

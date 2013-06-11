@@ -7,30 +7,21 @@ import Data.Serialize
 import Text.CSV
 import Data.List as L
 
+import Dust.Model.Observations
 import Dust.Model.TrafficModel
-import Dust.Model.PacketLength
-import Dust.Model.Content
 
 main = do
     args <- getArgs
 
     case args of
-        (lengthpath:contentpath:modelpath:_) -> compile lengthpath contentpath modelpath
-        otherwise      -> putStrLn "Usage: compile [lengths-file] [content-file] [model-file]"
+        (obspath:modelpath:_) -> compile obspath modelpath
+        otherwise      -> putStrLn "Usage: compile [observation-file] [model-file]"
 
-compile :: FilePath -> FilePath -> FilePath -> IO()
-compile lengthpath contentPath modelpath  = do
-    result <- parseCSVFromFile lengthpath
-    case result of
-        Left error -> putStrLn "Error parsing CSV"
-        Right contents -> do
-            let lengthModel = PacketLengthModel $ process contents
-            contentModel <- loadContentModel contentPath
-            let model = TrafficModel lengthModel contentModel
+compile :: FilePath -> FilePath -> IO()
+compile obspath modelpath  = do
+    eitherObs <- loadObservations obspath
+    case eitherObs of
+        Left error -> putStrLn "Error loading observations"
+        Right obs -> do
+            let model = makeModel obs
             B.writeFile modelpath (encode model)
-
-process :: CSV -> [Double]
-process [] = []
-process ((countStr:_):rest) =
-    let count = (read countStr) :: Double
-    in [count] ++ process rest
