@@ -3,6 +3,8 @@
 module Dust.Model.Observations
 (
     Observations(..),
+    LengthObservations(..),
+    ContentObservations(..),
     emptyObservations,
     loadObservations,
     saveObservations,
