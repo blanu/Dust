@@ -10,6 +10,7 @@ module Dust.Model.Observations
     saveObservations,
     ensureObservations,
     observePacket,
+    observePort,
     makeModel
 )
 where
@@ -21,14 +22,17 @@ import qualified Data.ByteString as B
 import Data.Int
 import Data.Word
 import System.Directory
+import Data.List (nub)
 
 import Dust.Model.PacketLength
 import qualified Dust.Model.Content as C
+import Dust.Model.Port
 import Dust.Model.TrafficModel
 
 data Observations = Observations {
     lengths :: LengthObservations,
-    content :: ContentObservations
+    content :: ContentObservations,
+    ports   :: PortObservations
 } deriving (Generic, Show)
 instance Serialize Observations
 
@@ -38,12 +42,20 @@ instance Serialize LengthObservations
 data ContentObservations = ContentObservations [Int] deriving (Generic, Show)
 instance Serialize ContentObservations
 
+data PortObservations = PortObservations [Int] deriving (Generic, Show)
+instance Serialize PortObservations
+
 observePacket :: Observations -> ByteString -> Observations
-observePacket (Observations lobs cobs) bs =
+observePacket (Observations lobs cobs pobs) bs =
   let bsl = (fromIntegral $ B.length bs)::Int
       lobs' = observeLengths lobs (bsl, 1)
       cobs' = observeByteString cobs bs
-  in Observations lobs' cobs'
+  in Observations lobs' cobs' pobs
+
+observePort :: Observations -> Int -> Observations
+observePort (Observations lobs cobs (PortObservations ports)) port =
+  let pobs' = PortObservations $ nub $ port : ports
+  in Observations lobs cobs pobs'
 
 observeLengths :: LengthObservations -> (Int, Int) -> LengthObservations
 observeLengths (LengthObservations items) item = LengthObservations $ updateCounts items item
@@ -67,7 +79,7 @@ observeByte :: ContentObservations -> (Int, Int) -> ContentObservations
 observeByte (ContentObservations items) item = ContentObservations $ updateCounts items item
 
 emptyObservations :: Observations
-emptyObservations = Observations emptyLengthObservations emptyContentObservations
+emptyObservations = Observations emptyLengthObservations emptyContentObservations emptyPortObservations
 
 emptyLengthObservations :: LengthObservations
 emptyLengthObservations = LengthObservations (take 1520 $ repeat 0)
@@ -75,15 +87,17 @@ emptyLengthObservations = LengthObservations (take 1520 $ repeat 0)
 emptyContentObservations :: ContentObservations
 emptyContentObservations = ContentObservations (take 256 $ repeat 0)
 
+emptyPortObservations :: PortObservations
+emptyPortObservations = PortObservations []
+
 loadObservations :: FilePath -> IO (Either String Observations)
 loadObservations path = do
     s <- B.readFile path
     return ((decode s)::(Either String Observations))
 
 saveObservations :: FilePath -> Observations -> IO()
-saveObservations path obs@(Observations lobs cobs) = do
+saveObservations path obs = do
     putStrLn "Saving observations..."
-    putStrLn $ show cobs
     let s = encode obs
     putStrLn $ "Writing " ++ (show $ B.length s) ++ " bytes"
     B.writeFile path s
@@ -101,10 +115,11 @@ ensureObservations path = do
       False -> return emptyObservations
 
 makeModel :: Observations -> TrafficModel
-makeModel (Observations lengthObs contentObs) =
+makeModel (Observations lengthObs contentObs portObs) =
     let lengthModel = makeLengthModel lengthObs
         contentModel = makeContentModel contentObs
-    in TrafficModel lengthModel contentModel
+        portModel = makePortModel portObs
+    in TrafficModel lengthModel contentModel portModel
 
 makeLengthModel :: LengthObservations -> PacketLengthModel
 makeLengthModel (LengthObservations counts) =
@@ -115,6 +130,9 @@ makeLengthModel (LengthObservations counts) =
 makeContentModel :: ContentObservations -> C.ContentModel
 makeContentModel (ContentObservations obs) =
   C.makeContentModel $ zip ([0..255]::[Word8]) obs
+
+makePortModel :: PortObservations -> PortModel
+makePortModel (PortObservations ports) = PortModel ports
 
 divideBy :: Int -> Int -> Double
 divideBy d n = 

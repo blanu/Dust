@@ -16,10 +16,12 @@ import qualified Data.ByteString as B
 
 import Dust.Model.PacketLength
 import qualified Dust.Model.Content as C
+import Dust.Model.Port
 
 data TrafficModel = TrafficModel {
     lengths :: PacketLengthModel,
-    content :: C.ContentModel
+    content :: C.ContentModel,
+    ports   :: PortModel
 } deriving (Generic)
 instance Serialize TrafficModel
 

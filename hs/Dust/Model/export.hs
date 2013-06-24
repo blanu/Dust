@@ -36,6 +36,6 @@ export modelpath csvpath = do
         writeFile csvpath text
 
 csvify :: String -> TrafficModel -> String
-csvify name (TrafficModel (PacketLengthModel ls) _) =
+csvify name (TrafficModel (PacketLengthModel ls) _ _) =
   name ++ "\n" ++ (unlines $ map show ls)
 

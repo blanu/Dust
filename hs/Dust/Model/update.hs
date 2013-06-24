@@ -36,14 +36,16 @@ updateOffline pcappath port modelpath = do
     setFilter pcap ("tcp port " ++ port) True ipmask
     putStrLn $ "Set filter to port " ++ port
 
+    let iport = (read port)::Int
     obs <- ensureObservations modelpath
+    let obs' = observePort obs iport
     putStrLn "Obs"
-    putStrLn $ show obs
+    putStrLn $ show obs'
 
     putStrLn "Processing"
-    obs' <- processOffline pcap obs
+    obs'' <- processOffline pcap obs'
     putStrLn "New observations"
-    saveObservations modelpath obs'
+    saveObservations modelpath obs''
 
 updateLive :: String -> Int -> String -> FilePath -> IO()
 updateLive device count port modelpath = do
@@ -53,14 +55,16 @@ updateLive device count port modelpath = do
     setFilter pcap ("tcp port " ++ port) True ipmask
     putStrLn $ "Set filter to port " ++ port
 
+    let iport = (read port)::Int
     obs <- ensureObservations modelpath
+    let obs' = observePort obs iport
     putStrLn "Obs"
-    putStrLn $ show obs
+    putStrLn $ show obs'
 
     putStrLn "Processing"
-    obs' <- processLive pcap obs count
+    obs'' <- processLive pcap obs' count
     putStrLn "New observations"
-    saveObservations modelpath obs'
+    saveObservations modelpath obs''
 
 processLive :: PcapHandle -> Observations -> Int -> IO Observations
 processLive pcap obs 0 = return obs
