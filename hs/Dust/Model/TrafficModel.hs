@@ -27,8 +27,9 @@ instance Serialize TrafficModel
 
 data TrafficGenerator = TrafficGenerator {
     generateLength :: IO Int,
-    encodeContent :: (ByteString -> ByteString),
-    decodeContent :: (ByteString -> ByteString)
+    encodeContent  :: (ByteString -> ByteString),
+    decodeContent  :: (ByteString -> ByteString),
+    generatePort   :: IO Int
 }
 
 loadModel :: FilePath -> IO (Either String TrafficModel)
@@ -44,4 +45,6 @@ makeGenerator model =
         (C.ContentModel tree) = content model
         enc = C.encodeContent tree
         dec = C.decodeContent tree
-    in TrafficGenerator lengthGen enc dec
+        (PortModel portList) = ports model
+        portGen = nextPort portList
+    in TrafficGenerator lengthGen enc dec portGen

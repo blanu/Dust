@@ -9,6 +9,7 @@ import Network.Socket hiding (recv)
 import Network.Socket.ByteString (recv, sendAll)
 import System.Entropy
 import Control.Exception
+import Data.Word (Word16)
 
 import Dust.Network.Util
 import Dust.Model.TrafficModel
@@ -28,7 +29,8 @@ main = do
 shaperClient :: TrafficGenerator -> IO()
 shaperClient gen = do
     let host = "166.78.129.122"
-    let port = 6995
+    portPick <- generatePort gen
+    let port = PortNum $ ((fromIntegral portPick)::Word16)
 
     client host port (shape gen)
 
