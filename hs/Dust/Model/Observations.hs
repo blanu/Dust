@@ -23,6 +23,7 @@ import Data.Int
 import Data.Word
 import System.Directory
 import Data.List (nub)
+import Data.Map (Map(..), alter)
 
 import Dust.Model.PacketLength
 import qualified Dust.Model.Content as C
@@ -32,7 +33,8 @@ import Dust.Model.TrafficModel
 data Observations = Observations {
     lengths :: LengthObservations,
     content :: ContentObservations,
-    ports   :: PortObservations
+    ports   :: PortObservations,
+    strings :: SubstringObservations
 } deriving (Generic, Show)
 instance Serialize Observations
 
@@ -45,17 +47,52 @@ instance Serialize ContentObservations
 data PortObservations = PortObservations [Int] deriving (Generic, Show)
 instance Serialize PortObservations
 
+data SubstringObservations = SubstringObservations [(Map ByteString Int)] deriving (Generic, Show)
+instance Serialize SubstringObservations
+
 observePacket :: Observations -> ByteString -> Observations
-observePacket (Observations lobs cobs pobs) bs =
+observePacket (Observations lobs cobs pobs sobs) bs =
   let bsl = (fromIntegral $ B.length bs)::Int
       lobs' = observeLengths lobs (bsl, 1)
       cobs' = observeByteString cobs bs
-  in Observations lobs' cobs' pobs
+  in Observations lobs' cobs' pobs sobs
 
 observePort :: Observations -> Int -> Observations
-observePort (Observations lobs cobs (PortObservations ports)) port =
+observePort (Observations lobs cobs (PortObservations ports) sobs) port =
   let pobs' = PortObservations $ nub $ port : ports
-  in Observations lobs cobs pobs'
+  in Observations lobs cobs pobs' sobs
+
+observeSubstrings :: Observations -> ByteString -> Observations
+observeSubstrings obs bs =
+  let windows = windowed 4 bs  
+  in observeSubstringList obs 0 windows
+
+observeSubstringList :: Observations -> Int -> [ByteString] -> Observations
+observeSubstringList obs offset [] = obs
+observeSubstringList obs offset (bs:bss) = observeSubstringList (observeSubstring obs offset bs) (offset+1) bss
+
+observeSubstring :: Observations -> Int -> ByteString -> Observations
+observeSubstring (Observations lobs cobs pobs (SubstringObservations subs)) offset bs =
+  let sobs' = SubstringObservations $ updateSubstringCount subs offset bs
+  in Observations lobs cobs pobs sobs'  
+
+updateSubstringCount :: [(Map ByteString Int)] -> Int -> ByteString -> [(Map ByteString Int)]
+updateSubstringCount items index bs =
+    let (a, (item:b)) = splitAt index items
+    in  a ++ ((alter updateMapCount bs item):b)  
+
+updateMapCount :: Maybe Int -> Maybe Int
+updateMapCount Nothing = Just 1
+updateMapCount (Just x) = Just (x+1)
+
+windowed :: Int -> ByteString -> [ByteString]
+windowed size ls = 
+  if B.null ls
+  then []
+  else
+    if B.length ls < size
+      then [ls]
+      else (B.take size ls) : (windowed size $ B.tail ls)
 
 observeLengths :: LengthObservations -> (Int, Int) -> LengthObservations
 observeLengths (LengthObservations items) item = LengthObservations $ updateCounts items item
@@ -79,7 +116,7 @@ observeByte :: ContentObservations -> (Int, Int) -> ContentObservations
 observeByte (ContentObservations items) item = ContentObservations $ updateCounts items item
 
 emptyObservations :: Observations
-emptyObservations = Observations emptyLengthObservations emptyContentObservations emptyPortObservations
+emptyObservations = Observations emptyLengthObservations emptyContentObservations emptyPortObservations emptySubstringObservations
 
 emptyLengthObservations :: LengthObservations
 emptyLengthObservations = LengthObservations (take 1520 $ repeat 0)
@@ -89,6 +126,9 @@ emptyContentObservations = ContentObservations (take 256 $ repeat 0)
 
 emptyPortObservations :: PortObservations
 emptyPortObservations = PortObservations []
+
+emptySubstringObservations :: SubstringObservations
+emptySubstringObservations = SubstringObservations []
 
 loadObservations :: FilePath -> IO (Either String Observations)
 loadObservations path = do
@@ -115,7 +155,7 @@ ensureObservations path = do
       False -> return emptyObservations
 
 makeModel :: Observations -> TrafficModel
-makeModel (Observations lengthObs contentObs portObs) =
+makeModel (Observations lengthObs contentObs portObs stringObs) =
     let lengthModel = makeLengthModel lengthObs
         contentModel = makeContentModel contentObs
         portModel = makePortModel portObs
