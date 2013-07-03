@@ -136,5 +136,5 @@ sendReplayedBytes config packet@(Packet _ _ transport payload) sock = do
                 Left error -> do
                     putStrLn $ "Error: " ++ show error
                 Right _ -> do
-                    putStrLn $ "sent " ++ (show (B.length payload))
+                    putStrLn $ "sent " ++ (show (B.length payload)) ++ " to " ++ (show addr)
     return ()
