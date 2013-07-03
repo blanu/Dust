@@ -5,12 +5,14 @@ module Dust.Model.Observations
     Observations(..),
     LengthObservations(..),
     ContentObservations(..),
+    SubstringObservations(..),
     emptyObservations,
     loadObservations,
     saveObservations,
     ensureObservations,
     observePacket,
     observePort,
+    observeSubstrings,
     makeModel
 )
 where
@@ -23,7 +25,7 @@ import Data.Int
 import Data.Word
 import System.Directory
 import Data.List (nub)
-import Data.Map (Map(..), alter)
+import Data.Map (Map(..), alter, empty)
 
 import Dust.Model.PacketLength
 import qualified Dust.Model.Content as C
@@ -64,7 +66,7 @@ observePort (Observations lobs cobs (PortObservations ports) sobs) port =
 
 observeSubstrings :: Observations -> ByteString -> Observations
 observeSubstrings obs bs =
-  let windows = windowed 4 bs  
+  let windows = windowed 17 bs  
   in observeSubstringList obs 0 windows
 
 observeSubstringList :: Observations -> Int -> [ByteString] -> Observations
@@ -78,8 +80,10 @@ observeSubstring (Observations lobs cobs pobs (SubstringObservations subs)) offs
 
 updateSubstringCount :: [(Map ByteString Int)] -> Int -> ByteString -> [(Map ByteString Int)]
 updateSubstringCount items index bs =
-    let (a, (item:b)) = splitAt index items
-    in  a ++ ((alter updateMapCount bs item):b)  
+    let (a, rest) = splitAt index items
+    in case rest of
+      [] -> items
+      (item:b) -> a ++ ((alter updateMapCount bs item):b)  
 
 updateMapCount :: Maybe Int -> Maybe Int
 updateMapCount Nothing = Just 1
@@ -128,7 +132,7 @@ emptyPortObservations :: PortObservations
 emptyPortObservations = PortObservations []
 
 emptySubstringObservations :: SubstringObservations
-emptySubstringObservations = SubstringObservations []
+emptySubstringObservations = SubstringObservations $ take 1500 $ repeat empty
 
 loadObservations :: FilePath -> IO (Either String Observations)
 loadObservations path = do

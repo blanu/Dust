@@ -17,6 +17,7 @@ import Dust.Model.TrafficModel
 import Dust.Model.PacketLength
 import Dust.Model.Content
 import Dust.Model.Observations
+import Dust.Model.Packet
 
 main = do
     args <- getArgs
@@ -39,12 +40,8 @@ updateOffline pcappath port modelpath = do
     let iport = (read port)::Int
     obs <- ensureObservations modelpath
     let obs' = observePort obs iport
-    putStrLn "Obs"
-    putStrLn $ show obs'
 
-    putStrLn "Processing"
-    obs'' <- processOffline pcap obs'
-    putStrLn "New observations"
+    obs'' <- processOffline True pcap obs'
     saveObservations modelpath obs''
 
 updateLive :: String -> Int -> String -> FilePath -> IO()
@@ -58,34 +55,39 @@ updateLive device count port modelpath = do
     let iport = (read port)::Int
     obs <- ensureObservations modelpath
     let obs' = observePort obs iport
-    putStrLn "Obs"
-    putStrLn $ show obs'
 
-    putStrLn "Processing"
-    obs'' <- processLive pcap obs' count
-    putStrLn "New observations"
+    obs'' <- processLive True pcap obs' count
     saveObservations modelpath obs''
 
-processLive :: PcapHandle -> Observations -> Int -> IO Observations
-processLive pcap obs 0 = return obs
-processLive pcap obs count = do
+processLive :: Bool -> PcapHandle -> Observations -> Int -> IO Observations
+processLive first pcap obs 0 = return obs
+processLive first pcap obs count = do
     (hdr, body) <- nextBS pcap
     if hdrWireLength hdr /= 0
         then do
-            putStrLn "Got next"
-            let obs' = observePacket obs body
-            putStrLn $ show obs'
-            processLive pcap obs' (count-1)
+            let eitherPacket = parsePacket body
+            case eitherPacket of
+              Left error -> do
+                putStrLn $ "Error parsing packet"
+                processLive first pcap obs count
+              Right (Packet _ _ _ payload) -> do
+                let obs' = observePacket obs payload
+                let obs'' = if first then (observeSubstrings obs payload) else obs'
+                processLive False pcap obs'' (count-1)
         else return obs
 
-processOffline :: PcapHandle -> Observations -> IO Observations
-processOffline pcap obs = do
+processOffline :: Bool -> PcapHandle -> Observations -> IO Observations
+processOffline first pcap obs = do
     (hdr, body) <- nextBS pcap
     if hdrWireLength hdr /= 0
         then do
-            putStrLn "Got next"
-            let obs' = observePacket obs body
-            putStrLn $ show obs'
-            processOffline pcap obs'
+            let eitherPacket = parsePacket body
+            case eitherPacket of
+              Left error -> do
+                putStrLn $ "Error parsing packet"
+                processOffline first pcap obs
+              Right (Packet _ _ _ payload) -> do
+                let obs' = observePacket obs payload
+                let obs'' = observeSubstrings obs payload
+                processOffline False pcap obs''
         else return obs
-
