@@ -43,7 +43,7 @@ replayClient pcappath protocol rport = do
       otherwise -> putStrLn $ "Unknown protocol " ++ protocol
 
 client :: String -> String -> PortNumber -> (Socket -> IO()) -> IO()
-client protocol host port handleRequest = withSocketsDo $ do
+client protocol host port@(PortNum iport) handleRequest = withSocketsDo $ do
     case protocol of
       "tcp" -> do
         sock <- socket AF_INET Stream defaultProtocol
@@ -56,6 +56,7 @@ client protocol host port handleRequest = withSocketsDo $ do
         let myport = PortNum 2014
         sock <- socket AF_INET Datagram defaultProtocol
         addr <- inet_addr host
+        putStrLn $ "Binding to " ++ (show iport)
         bindSocket sock (SockAddrInet myport iNADDR_ANY)
         connect sock (SockAddrInet port addr)
 
