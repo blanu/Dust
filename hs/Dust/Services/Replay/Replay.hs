@@ -58,8 +58,9 @@ replayStream config pcap sock = do
         else do
             putStrLn "Done replaying"
             putStrLn "Closing socket"
-	    sClose sock
-	    return ()
+	    case config of
+	        (TCPConfig _ _)     -> sClose sock
+	        (UDPConfig _ _ _ _) -> return()
 
 markNotFirst :: ReplayConfig -> ReplayConfig
 markNotFirst config@(TCPConfig _ _) = config
