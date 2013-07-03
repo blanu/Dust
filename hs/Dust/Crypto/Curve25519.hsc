@@ -18,6 +18,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import Foreign.Ptr
 import Foreign.ForeignPtr (withForeignPtr)
 import Data.Word
+import Foreign.Marshal.Alloc (mallocBytes)
 
 withByteStringPtr :: ByteString -> (Ptr Word8 -> IO a) -> IO a
 withByteStringPtr b f =
@@ -29,11 +30,11 @@ curve25519 bs1 bs2 = unsafePerformIO $ unsafe_curve25519 bs1 bs2
 
 unsafe_curve25519 :: ByteString -> ByteString -> IO ByteString
 unsafe_curve25519 input1 input2 = do
-    withByteStringPtr (pack "1234567890123457890123456789012") $ \output -> do
-        withByteStringPtr input1 $ \cinput1 -> do
-            withByteStringPtr input2 $ \cinput2 -> do
-                result <- c_curve25519_donna output cinput1 cinput2
-                unsafePackCStringFinalizer output 32 emptyFinalizer
+    output <- mallocBytes 32
+    withByteStringPtr input1 $ \cinput1 -> do
+        withByteStringPtr input2 $ \cinput2 -> do
+            result <- c_curve25519_donna output cinput1 cinput2
+            unsafePackCStringFinalizer output 32 emptyFinalizer
 
 emptyFinalizer :: IO()
 emptyFinalizer = return ()

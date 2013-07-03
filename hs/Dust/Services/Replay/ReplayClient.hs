@@ -53,8 +53,10 @@ client protocol host port handleRequest = withSocketsDo $ do
 
         handleRequest sock
       "udp" -> do
+        let myport = PortNum 2014
         sock <- socket AF_INET Datagram defaultProtocol
         addr <- inet_addr host
+        bindSocket sock (SockAddrInet myport iNADDR_ANY)
         connect sock (SockAddrInet port addr)
 
         handleRequest sock

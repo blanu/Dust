@@ -71,12 +71,18 @@ getSession gen keypair sock = do
 
 getPacket :: TrafficGenerator -> Session -> Socket -> IO Plaintext
 getPacket gen session sock = do
+    putStrLn $ "Session: " ++ (show session)
     packetBytes <- readBytes gen sock 4 B.empty
+    putStrLn $ "packetBytes: " ++ (show packetBytes)
     let cipherHeader = CipherHeader (Ciphertext packetBytes)
+    putStrLn $ "cipherHeader: " ++ (show cipherHeader)
     let cipher = makeDecrypt session
     let plainPacketHeader = decryptHeader cipher cipherHeader
+    putStrLn $ "plainPacketHeader: " ++ (show plainPacketHeader)
     let PlainHeader packetLength = plainPacketHeader
+    putStrLn $ "packetLength: " ++ (show packetLength)
     let packetLen = (fromIntegral packetLength)::Int
+    putStrLn $ "packetLen: " ++ (show packetLen)
 
     payloadBytes <- readBytes gen sock packetLen B.empty
     let ciphertext = Ciphertext payloadBytes
@@ -117,26 +123,37 @@ readMoreBytes gen sock maxLen buffer = do
 
 putSessionPacket :: TrafficGenerator -> Session -> Plaintext -> Socket -> IO()
 putSessionPacket gen session plaintext sock = do
+    putStrLn $ "Session: " ++ (show session)
     let (Session (Keypair (PublicKey myPublic) _) _ (IV iv)) = session
-    let encoder = encodeContent gen
-    let encPub = encoder myPublic
-    let encIV = encoder iv
-    let encSession = B.append encPub encIV
+--    let encoder = encodeContent gen
+--    let encPub = encoder myPublic
+--    let encIV = encoder iv
+--    let encSession = B.append encPub encIV
 
     let packet = makePlainPacket plaintext
     let cipher = makeEncrypt session
     let (CipherDataPacket (CipherHeader (Ciphertext header)) (Ciphertext payload)) = encryptData cipher packet
-    let encHeader = encoder header
-    let encPayload = encoder payload
-    let encPacket = B.append encHeader encPayload -- 4 bytes, variable
+--    let encHeader = encoder header
+--    let encPayload = encoder payload
+--    let encPacket = B.append encHeader encPayload -- 4 bytes, variable
 
-    let bytes = B.append encSession encPacket
+--    let bytes = B.append encSession encPacket
+
+    let sessionBytes = B.append myPublic iv
+    let packetBytes = B.append header payload
+    let bytes = B.append sessionBytes packetBytes
 
     putStrLn $ "Sending encoded bytes:"
-    putStrLn $ (show $ B.length myPublic) ++ ":" ++ (show $ B.length encPub) ++ " " ++ (show myPublic) ++ " -> " ++ (show encPub)
-    putStrLn $ (show $ B.length iv) ++ ":" ++ (show $ B.length encIV) ++ " " ++ (show iv) ++ " -> " ++ (show encIV)
-    putStrLn $ (show $ B.length header) ++ ":" ++ (show $ B.length encHeader) ++ " " ++ (show header) ++ " -> " ++ (show encHeader)
-    putStrLn $ (show $ B.length payload) ++ ":" ++ (show $ B.length encPayload) ++ " " ++ (show payload) ++ " -> " ++ (show encPayload)
+--    putStrLn $ (show $ B.length myPublic) ++ ":" ++ (show $ B.length encPub) ++ " " ++ (show myPublic) ++ " -> " ++ (show encPub)
+    putStrLn $ show myPublic
+    putStrLn $ show iv
+--    putStrLn $ (show $ B.length iv) ++ ":" ++ (show $ B.length encIV) ++ " " ++ (show iv) ++ " -> " ++ (show encIV)
+--    putStrLn $ (show $ B.length header) ++ ":" ++ (show $ B.length encHeader) ++ " " ++ (show header) ++ " -> " ++ (show encHeader)
+--    putStrLn $ (show $ B.length payload) ++ ":" ++ (show $ B.length encPayload) ++ " " ++ (show payload) ++ " -> " ++ (show encPayload)
+--    putStrLn "==="
+--    putStrLn $ show encIV
+--    putStrLn $ show encSession
+--    putStrLn $ show encPacket
     putStrLn "---------------------"
     sendBytes gen bytes sock
 

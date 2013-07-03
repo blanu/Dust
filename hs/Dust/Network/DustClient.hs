@@ -22,7 +22,8 @@ import Dust.Model.TrafficModel
 
 dustClient :: TrafficGenerator -> FilePath -> Plaintext -> IO(Plaintext)
 dustClient gen idpath payload = do
-    let host = "166.78.129.122"
+--    let host = "166.78.129.122"
+    let host = "127.0.0.1"
     let port = 6885
 
     keypair <- createEphemeral

@@ -25,7 +25,7 @@ import Dust.Network.Util
 import Dust.Model.TrafficModel
 import Dust.Model.Packet
 
-data ReplayConfig = 
+data ReplayConfig =
     TCPConfig String Bool
   | UDPConfig String Bool String Bool
 
@@ -45,7 +45,7 @@ replayStream config pcap sock = do
     if hdrWireLength hdr /= 0
         then do
             let eitherHeaders = parsePacket body
- 
+
             case eitherHeaders of
                 Left error -> putStrLn "Error parsing [TCP|UDP]/IP headers"
                 Right headers@(Packet _ _ _ payload) -> do
@@ -83,7 +83,7 @@ replayDirection config packet =
 -- False if the destination of the packet is any other port
 --   Means packet is going to client
 packetDirection :: Packet -> String -> Bool
-packetDirection (Packet _ _ tcp _) strport = 
+packetDirection (Packet _ _ tcp _) strport =
     let w16port = (read strport)::Word16
     in (destport tcp) == w16port
 
@@ -124,23 +124,17 @@ sendReplayedBytes config packet@(Packet _ _ transport payload) sock = do
             case sendTry of
                 Left error -> do
                     putStrLn $ "Error: " ++ show error
-	            putStrLn "Closing socket"
-        	    sClose sock
-        	Right _ -> do
-        	    putStrLn $ "sent " ++ (show (B.length payload))
+                    putStrLn "Closing socket"
+                    sClose sock
+                Right _ -> do
+                    putStrLn $ "sent " ++ (show (B.length payload))
         (UDPConfig sport dir host first) -> do
-            let w16port = (srcport transport)
-            let iport = (fromIntegral w16port)::Int
             bindAddr <- inet_addr host
-            let addr = SockAddrInet (PortNum w16port) bindAddr
-            case first of
-              True -> do
-                putStrLn $ "Binding to " ++ (show iport)
-                bindSocket sock addr
+            let addr = SockAddrInet (PortNum (if dir then 2014 else 2013)) bindAddr
             sendTry <- try (sendTo sock payload addr) :: IO (Either IOError Int)
             case sendTry of
                 Left error -> do
                     putStrLn $ "Error: " ++ show error
-        	Right _ -> do
-        	    putStrLn $ "sent " ++ (show (B.length payload))
+                Right _ -> do
+                    putStrLn $ "sent " ++ (show (B.length payload))
     return ()
