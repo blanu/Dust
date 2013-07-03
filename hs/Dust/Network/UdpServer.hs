@@ -12,4 +12,4 @@ server host port@(PortNum iport) handleRequest = withSocketsDo $ do
         sock <- socket AF_INET Datagram defaultProtocol
         putStrLn $ "Binding to " ++ (show iport)
         bindSocket sock (SockAddrInet port iNADDR_ANY)
-        forever $ handleRequest sock
+        handleRequest sock
