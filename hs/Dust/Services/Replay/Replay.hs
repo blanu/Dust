@@ -2,6 +2,8 @@ module Dust.Services.Replay.Replay
 (
     ReplayConfig(..),
     openPcap,
+    PacketMask(..),
+    loadMask,
     replayStream
 )
 where
@@ -19,7 +21,9 @@ import Network.Socket.ByteString (recv, sendAll, sendTo)
 import System.Entropy
 import Control.Exception
 import Network.Pcap
-import Data.Word (Word16, Word32)
+import Data.Word (Word8, Word16, Word32)
+import Data.String
+import Data.List.Split
 
 import Dust.Network.Util
 import Dust.Model.TrafficModel
@@ -28,6 +32,30 @@ import Dust.Model.Packet
 data ReplayConfig =
     TCPConfig String Bool
   | UDPConfig String Bool String Bool
+
+data PacketMask = PacketMask [[(Int,Word8)]] deriving (Show) -- [[(Offset,Byte)]], list index is packet number
+
+nextMask :: PacketMask -> PacketMask
+nextMask (PacketMask []) = PacketMask []
+nextMask (PacketMask (mask:masks)) = PacketMask masks
+
+loadMask :: FilePath -> IO PacketMask
+loadMask path = do
+  file <- readFile path
+  return $ parseMasks $ map words (lines file)
+
+parseMasks :: [[String]] -> PacketMask
+parseMasks sss = PacketMask $ map parseMask sss
+
+parseMask :: [String] -> [(Int,Word8)]
+parseMask ss = map parseByteMask ss
+
+parseByteMask :: String -> (Int,Word8)
+parseByteMask s =
+  let (a:b:_) = splitOn "," s
+      a' = (read a)::Int
+      b' = (read b)::Word8
+  in (a',b')
 
 openPcap :: FilePath -> ReplayConfig -> IO PcapHandle
 openPcap pcappath config = do
@@ -39,8 +67,8 @@ openPcap pcappath config = do
       (UDPConfig port _ _ _) -> setFilter pcap ("udp port " ++ port) True ipmask
     return pcap
 
-replayStream :: ReplayConfig -> PcapHandle -> Socket -> IO()
-replayStream config pcap sock = do
+replayStream :: ReplayConfig -> PcapHandle -> PacketMask -> Socket -> IO()
+replayStream config pcap mask sock = do
     (hdr, body) <- nextBS pcap
     if hdrWireLength hdr /= 0
         then do
@@ -52,9 +80,9 @@ replayStream config pcap sock = do
 	            if (B.length payload) > 0
         	        then do
                 	    let replayDir = replayDirection config headers
-	                    replayPacket config replayDir headers sock
-        		    replayStream (markNotFirst config) pcap sock
-        		else replayStream config pcap sock
+	                    replayPacket config replayDir headers mask sock
+        		    replayStream (markNotFirst config) pcap (nextMask mask) sock
+        		else replayStream config pcap mask sock
         else do
             putStrLn "Done replaying"
             putStrLn "Closing socket"
@@ -88,11 +116,11 @@ packetDirection (Packet _ _ tcp _) strport =
     let w16port = (read strport)::Word16
     in (destport tcp) == w16port
 
-replayPacket :: ReplayConfig -> Bool -> Packet -> Socket -> IO()
-replayPacket config dir packet@(Packet _ _ _ payload) sock = do
+replayPacket :: ReplayConfig -> Bool -> Packet -> PacketMask -> Socket -> IO()
+replayPacket config dir packet@(Packet _ _ _ payload) mask sock = do
     case dir of
         True  -> getReplayedBytes (B.length payload) sock
-        False -> sendReplayedBytes config packet sock
+        False -> sendReplayedBytes config packet mask sock
 
 getReplayedBytes :: Int -> Socket -> IO()
 getReplayedBytes count sock = do
@@ -116,12 +144,13 @@ getReplayedBytes count sock = do
                 then getReplayedBytes (count - (B.length bs)) sock
                 else return ()
 
-sendReplayedBytes :: ReplayConfig -> Packet -> Socket -> IO()
-sendReplayedBytes config packet@(Packet _ _ transport payload) sock = do
+sendReplayedBytes :: ReplayConfig -> Packet -> PacketMask -> Socket -> IO()
+sendReplayedBytes config packet@(Packet _ _ transport payload) mask sock = do
     putStrLn $ "sending " ++ show (B.length payload)
+    let maskedPayload = applyMask mask payload
     case config of
         (TCPConfig _ _) -> do
-            sendTry <- try (sendAll sock payload) :: IO (Either IOError ())
+            sendTry <- try (sendAll sock maskedPayload) :: IO (Either IOError ())
             case sendTry of
                 Left error -> do
                     putStrLn $ "Error: " ++ show error
@@ -132,10 +161,24 @@ sendReplayedBytes config packet@(Packet _ _ transport payload) sock = do
         (UDPConfig sport dir host first) -> do
             bindAddr <- inet_addr host
             let addr = SockAddrInet (PortNum (if dir then 2014 else 2013)) bindAddr
-            sendTry <- try (sendTo sock payload addr) :: IO (Either IOError Int)
+            sendTry <- try (sendTo sock maskedPayload addr) :: IO (Either IOError Int)
             case sendTry of
                 Left error -> do
                     putStrLn $ "Error: " ++ show error
                 Right _ -> do
                     putStrLn $ "sent " ++ (show (B.length payload)) ++ " to " ++ (show addr)
     return ()
+
+applyMask :: PacketMask -> ByteString -> ByteString
+applyMask (PacketMask []) bs = bs
+applyMask (PacketMask (mask:_)) bs = applyByteMasks mask bs
+
+applyByteMasks :: [(Int,Word8)] -> ByteString -> ByteString
+applyByteMasks [] bs = bs
+applyByteMasks (mask:masks) bs = applyByteMasks masks (applyByteMask mask bs)
+
+applyByteMask :: (Int,Word8) -> ByteString -> ByteString
+applyByteMask (offset,value) bs = 
+  let front = B.take offset bs
+      back = B.drop (offset+1) bs
+  in front `B.append` (value `B.cons` back)

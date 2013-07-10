@@ -24,11 +24,14 @@ main = do
     args <- getArgs
 
     case args of
-        (pcappath:protocol:port:_) -> replayServer pcappath protocol port
-        otherwise      -> putStrLn "Usage: replay-server [pcap-file] [tcp|udp] [port]"
+        (pcappath:protocol:port:maskfile:_) -> do
+          mask <- loadMask maskfile
+          replayServer pcappath protocol port mask
+        (pcappath:protocol:port:_) -> replayServer pcappath protocol port (PacketMask [])
+        otherwise      -> putStrLn "Usage: replay-server [pcap-file] [tcp|udp] [port] <mask-file>"
 
-replayServer :: FilePath -> String -> String -> IO()
-replayServer pcappath protocol rport = do
+replayServer :: FilePath -> String -> String -> PacketMask -> IO()
+replayServer pcappath protocol rport mask = do
     let host = "166.78.129.122"
     let port = PortNum 2013
 
@@ -36,11 +39,11 @@ replayServer pcappath protocol rport = do
       "tcp" -> do
           let config = TCPConfig rport True
           pcap <- openPcap pcappath config
-          TCP.server host port (replayStream config pcap)
+          TCP.server host port (replayStream config pcap mask)
       "udp" -> do
           let config = UDPConfig rport True host True
           pcap <- openPcap pcappath config
-          UDP.server host port (replayStream config pcap)
+          UDP.server host port (replayStream config pcap mask)
       otherwise -> putStrLn $ "Unknown protocol " ++ protocol
 
 

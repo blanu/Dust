@@ -9,7 +9,7 @@ Build-Type:          Simple
 Cabal-Version:       >=1.8
 
 Library
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict, directory
+  Build-Depends:     base >= 3 && < 5, bytestring, AES, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict, directory, split
   Extensions:
     ForeignFunctionInterface
   if os(windows)
@@ -34,11 +34,11 @@ Executable shaper-client
     
 Executable replay-server
   Main-is: Dust/Services/Replay/ReplayServer.hs
-  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap
+  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap, split
 
 Executable replay-client
   Main-is: Dust/Services/Replay/ReplayClient.hs
-  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap
+  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap, split
     
 Executable update
   Main-is:           Dust/Model/update.hs
