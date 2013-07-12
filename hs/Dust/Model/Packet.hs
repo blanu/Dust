@@ -115,11 +115,12 @@ getTCP = do
   s14<- getWord16be
   s16<- getWord16be
   s18<- getWord16be
-  let v20 = B.empty
 
   let off = shift b12 (-4)
   let rsv = shift (shift b12 4) (-4)
   
+  v20 <- getByteString (fromIntegral ((off - 5) * 4)::Int)
+
   return $ TCP s0 s2 l4 l8 off rsv b13 s14 s16 s18 v20
 
 parseUDP :: ByteString -> (Either String Transport, ByteString)

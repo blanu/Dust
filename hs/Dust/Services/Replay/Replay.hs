@@ -147,6 +147,7 @@ getReplayedBytes count sock = do
 sendReplayedBytes :: ReplayConfig -> Packet -> PacketMask -> Socket -> IO()
 sendReplayedBytes config packet@(Packet _ _ transport payload) mask sock = do
     putStrLn $ "sending " ++ show (B.length payload)
+    putStrLn $ show packet
     let maskedPayload = applyMask mask payload
     case config of
         (TCPConfig _ _) -> do
@@ -182,3 +183,4 @@ applyByteMask (offset,value) bs =
   let front = B.take offset bs
       back = B.drop (offset+1) bs
   in front `B.append` (value `B.cons` back)
+
