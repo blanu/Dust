@@ -16,7 +16,7 @@ import Data.Serialize
 import Text.Printf (printf)
 import Data.List as L
 import Control.Concurrent
-import Network.Socket hiding (recv, sendTo)
+import Network.Socket hiding (recv, sendTo, Stream)
 import Network.Socket.ByteString (recv, sendAll, sendTo)
 import System.Entropy
 import Control.Exception
@@ -30,8 +30,8 @@ import Dust.Model.TrafficModel
 import Dust.Model.Packet
 
 data ReplayConfig =
-    TCPConfig String Bool
-  | UDPConfig String Bool String Bool
+    TCPConfig PortNumber Bool
+  | UDPConfig PortNumber Bool String Bool
 
 data PacketMask = PacketMask [[(Int,Word8)]] deriving (Show) -- [[(Offset,Byte)]], list index is packet number
 
@@ -63,32 +63,20 @@ openPcap pcappath config = do
     putStrLn "Opened pcap file"
     let ipmask = (fromIntegral 0)::Word32
     case config of
-      (TCPConfig port _)     -> setFilter pcap ("tcp port " ++ port) True ipmask
-      (UDPConfig port _ _ _) -> setFilter pcap ("udp port " ++ port) True ipmask
+      (TCPConfig (PortNum port) _)     -> setFilter pcap ("tcp port " ++ (show port)) True ipmask
+      (UDPConfig (PortNum port) _ _ _) -> setFilter pcap ("udp port " ++ (show port)) True ipmask
     return pcap
 
-replayStream :: ReplayConfig -> PcapHandle -> PacketMask -> Socket -> IO()
-replayStream config pcap mask sock = do
-    (hdr, body) <- nextBS pcap
-    if hdrWireLength hdr /= 0
-        then do
-            let eitherHeaders = parsePacket body
-
-            case eitherHeaders of
-                Left error -> putStrLn "Error parsing [TCP|UDP]/IP headers"
-                Right headers@(Packet _ _ _ payload) -> do
-	            if (B.length payload) > 0
-        	        then do
-                	    let replayDir = replayDirection config headers
-	                    replayPacket config replayDir headers mask sock
-        		    replayStream (markNotFirst config) pcap (nextMask mask) sock
-        		else replayStream config pcap mask sock
-        else do
-            putStrLn "Done replaying"
-            putStrLn "Closing socket"
-	    case config of
-	        (TCPConfig _ _)     -> sClose sock
-	        (UDPConfig _ _ _ _) -> return()
+replayStream :: ReplayConfig -> Stream -> PacketMask -> Socket -> IO()
+replayStream config stream@(Stream _ _ []) mask sock = do
+  putStrLn "Done replaying"
+  putStrLn "Closing socket"
+  case config of
+   (TCPConfig _ _)     -> sClose sock
+   (UDPConfig _ _ _ _) -> return()
+replayStream config stream@(Stream _ _ (packet:packets)) mask sock = do
+  replayPacket config packet mask sock
+  replayStream (markNotFirst config) stream (nextMask mask) sock
 
 markNotFirst :: ReplayConfig -> ReplayConfig
 markNotFirst config@(TCPConfig _ _) = config
@@ -111,14 +99,12 @@ replayDirection config packet =
 --   Means packet is going to server
 -- False if the destination of the packet is any other port
 --   Means packet is going to client
-packetDirection :: Packet -> String -> Bool
-packetDirection (Packet _ _ tcp _) strport =
-    let w16port = (read strport)::Word16
-    in (destport tcp) == w16port
+packetDirection :: Packet -> PortNumber -> Bool
+packetDirection (Packet _ _ tcp _) (PortNum port) = (destport tcp) == port
 
-replayPacket :: ReplayConfig -> Bool -> Packet -> PacketMask -> Socket -> IO()
-replayPacket config dir packet@(Packet _ _ _ payload) mask sock = do
-    case dir of
+replayPacket :: ReplayConfig -> Packet -> PacketMask -> Socket -> IO()
+replayPacket config packet@(Packet _ _ _ payload) mask sock = do
+    case (replayDirection config packet) of
         True  -> getReplayedBytes (B.length payload) sock
         False -> sendReplayedBytes config packet mask sock
 

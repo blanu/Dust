@@ -1,12 +1,18 @@
+{-# LANGUAGE DeriveGeneric, DefaultSignatures #-}
+
 module Dust.Model.Packet
 (
     IP(..),
     Transport(..),
     Packet(..),
+    Stream(..),
+    Protocol(..),
     parsePacket
 )
 where
 
+import GHC.Generics
+import Data.Serialize (Serialize)
 import Data.ByteString (ByteString, unpack)
 import Data.Binary.Strict.Get
 import qualified Data.ByteString as B
@@ -26,7 +32,8 @@ data Ethernet = Ethernet {
   ethDest :: ByteString, -- 6 bytes
   ethSrc  :: ByteString, -- 6 bytes
   ethtype :: Word16
-} deriving (Show)
+} deriving (Generic, Show)
+instance Serialize Ethernet
 
 parseEthernet :: ByteString -> (Either String Ethernet, ByteString)
 parseEthernet bs = runGet getEthernet bs
@@ -53,7 +60,8 @@ data IP  = IP {
   source  :: Word32,
   dest    :: Word32,
   ipopts  :: ByteString
-} deriving (Show)
+} deriving (Generic, Show)
+instance Serialize IP
 
 parseIP :: ByteString -> (Either String IP, ByteString)
 parseIP bs = runGet getIP bs
@@ -99,7 +107,8 @@ data Transport =
     len     :: Word16,
     udpchk  :: Word16
   }
-  deriving (Show)
+  deriving (Generic, Show)
+instance Serialize Transport
 
 parseTCP :: ByteString -> (Either String Transport, ByteString)
 parseTCP bs = runGet getTCP bs
@@ -135,7 +144,14 @@ getUDP = do
 
   return $ UDP s0 s2 s4 s6
 
-data Packet = Packet Ethernet IP Transport ByteString deriving (Show)
+data Packet = Packet Ethernet IP Transport ByteString deriving (Generic, Show)
+instance Serialize Packet 
+
+data Stream = Stream Protocol Word16 [Packet] deriving (Generic, Show)
+instance Serialize Stream
+
+data Protocol = ProtocolTCP | ProtocolUDP deriving (Generic, Show)
+instance Serialize Protocol
 
 parsePacket :: ByteString -> (Either String Packet)
 parsePacket bs =

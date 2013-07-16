@@ -5,7 +5,8 @@ import Data.Serialize
 import Text.Printf (printf)
 import Data.List as L
 import Control.Concurrent
-import Network.Socket hiding (recv)
+import Network.Socket hiding (recv, Stream)
+import qualified Network.Socket as NS
 import Network.Socket.ByteString (recv, sendAll)
 import System.Entropy
 import Control.Exception
@@ -14,6 +15,7 @@ import Network.Pcap
 import System.Environment (getArgs)
 
 import Dust.Network.Util
+import Dust.Model.Packet
 import Dust.Model.TrafficModel
 import Dust.Model.Observations
 import Dust.Services.Replay.Replay
@@ -23,39 +25,46 @@ main = do
     args <- getArgs
 
     case args of
-        (pcappath:protocol:port:maskfile:_) -> do
+        (pspath:maskfile:_) -> do
           mask <- loadMask maskfile
-          replayClient pcappath protocol port mask
-        (pcappath:protocol:port:_) -> replayClient pcappath protocol port (PacketMask [])
-        otherwise      -> putStrLn "Usage: replay-client [pcap-file] [tcp|udp] [port] <mask-file>"
+          bs <- B.readFile pspath
+          let eitherStream = (decode bs)::(Either String Stream)
+          case eitherStream of
+            Left error -> putStrLn "Could not load packetstream file"
+            Right stream -> replayClient stream mask
+        (pspath:_) -> do
+          bs <- B.readFile pspath
+          let eitherStream = (decode bs)::(Either String Stream)
+          case eitherStream of
+            Left error -> putStrLn "Could not load packetstream file"
+            Right stream -> replayClient stream (PacketMask [])
+        otherwise      -> putStrLn "Usage: replay-client [packetstream-file] <mask-file>"
 
-replayClient :: FilePath -> String -> String -> PacketMask -> IO()
-replayClient pcappath protocol rport mask = do
+replayClient :: Stream -> PacketMask -> IO()
+replayClient stream@(Stream protocol rport packets) mask = do
     let host = "166.78.129.122"
     let port = PortNum 2013
 
     case protocol of
-      "tcp" -> do
-          let config = TCPConfig rport False
-          pcap <- openPcap pcappath config
-          client protocol host port (replayStream config pcap mask)
-      "udp" -> do
-          let config = UDPConfig rport False host True
-          pcap <- openPcap pcappath config
-          client protocol host port (replayStream config pcap mask)
-      otherwise -> putStrLn $ "Unknown protocol " ++ protocol
+      ProtocolTCP -> do
+          let config = TCPConfig (PortNum rport) False          
+          client protocol host port (replayStream config stream mask)
+      ProtocolUDP -> do
+          let config = UDPConfig (PortNum rport) False host True
+          client protocol host port (replayStream config stream mask)
 
-client :: String -> String -> PortNumber -> (Socket -> IO()) -> IO()
+client :: Protocol -> String -> PortNumber -> (Socket -> IO()) -> IO()
 client protocol host port handleRequest = withSocketsDo $ do
     case protocol of
-      "tcp" -> do
-        sock <- socket AF_INET Stream defaultProtocol
+      ProtocolTCP -> do
+        sock <- socket AF_INET NS.Stream defaultProtocol
         addr <- inet_addr host
         connect sock (SockAddrInet port addr)
         setSocketOption sock NoDelay 1
 
         handleRequest sock
-      "udp" -> do
+
+      ProtocolUDP -> do
         let iport = 2014
         let myport = PortNum iport
         sock <- socket AF_INET Datagram defaultProtocol
@@ -65,4 +74,3 @@ client protocol host port handleRequest = withSocketsDo $ do
         connect sock (SockAddrInet port addr)
 
         handleRequest sock
-      otherwise -> putStrLn $ "Unknown protocol " ++ protocol
