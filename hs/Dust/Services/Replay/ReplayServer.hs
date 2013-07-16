@@ -46,8 +46,8 @@ replayServer stream@(Stream protocol rport packets) mask = do
 
     case protocol of
       ProtocolTCP -> do
-          let config = TCPConfig (PortNum rport) False          
+          let config = TCPConfig (PortNum rport) True          
           TCP.server host port (replayStream config stream mask)
       ProtocolUDP -> do
-          let config = UDPConfig (PortNum rport) False host True
+          let config = UDPConfig (PortNum rport) True host True
           UDP.server host port (replayStream config stream mask)
