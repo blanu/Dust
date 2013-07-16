@@ -62,9 +62,9 @@ replayStream config stream@(Stream _ _ []) mask sock = do
   case config of
    (TCPConfig _ _)     -> sClose sock
    (UDPConfig _ _ _ _) -> return()
-replayStream config stream@(Stream _ _ (packet:packets)) mask sock = do
+replayStream config stream@(Stream protocol port (packet:packets)) mask sock = do
   replayPacket config packet mask sock
-  replayStream (markNotFirst config) stream (nextMask mask) sock
+  replayStream (markNotFirst config) (Stream protocol port packets) (nextMask mask) sock
 
 markNotFirst :: ReplayConfig -> ReplayConfig
 markNotFirst config@(TCPConfig _ _) = config
