@@ -65,3 +65,14 @@ convertStream config pcap stream@(Stream protocol rport packets) = do
         	        then convertStream config pcap $ Stream protocol rport $ packet:packets
         		else convertStream config pcap stream
         else return stream
+
+openPcap :: FilePath -> ReplayConfig -> IO PcapHandle
+openPcap pcappath config = do
+    pcap <- openOffline pcappath
+    putStrLn "Opened pcap file"
+    let ipmask = (fromIntegral 0)::Word32
+    case config of
+      (TCPConfig (PortNum port) _)     -> setFilter pcap ("tcp port " ++ (show port)) True ipmask
+      (UDPConfig (PortNum port) _ _ _) -> setFilter pcap ("udp port " ++ (show port)) True ipmask
+    return pcap
+

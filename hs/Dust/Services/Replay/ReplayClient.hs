@@ -11,7 +11,6 @@ import Network.Socket.ByteString (recv, sendAll)
 import System.Entropy
 import Control.Exception
 import Data.Word (Word16)
-import Network.Pcap
 import System.Environment (getArgs)
 
 import Dust.Network.Util

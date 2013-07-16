@@ -1,7 +1,6 @@
 module Dust.Services.Replay.Replay
 (
     ReplayConfig(..),
-    openPcap,
     PacketMask(..),
     loadMask,
     replayStream
@@ -20,7 +19,6 @@ import Network.Socket hiding (recv, sendTo, Stream)
 import Network.Socket.ByteString (recv, sendAll, sendTo)
 import System.Entropy
 import Control.Exception
-import Network.Pcap
 import Data.Word (Word8, Word16, Word32)
 import Data.String
 import Data.List.Split
@@ -56,16 +54,6 @@ parseByteMask s =
       a' = (read a)::Int
       b' = (read b)::Word8
   in (a',b')
-
-openPcap :: FilePath -> ReplayConfig -> IO PcapHandle
-openPcap pcappath config = do
-    pcap <- openOffline pcappath
-    putStrLn "Opened pcap file"
-    let ipmask = (fromIntegral 0)::Word32
-    case config of
-      (TCPConfig (PortNum port) _)     -> setFilter pcap ("tcp port " ++ (show port)) True ipmask
-      (UDPConfig (PortNum port) _ _ _) -> setFilter pcap ("udp port " ++ (show port)) True ipmask
-    return pcap
 
 replayStream :: ReplayConfig -> Stream -> PacketMask -> Socket -> IO()
 replayStream config stream@(Stream _ _ []) mask sock = do

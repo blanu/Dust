@@ -34,27 +34,27 @@ Executable shaper-client
     
 Executable replay-server
   Main-is: Dust/Services/Replay/ReplayServer.hs
-  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap, split
+  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, split
 
 Executable replay-client
   Main-is: Dust/Services/Replay/ReplayClient.hs
-  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap, split
+  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, split
     
-Executable replay-convert
-  Main-is: Dust/Services/Replay/convert.hs
-  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap, split
+--Executable replay-convert
+--  Main-is: Dust/Services/Replay/convert.hs
+--  Build-Depends: base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap, split
     
-Executable update
-  Main-is:           Dust/Model/update.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
+--Executable update
+--  Main-is:           Dust/Model/update.hs
+--  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
 
-Executable export
-  Main-is:           Dust/Model/export.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
+--Executable export
+--  Main-is:           Dust/Model/export.hs
+--  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
 
-Executable show
-  Main-is:           Dust/Model/show.hs
-  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
+--Executable show
+--  Main-is:           Dust/Model/show.hs
+--  Build-Depends:     base >= 3 && < 5, bytestring, AES, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
 
 --Executable compile
 --  Main-is:           Dust/Model/compile.hs

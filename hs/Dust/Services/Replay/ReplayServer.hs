@@ -9,10 +9,10 @@ import Network.Socket (Socket, PortNumber(..))
 import Network.Socket.ByteString (recv, sendAll)
 import System.Entropy
 import Data.Word (Word16)
-import Network.Pcap
 import System.Environment (getArgs)
 
 import Dust.Model.Port
+import Dust.Model.Packet
 import Dust.Model.TrafficModel
 import qualified Dust.Network.TcpServer as TCP
 import qualified Dust.Network.UdpServer as UDP
@@ -24,26 +24,30 @@ main = do
     args <- getArgs
 
     case args of
-        (pcappath:protocol:port:maskfile:_) -> do
+        (pspath:maskfile:_) -> do
           mask <- loadMask maskfile
-          replayServer pcappath protocol port mask
-        (pcappath:protocol:port:_) -> replayServer pcappath protocol port (PacketMask [])
-        otherwise      -> putStrLn "Usage: replay-server [pcap-file] [tcp|udp] [port] <mask-file>"
+          bs <- B.readFile pspath
+          let eitherStream = (decode bs)::(Either String Stream)
+          case eitherStream of
+            Left error -> putStrLn "Could not load packetstream file"
+            Right stream -> replayServer stream mask
+        (pspath:_) -> do
+          bs <- B.readFile pspath
+          let eitherStream = (decode bs)::(Either String Stream)
+          case eitherStream of
+            Left error -> putStrLn "Could not load packetstream file"
+            Right stream -> replayServer stream (PacketMask [])
+        otherwise      -> putStrLn "Usage: replay-server [packetstream-file] <mask-file>"
 
-replayServer :: FilePath -> String -> String -> PacketMask -> IO()
-replayServer pcappath protocol rport mask = do
+replayServer :: Stream -> PacketMask -> IO()
+replayServer stream@(Stream protocol rport packets) mask = do
     let host = "166.78.129.122"
     let port = PortNum 2013
 
     case protocol of
-      "tcp" -> do
-          let config = TCPConfig rport True
-          pcap <- openPcap pcappath config
-          TCP.server host port (replayStream config pcap mask)
-      "udp" -> do
-          let config = UDPConfig rport True host True
-          pcap <- openPcap pcappath config
-          UDP.server host port (replayStream config pcap mask)
-      otherwise -> putStrLn $ "Unknown protocol " ++ protocol
-
-
+      ProtocolTCP -> do
+          let config = TCPConfig (PortNum rport) False          
+          TCP.server host port (replayStream config stream mask)
+      ProtocolUDP -> do
+          let config = UDPConfig (PortNum rport) False host True
+          UDP.server host port (replayStream config stream mask)
