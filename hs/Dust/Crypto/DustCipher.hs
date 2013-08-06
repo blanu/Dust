@@ -15,7 +15,7 @@ module Dust.Crypto.DustCipher
 import GHC.Generics
 import Data.ByteString
 import Data.Serialize
-import Codec.Crypto.AES
+import qualified Crypto.Cipher.AES as AES
 import System.Entropy
 
 import Dust.Crypto.Keys
@@ -30,10 +30,16 @@ instance Serialize Plaintext
 instance Serialize Ciphertext
 
 encrypt :: EncryptionKey -> IV -> Plaintext -> Ciphertext
-encrypt (EncryptionKey key) (IV iv) (Plaintext plaintext) = Ciphertext (crypt' CTR key iv Encrypt plaintext)
+encrypt (EncryptionKey keyBytes) (IV iv) (Plaintext plaintext) = 
+  let aesKey = AES.initKey keyBytes
+      aesIv  = AES.IV iv
+  in Ciphertext $ AES.encryptCTR aesKey aesIv plaintext
 
 decrypt :: EncryptionKey -> IV -> Ciphertext -> Plaintext
-decrypt (EncryptionKey key) (IV iv) (Ciphertext ciphertext) = Plaintext (crypt' CTR key iv Decrypt ciphertext)
+decrypt (EncryptionKey keyBytes) (IV iv) (Ciphertext ciphertext) = 
+  let aesKey = AES.initKey keyBytes
+      aesIv  = AES.IV iv
+  in Plaintext $ AES.decryptCTR aesKey aesIv ciphertext
 
 createIV :: IO (IV)
 createIV = do
