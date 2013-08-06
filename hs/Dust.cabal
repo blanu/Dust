@@ -17,12 +17,12 @@ Library
 --    C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
 --    extra-lib-dirs=C:\OpenSSL-Win64 /OpenSSL-Win64 C:\OpenSSL-Win64\lib C:\OpenSSL-Win64\bin
 --    extra-libraries: ssleay32 eay32
-    Exposed-modules:   Dust.Network.TcpServer, Dust.Network.UdpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations
+    Exposed-modules:   Dust.Network.TcpServer, Dust.Network.UdpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations, Dust.Model.Stats
   if os(linux)
     C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
     Include-Dirs: lib
     extra-libraries: crypto
-    Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.Protocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Model.Port, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations, Dust.Model.Packet
+    Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.Protocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Model.Port, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations, Dust.Model.Packet, Dust.Model.Stats
 
 Executable shaper-server
   Main-is: Dust/Services/Shaper/ShaperServer.hs
@@ -84,23 +84,25 @@ Executable replay-client
 --   Main-is:           OctopressPoster.hs
 --   Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, hinotify, directory, filepath
 
---test-suite crypto
---  type: exitcode-stdio-1.0
---  main-is: TestCrypto.hs
---  ghc-options: -w -threaded -rtsopts -with-rtsopts=-N
---  hs-source-dirs: tests
+test-suite crypto
+  type: exitcode-stdio-1.0
+  main-is: TestCrypto.hs
+  ghc-options: -w -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: tests
 
---  build-depends:
---    base,
---    Dust,
---    HUnit >= 1.2,
---    test-framework       >= 0.6,
---    test-framework-hunit >= 0.2,
+  build-depends:
+    base,
+    Dust,
+    HUnit >= 1.2,
+    test-framework       >= 0.6,
+    test-framework-hunit >= 0.2,
+    test-framework-quickcheck2,
 --    test-framework-th,
---    bytestring,
---    cipher-aes,
---    cereal,
---    ghc-prim
+    bytestring,
+    cipher-aes,
+    cereal,
+    ghc-prim,
+    QuickCheck
 
 --test-suite core
 --  type: exitcode-stdio-1.0
