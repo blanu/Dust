@@ -14,7 +14,7 @@ where
 import GHC.Generics
 import Data.Serialize (Serialize)
 import Data.ByteString (ByteString, unpack)
-import Data.Binary.Strict.Get
+import Data.Binary.Get
 import qualified Data.ByteString as B
 import Data.Int
 import Data.Word
