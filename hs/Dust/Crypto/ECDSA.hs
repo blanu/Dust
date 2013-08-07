@@ -11,12 +11,9 @@ module Dust.Crypto.ECDSA
   verify
 ) where
 
-import Data.ByteString as B
-import Data.Word
-import Data.Bits
-import System.Entropy
-import GHC.Generics
-import Data.Serialize
+import GHC.Generics (Generic)
+import Data.Serialize (Serialize)
+import Data.ByteString (ByteString)
 
 import Dust.Crypto.Keys
 import Dust.Crypto.Ed25519
@@ -28,16 +25,15 @@ data Signedtext = Signedtext PublicKey Signature ByteString deriving (Eq, Show, 
 instance Serialize Signedtext
 
 createPrivate :: ByteString -> PrivateKey
-createPrivate bs = PrivateKey bs
+createPrivate = PrivateKey
 
 createPublic :: PrivateKey -> PublicKey
-createPublic private = PublicKey $ ed25519_publickey $ privateBytes private
+createPublic = PublicKey . ed25519_publickey . privateBytes
 
 createSigningKeypair :: ByteString -> Keypair
-createSigningKeypair entropy =
-    let private = createPrivate entropy
-        public = createPublic private
-    in Keypair public private
+createSigningKeypair entropy = Keypair (createPublic private) private
+    where
+    private = createPrivate entropy
 
 sign :: ByteString -> Keypair -> Signedtext
 sign msg (Keypair pubkey private) = Signedtext pubkey (Signature $ ed25519_sign msg (privateBytes private) (publicBytes pubkey)) msg
