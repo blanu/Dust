@@ -6,6 +6,7 @@ module Dust.Crypto.Curve25519 (curve25519) where
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import Data.ByteString.Unsafe (unsafeUseAsCString)
+import Foreign.C.String (CString)
 
 import Foreign.Marshal.Unsafe (unsafeLocalState)
 
@@ -21,11 +22,11 @@ unsafe_curve25519 secret basepoint
         -- the C side does not keep a reference to it afterward, it does what we
         -- expect and saves us a copy
         unsafeUseAsCString outBS $ \output ->
-            B.useAsCString input1 $ \csecret ->
-                B.useAsCString input2 $ \cbasepoint -> do
+            B.useAsCString secret $ \csecret ->
+                B.useAsCString basepoint $ \cbasepoint -> do
                     result <- c_curve25519_donna output csecret cbasepoint
                     case result of
-                        0 -> return outBS
+                        0 -> return $ Just outBS
                         _ -> return Nothing
     | otherwise = return Nothing
     where
