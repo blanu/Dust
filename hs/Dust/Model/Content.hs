@@ -49,7 +49,7 @@ encodeContent tree input =
 
 decodeContent :: (HuffmanTree Word8) -> B.ByteString -> B.ByteString
 decodeContent tree input =
---    let Right bits = H.bitunpack input
+--    let bits = H.bitunpack input
 --        bytes = H.decode tree bits
 --    in B.pack bytes
     input

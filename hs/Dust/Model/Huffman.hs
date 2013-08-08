@@ -123,8 +123,8 @@ bitpack = B.pack . map packByte . takeWhile (not . null) . unfoldr (Just . split
     where
     packByte = foldl' (\i b -> (i `shiftL` 1) .|. (fromIntegral $ fromEnum b)) 0
 
-bitunpack :: S.ByteString -> Either String [Bool]
-bitunpack = Right . concatMap (\byte -> map (testBit byte) [7,6..0]) . S.unpack
+bitunpack :: S.ByteString -> [Bool]
+bitunpack = concatMap (\byte -> map (testBit byte) [7,6..0]) . S.unpack
 
 --------------------------------------------------
 

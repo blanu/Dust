@@ -22,7 +22,7 @@ instance Arbitrary Bits where
         startsWithTrue _ = False
 
 prop_bitpack_unpack_loop :: Bits -> Bool
-prop_bitpack_unpack_loop (Bits bits) = bitunpack packed == Right bits
+prop_bitpack_unpack_loop (Bits bits) = bitunpack packed == bits
     where
     packed = mconcat $ LZ.toChunks $ bitpack bits
     {-# NOINLINE packed #-}
