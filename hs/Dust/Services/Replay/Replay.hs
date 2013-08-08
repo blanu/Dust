@@ -110,7 +110,7 @@ getReplayedBytes count sock = do
         Left error -> do
             putStrLn $ "Error: " ++ show error
             putStrLn "Closing socket"
-            sClose sock
+--            sClose sock
             return ()
         Right bs -> do
             putStrLn $ "got " ++ (show (B.length bs))
@@ -118,7 +118,7 @@ getReplayedBytes count sock = do
               then do
                 putStrLn "0 length read"
                 putStrLn "Closing socket"
-                sClose sock
+--                sClose sock
                 return ()
               else if (B.length bs) < count
                 then getReplayedBytes (count - (B.length bs)) sock
@@ -136,7 +136,7 @@ sendReplayedBytes config packet@(Packet _ _ transport payload) mask sock = do
                 Left error -> do
                     putStrLn $ "Error: " ++ show error
                     putStrLn "Closing socket"
-                    sClose sock
+--                    sClose sock
                 Right _ -> do
                     putStrLn $ "sent " ++ (show (B.length payload))
         (UDPConfig sport dir host first) -> do
