@@ -18,11 +18,10 @@ import Data.Serialize hiding (encode, decode)
 
 import Data.Word
 import Data.Char (intToDigit)
-import Data.List (insertBy, foldl', sortBy)
+import Data.Bits ((.|.), shiftL, testBit)
+import Data.List (insertBy, foldl', sortBy, unfoldr)
 import Data.Maybe (fromJust)
 import Data.Ord (comparing)
-import qualified Data.Binary.BitPut        as P
-import qualified Data.Binary.Strict.BitGet as G
 import qualified Data.ByteString           as S
 import qualified Data.ByteString.Lazy      as B
 import qualified Data.Map                  as M
@@ -120,17 +119,12 @@ showBits = map (intToDigit . fromEnum)
 --------------------------------------------------
 
 bitpack :: [Bool] -> B.ByteString
-bitpack = P.runBitPut . mapM_ P.putBit
+bitpack = B.pack . map packByte . takeWhile (not . null) . unfoldr (Just . splitAt 8)
+    where
+    packByte = foldl' (\i b -> (i `shiftL` 1) .|. (fromIntegral $ fromEnum b)) 0
 
-bitunpack :: S.ByteString -> Either String [Bool]
-bitunpack bs0 =
-    G.runBitGet bs0 $ go []
-  where
-    go a = do
-      e <- G.isEmpty
-      if e
-        then return (reverse a)
-        else G.getBit >>= go . (:a)
+bitunpack :: S.ByteString -> [Bool]
+bitunpack = concatMap (\byte -> map (testBit byte) [7,6..0]) . S.unpack
 
 --------------------------------------------------
 
