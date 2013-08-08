@@ -27,6 +27,8 @@ import qualified Data.ByteString           as S
 import qualified Data.ByteString.Lazy      as B
 import qualified Data.Map                  as M
 
+import Dust.Model.Stats (histogram)
+
 --------------------------------------------------
 
 data HuffmanTree a
@@ -108,13 +110,6 @@ decode t0 xs0 =
     go _ [] = []
 
 --------------------------------------------------
-
--- count the number of instances each symbol occurs in a list
-histogram :: Ord a => [a] -> [(a,Int)]
-histogram xs =
-    M.toList . foldl' insert M.empty $ xs
-  where
-    insert a k = M.insertWith' (+) k 1 a
 
 swap :: (a,b) -> (b,a)
 swap ~(a,b) = (b,a)
