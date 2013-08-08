@@ -40,9 +40,9 @@ Executable replay-client
   Main-is: Dust/Services/Replay/ReplayClient.hs
   Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, split
     
---Executable replay-convert
---  Main-is: Dust/Services/Replay/convert.hs
---  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap, split
+Executable replay-convert
+  Main-is: Dust/Services/Replay/convert.hs
+  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap, split
     
 --Executable update
 --  Main-is:           Dust/Model/update.hs
