@@ -9,7 +9,7 @@ Build-Type:          Simple
 Cabal-Version:       >=1.8
 
 Library
-  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict, directory, split
+  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, directory, split
   Extensions:
     ForeignFunctionInterface
   if os(windows)
@@ -26,39 +26,39 @@ Library
 
 Executable shaper-server
   Main-is: Dust/Services/Shaper/ShaperServer.hs
-  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory
+  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, random-source, random-fu, random-extras, directory
 
 Executable shaper-client
   Main-is: Dust/Services/Shaper/ShaperClient.hs
-  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory
+  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, random-source, random-fu, random-extras, directory
     
 Executable replay-server
   Main-is: Dust/Services/Replay/ReplayServer.hs
-  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, split
+  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, random-source, random-fu, random-extras, directory, split
 
 Executable replay-client
   Main-is: Dust/Services/Replay/ReplayClient.hs
-  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, split
+  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, random-source, random-fu, random-extras, directory, split
     
 --Executable replay-convert
 --  Main-is: Dust/Services/Replay/convert.hs
---  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, binary-strict, random-source, random-fu, random-extras, directory, pcap, split
+--  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, random-source, random-fu, random-extras, directory, pcap, split
     
 --Executable update
 --  Main-is:           Dust/Model/update.hs
---  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
+--  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, pcap, directory
 
 --Executable export
 --  Main-is:           Dust/Model/export.hs
---  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
+--  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, pcap, directory
 
 --Executable show
 --  Main-is:           Dust/Model/show.hs
---  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, pcap, directory
+--  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, pcap, directory
 
 --Executable compile
 --  Main-is:           Dust/Model/compile.hs
---  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, binary-strict, directory
+--  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, directory
 
 -- Executable echo-server
 --   Main-is:           Dust/Services/Example/EchoServer.hs
@@ -70,15 +70,15 @@ Executable replay-client
 
 --  Executable message-server
 --    Main-is:           Dust/Services/Sneakermesh/MessageServer.hs
---    Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, HTTP, cereal, ghc-prim, binary, crypto-api, skein, filepath, directory, random, random-extras, random-source, random-fu, containers, binary-strict
+--    Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, HTTP, cereal, ghc-prim, binary, crypto-api, skein, filepath, directory, random, random-extras, random-source, random-fu, containers
 
 --  Executable post
 --    Main-is:           Dust/Services/Sneakermesh/post.hs
---    Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict
+--    Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers
 
 --  Executable fetch
 --    Main-is:           Dust/Services/Sneakermesh/fetch.hs
---    Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, containers, binary-strict, random-source, random-fu
+--    Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, containers, random-source, random-fu
 
 -- Executable octopress-post
 --   Main-is:           OctopressPoster.hs
@@ -136,4 +136,4 @@ test-suite crypto
 --     test-framework       >= 0.6,
 --     test-framework-hunit >= 0.2,
 --     test-framework-th,
---     base >= 3 && < 5, bytestring, cipher-aes, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, binary-strict
+--     base >= 3 && < 5, bytestring, cipher-aes, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers
