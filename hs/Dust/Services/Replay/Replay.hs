@@ -3,7 +3,8 @@ module Dust.Services.Replay.Replay
     ReplayConfig(..),
     PacketMask(..),
     loadMask,
-    replayStream
+    replayStream,
+    linger
 )
 where
 
@@ -22,6 +23,7 @@ import Control.Exception
 import Data.Word (Word8, Word16, Word32)
 import Data.String
 import Data.List.Split
+import Control.Monad (forever)
 
 import Dust.Network.Util
 import Dust.Model.TrafficModel
@@ -60,7 +62,8 @@ replayStream config stream@(Stream _ _ []) mask sock = do
   putStrLn "Done replaying"
   putStrLn "Closing socket"
   case config of
-   (TCPConfig _ _)     -> sClose sock
+--   (TCPConfig _ _)     -> sClose sock
+   (TCPConfig _ _)     -> linger sock
    (UDPConfig _ _ _ _) -> return()
 replayStream config stream@(Stream protocol port (packet:packets)) mask sock = do
   replayPacket config packet mask sock
@@ -96,6 +99,9 @@ replayPacket config packet@(Packet _ _ _ payload) mask sock = do
         True  -> getReplayedBytes (B.length payload) sock
         False -> sendReplayedBytes config packet mask sock
 
+linger :: Socket -> IO()
+linger = forever $ getReplayedBytes 1024
+
 getReplayedBytes :: Int -> Socket -> IO()
 getReplayedBytes count sock = do
     putStrLn $ "waiting for " ++ show count
@@ -104,7 +110,7 @@ getReplayedBytes count sock = do
         Left error -> do
             putStrLn $ "Error: " ++ show error
             putStrLn "Closing socket"
-            sClose sock
+--            sClose sock
             return ()
         Right bs -> do
             putStrLn $ "got " ++ (show (B.length bs))
@@ -112,7 +118,7 @@ getReplayedBytes count sock = do
               then do
                 putStrLn "0 length read"
                 putStrLn "Closing socket"
-                sClose sock
+--                sClose sock
                 return ()
               else if (B.length bs) < count
                 then getReplayedBytes (count - (B.length bs)) sock
@@ -130,7 +136,7 @@ sendReplayedBytes config packet@(Packet _ _ transport payload) mask sock = do
                 Left error -> do
                     putStrLn $ "Error: " ++ show error
                     putStrLn "Closing socket"
-                    sClose sock
+--                    sClose sock
                 Right _ -> do
                     putStrLn $ "sent " ++ (show (B.length payload))
         (UDPConfig sport dir host first) -> do

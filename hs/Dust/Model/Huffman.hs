@@ -21,8 +21,8 @@ import Data.Char (intToDigit)
 import Data.List (insertBy, foldl', sortBy)
 import Data.Maybe (fromJust)
 import Data.Ord (comparing)
-import qualified Data.Binary.BitPut        as P
-import qualified Data.Binary.Strict.BitGet as G
+import qualified Data.Binary.BitPut           as P
+import qualified Data.Binary.Strict.BitGet           as G
 import qualified Data.ByteString           as S
 import qualified Data.ByteString.Lazy      as B
 import qualified Data.Map                  as M
