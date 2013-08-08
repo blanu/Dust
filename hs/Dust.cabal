@@ -22,7 +22,7 @@ Library
     C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
     Include-Dirs: lib
     extra-libraries: crypto
-    Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.Protocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Model.Port, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations, Dust.Model.Packet, Dust.Model.Stats, Dust.Crypto.Keys
+    Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.Protocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Model.Port, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations, Dust.Model.Packet, Dust.Model.Stats
 
 Executable shaper-server
   Main-is: Dust/Services/Shaper/ShaperServer.hs
