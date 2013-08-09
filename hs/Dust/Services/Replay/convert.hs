@@ -12,6 +12,7 @@ import Control.Exception
 import Data.Word (Word16)
 import Network.Pcap
 import System.Environment (getArgs)
+import Data.Word (Word32)
 
 import Dust.Network.Util
 import Dust.Model.Packet
@@ -37,6 +38,7 @@ convert pcappath protocol sport pspath = do
           let config = TCPConfig (PortNum rport) False
           pcap <- openPcap pcappath config
           stream <- convertStream config pcap $ Stream ProtocolTCP rport []
+          putStrLn "---------------------------"
           putStrLn $ show stream
           let bs = encode stream
           B.writeFile pspath bs
@@ -61,8 +63,9 @@ convertStream config pcap stream@(Stream protocol rport packets) = do
                   putStrLn "Error parsing [TCP|UDP]/IP headers"
                   return stream
                 Right packet@(Packet _ _ _ payload) -> do
+                    putStrLn $ show packet
 	            if (B.length payload) > 0
-        	        then convertStream config pcap $ Stream protocol rport $ packet:packets
+        	        then convertStream config pcap $ Stream protocol rport $ packets ++ [packet]
         		else convertStream config pcap stream
         else return stream
 

@@ -42,7 +42,7 @@ main = do
 replayServer :: Stream -> PacketMask -> IO()
 replayServer stream@(Stream protocol rport packets) mask = do
     let host = "166.78.129.122"
-    let port = 1194 :: PortNumber
+    let port = 1195 :: PortNumber
 
     case protocol of
       ProtocolTCP -> do
