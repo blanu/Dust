@@ -13,8 +13,8 @@ where
 
 import GHC.Generics
 import Data.Serialize (Serialize)
+import Data.Serialize.Get
 import Data.ByteString (ByteString, unpack)
-import Data.Binary.Strict.Get
 import qualified Data.ByteString as B
 import Data.Int
 import Data.Word
@@ -35,8 +35,8 @@ data Ethernet = Ethernet {
 } deriving (Generic, Show)
 instance Serialize Ethernet
 
-parseEthernet :: ByteString -> (Either String Ethernet, ByteString)
-parseEthernet bs = runGet getEthernet bs
+parseEthernet :: ByteString -> Either String (Ethernet, ByteString)
+parseEthernet bs = runGetState getEthernet bs 0
 
 getEthernet :: Get Ethernet
 getEthernet = do
@@ -63,8 +63,8 @@ data IP  = IP {
 } deriving (Generic, Show)
 instance Serialize IP
 
-parseIP :: ByteString -> (Either String IP, ByteString)
-parseIP bs = runGet getIP bs
+parseIP :: ByteString -> Either String (IP, ByteString)
+parseIP bs = runGetState getIP bs 0
 
 getIP :: Get IP
 getIP = do
@@ -110,8 +110,8 @@ data Transport =
   deriving (Generic, Show)
 instance Serialize Transport
 
-parseTCP :: ByteString -> (Either String Transport, ByteString)
-parseTCP bs = runGet getTCP bs
+parseTCP :: ByteString -> Either String (Transport, ByteString)
+parseTCP bs = runGetState getTCP bs 0
 
 getTCP :: Get Transport
 getTCP = do
@@ -132,8 +132,8 @@ getTCP = do
 
   return $ TCP s0 s2 l4 l8 off rsv b13 s14 s16 s18 v20
 
-parseUDP :: ByteString -> (Either String Transport, ByteString)
-parseUDP bs = runGet getUDP bs
+parseUDP :: ByteString -> Either String (Transport, ByteString)
+parseUDP bs = runGetState getUDP bs 0
 
 getUDP :: Get Transport
 getUDP = do
@@ -155,19 +155,18 @@ instance Serialize Protocol
 
 parsePacket :: ByteString -> (Either String Packet)
 parsePacket bs =
-  let (eitherEther, noether) = parseEthernet bs
-  in case eitherEther of
+  case parseEthernet bs of
     Left etherError -> Left etherError
-    Right ether -> let (eitherIP, noip) = parseIP noether
-      in case eitherIP of
+    Right (ether, noether) ->
+      case parseIP noether of
         Left ipError -> Left ipError
-        Right ip -> case (prot ip) of
-          6  -> let (eitherTCP, notcp) = parseTCP noip
-            in case eitherTCP of
+        Right (ip, noip) -> case (prot ip) of
+          6  ->
+            case parseTCP noip of
               Left tcpError -> Left tcpError
-              Right tcp -> Right $ Packet ether ip tcp notcp
-          17 -> let (eitherUDP, noudp) = parseUDP noip
-            in case eitherUDP of
+              Right (tcp, notcp) -> Right $ Packet ether ip tcp notcp
+          17 ->
+            case parseUDP noip of
               Left udpError -> Left udpError
-              Right udp -> Right $ Packet ether ip udp noudp
+              Right (udp, noudp) -> Right $ Packet ether ip udp noudp
           otherwise -> Left $ "Unknown protocol " ++ (show $ prot ip)
