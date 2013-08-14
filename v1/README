@@ -1,3 +1,9 @@
+!!! 
+This document and everything in the v1 directory relates to Dust v1.
+There is a new Dust v2 which is substantially different.
+Please refer to Dust/hs for the Dust v2 implementation and documentation.
+!!!
+
 ﻿Dust: A Censorship-Resistant Internet Transport Protocol
 Brandon Wiley
 The University of Texas at Austin School of Information
