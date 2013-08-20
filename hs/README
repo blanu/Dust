@@ -1,0 +1,93 @@
+Note: This document describes Dust v2. The protocol used in the paper http://blanu.net/Dust.pdf is Dust v1. That protocol is documented in Dust/v1/README.
+
+Dust: A Censorship-Resistant Internet Transport Protocol
+Brandon Wiley
+The University of Texas at Austin School of Information
+
+Introduction
+Dust is an Internet protocol designed to resist a number of attacks currently in active use to censor Internet communication. While adherence to the theoretical maxims of cryptographic security are observed where possible, the focus of Dust is on real solutions to real attacks.
+
+Use Case
+The use case for Dust assumes that there is an area of the Internet surrounded by a packet filtering firewall. All normal Internet traffic passing between the inside and outside of the zone is filtered using standard packet filtering techniques, disallowing the transmission of certain banned content. It is also assumed that there is a secure, but perhaps expensive and high latency, channel into the filtered zone. This channel is considered to be out of band, i.e. it is not over the Internet (phone, letter, messenger, etc.). Given this scenario, Dust creates an inexpensive, unfiltered channel from inside the firewall to outside.
+
+Packet Filtering Techniques
+The packet filtering techniques currently in use attempt to keep as little state as possible in order to be scalable. Filtering can happen either at the individual packet level (drop banned packets) or at the stream level (block or throttle streams containing banned packets). For stream level filtering it is common to sample only the initial packets of the stream, or to do random statistical sampling of packets. Filters do not keep persistent state about streams other than whether they have been marked as banned. Technique for defeating filtering can therefore concentrate on not sending packets which will be marked as banned.
+
+There are two general classificiations of techniques for determining of a whether a packet is banned. Shallow packet inspection (SPI) uses just the headers of the packet. This is less expensive because the headers need to be examined anyway in order to route the packet. Deep packet inspection (DPI) simply refers to examining the packet contents as well as the headers. DPI used to be considered too expensive to be practical, but is now in widespread use by some filters.
+
+SPI techniques in active use for marking packets are as follows: source IP and port, destination IP and port, and packet length.
+DPI techniques in active use for marking packets are as follows: examing packet for connection headers and handshakes of known protocols, examining packet contents for banned static strings, and examining packet contents for banned string patterns.
+
+How Dust Circumvents Filters
+Dust is an engine for generating Internet protocols used to send packets which defeat the various filtering techniques currently in use. There is a client and a server. In order for them to communicate they must both be using the same encoding. Encodings can be devised which make traffic look random or which mimic existing protocols.
+
+IP and port blacklists - This is outside of the scope of the protocol. Communication over the Internet requires a destination IP and port which has not been blacklisted by the filter. For the source IP and port, packet spoofing could be used. For more information on how to circumvent IP blacklists, see the Arcadia paper. http://blanu.net/Arcadia.pdf
+
+Packet length - Dust packets have randomized lengths, shaped to a target distribution. Different encodings can make the packet lengths look random or like an existing protocol.
+
+Connection headers and handshakes - Unlike SSH and SSL (both now filtered but some filters), Dust contains no plaintext handshake.
+
+Static strings and string patterns - Dust packets are encrypted, therefore the contents are randomized and static strings and string patterns are removed.
+
+Statistical properties of content - Even encrypted content can filtered, either by looking for high entropy content, or requiring that the content conform to the statistical properties of a certain protocol. After encryption, Dust content is shaped to have a statistical distribution based on a target distribution. Different encodings can make the content look random or like an existing protocol.
+
+Mechanics
+Overview
+The Dust protocol engine can generate encodings which communicate over TCP or UDP. The message to be delivered is first encrypted. Then a header is added specifying the necessary information to read the message such as the public key of the sender and an initialization vector, both of which are random. Together the ciphertext and random header form a random bytestring. This is shaped using reverse Huffman encoding to the target distribution for content. It is then divided into packets using the target distribution for packet lengths.
+
+The Key Exchange
+Protocols such as SSL and SSH initiate a public key exchange using a plaintext handshake. They are therefore susceptible to protocol fingerprinting and filtering. Dust also requires a public key exchange, but not utilize a plaintext handshake. Instead, Dust uses a novel half in-band, half out-of-band key exchange protocol..
+
+In order to accept a connection from an unknown host, a Dust server must first complete a key exchange with the client. The Dust server first creates a permanent public key. The server then creates an invite, which contains the server's IP, port, public key, and the parameters for the encoding to be used.
+
+The server operator then distributes the invite to the client out-of-band. This constitutes the first half of the public key exchange.
+
+The client generates an ephemeral public key for use only on the current connection and then uses the IP and port information from the invite to connect to the server. The encryption key is derived from the server's permanent public key and the client's ephemeral public key. This completes the second phase of the public key exchange.
+
+At this point, the client generates a random initialization vector and sends it to the server. This IV along with the encryption key allows for a conversation consisting of one or more encrypted messages to begin.
+
+Sending Messages
+Once the conversation has begun, messages can be sent. To send a message, the encryption key and the initialization vector are used to encrypt first the message length and then the message. This creates an entirely encrypted, random-looking sequence of bytes. This is then shaped according to the current protocol parameters to create a shaped message that fits the given parameters. For instance, it may be shaped to look like an HTTP message, mimic any other protocol, or be shaped to look unlike any existing protocol, all dependent on the parameters. This shaped message is then sent to the server.
+
+When the server receives an encrypted message, first unshapes it according to the given protocol parameters to recover the encrypted message. It first decrypts the message length and then uses this to extract a message of the correct length. As bytes may be added to the end of the message to adjust its length to the target protocol parameters, the length is necessary to know which data to keep and which to discard. Once the message is decrypted, it is delivered to whatever backend service the server is providing.
+
+Randomness
+A key consideration in the Dust protocol is that the only information in a Dust packet should always be effectively random to an observer. There are only two types of information in a Dust packet: encrypted (should appear random) and single-use random bytes (actually is random). The apparent randomness is essential to the protocol's ability to avoid detection. Therefore, care should be taken to use a good random number generator and to never reuse random bytes. For instance, the client's ephemeral public key is intended for a single use and should never be reused. The server's permanent public key is intended for multiple uses and so should never be sent over the wire. Similarly, the initialization vector used in data packets should always be randomly generated and never reused between data packets.
+
+Currently there is a possible attack on curve25519 public keys as they do not appear as totally random bytes. There is a proposed solution for this in the elligator public key system. Unfortunately, there is currently no suitable implementation. If an implementation becomes available, switching from curve25519 to elligator is on the project roadmap.
+
+Wire Protocol
+
+Structure
+conversation = ephemeral-key iv messages
+messages     = message [messages]
+message      = encrypt(symmetric-key, iv, length(plaintext)) encrypt(symmetric-key, iv, plaintext)
+
+Layout
+32 bytes - ephemeral-key
+16 bytes - iv
+4 bytes  - length(plaintext)
+variable - plaintext
+
+ephemeral-key is the client's ephemeral public key
+iv is the initialization vector, random bytes used in the encryption to ensure that encrypting the same plaintext twice will yield a different packet
+encrypt(symmetric-key, iv, plaintext) encrypts the payload with the key and iv
+padding is random bytes used to randomize the length of the packet
+length(plaintext) is the length of the message, used to distinguish the actual data from the padding
+plaintext is the actual message
+
+Algorithms
+The mechanics and format of Dust are presented in a general manner such that any suitable public key cryptography system and cipher could be used. However, actual implementation requires specific choices and choices for implementation of Dust have been made which are small, fast, and have libraries for which it is easy to create bindings.
+
+   * Public key system: Curve25519 (future upgrade to Elligator)
+   * Session key exchange: Curve25519 implementation of ECDH
+   * Cipher: AES CTR mode (future upgrade to Salsa20)
+
+Acknowledgements
+
+Special thanks go to:
+Drake Wilson
+Greg Hazel
+Stephen Weber
+Trevor Perrin
+Robert Turner
