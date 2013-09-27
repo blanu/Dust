@@ -22,7 +22,12 @@ Library
     C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
     Include-Dirs: lib
     extra-libraries: crypto
-    Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.Protocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Model.Port, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations, Dust.Model.Packet, Dust.Model.Stats
+    Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.CryptoProtocol, Dust.Core.WireProtocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Model.Port, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations, Dust.Model.Packet, Dust.Model.Stats, Dust.Core.WireProtocolHandler
+  if os(darwin)
+    C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
+    Include-Dirs: lib
+    extra-libraries: crypto
+    Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.CryptoProtocol, Dust.Core.WireProtocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Model.Port, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations, Dust.Model.Packet, Dust.Model.Stats, Dust.Core.WireProtocolHandler
 
 Executable shaper-server
   Main-is: Dust/Services/Shaper/ShaperServer.hs
@@ -31,7 +36,7 @@ Executable shaper-server
 Executable shaper-client
   Main-is: Dust/Services/Shaper/ShaperClient.hs
   Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, random-source, random-fu, random-extras, directory
-    
+
 Executable replay-server
   Main-is: Dust/Services/Replay/ReplayServer.hs
   Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, random-source, random-fu, random-extras, directory, split
@@ -39,11 +44,11 @@ Executable replay-server
 Executable replay-client
   Main-is: Dust/Services/Replay/ReplayClient.hs
   Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, random-source, random-fu, random-extras, directory, split
-    
+
 --Executable replay-convert
 --  Main-is: Dust/Services/Replay/convert.hs
 --  Build-Depends: base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, containers, random-source, random-fu, random-extras, directory, pcap, split
-    
+
 --Executable update
 --  Main-is:           Dust/Model/update.hs
 --  Build-Depends:     base >= 3 && < 5, bytestring, cipher-aes, Dust, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers, csv, pcap, directory
