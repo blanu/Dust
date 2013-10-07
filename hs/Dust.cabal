@@ -41,7 +41,6 @@ Library
       Dust.Model.Huffman
       Dust.Model.Content
       Dust.Core.Invite
-      Dust.Services.Shaper.Shaper
       Dust.Model.Observations
       Dust.Model.Stats
       Dust.Crypto.Keys
@@ -66,13 +65,11 @@ Library
       Dust.Network.TcpClient
       Dust.Network.Util
       Dust.Network.DustServer
-      Dust.Services.Sneakermesh.Message
       Dust.Model.PacketLength
       Dust.Model.Huffman
       Dust.Model.Content
       Dust.Model.Port
       Dust.Core.Invite
-      Dust.Services.Shaper.Shaper
       Dust.Model.Observations
       Dust.Model.Packet
       Dust.Model.Stats
