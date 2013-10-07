@@ -1,6 +1,6 @@
 cd Dust/hs
-cabal install --only-dependencies
 cabal configure
+cabal install --only-dependencies
 cabal build
 cabal install
 

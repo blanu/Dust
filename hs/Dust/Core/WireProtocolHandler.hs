@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric, DefaultSignatures #-} -- For automatic generation of cereal put and get
 
-module Dust.Core.WireProtocol
+module Dust.Core.WireProtocolHandler
 (
  Packets(..),
  encodeMessage,
