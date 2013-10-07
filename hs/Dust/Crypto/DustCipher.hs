@@ -30,16 +30,14 @@ instance Serialize Plaintext
 instance Serialize Ciphertext
 
 encrypt :: EncryptionKey -> IV -> Plaintext -> Ciphertext
-encrypt (EncryptionKey keyBytes) (IV iv) (Plaintext plaintext) = 
-  let aesKey = AES.initKey keyBytes
-      aesIv  = AES.IV iv
-  in Ciphertext $ AES.encryptCTR aesKey aesIv plaintext
+encrypt (EncryptionKey keyBytes) (IV iv) (Plaintext plaintext) =
+  let aesKey = AES.initAES keyBytes
+  in Ciphertext $ AES.encryptCTR aesKey iv plaintext
 
 decrypt :: EncryptionKey -> IV -> Ciphertext -> Plaintext
-decrypt (EncryptionKey keyBytes) (IV iv) (Ciphertext ciphertext) = 
-  let aesKey = AES.initKey keyBytes
-      aesIv  = AES.IV iv
-  in Plaintext $ AES.decryptCTR aesKey aesIv ciphertext
+decrypt (EncryptionKey keyBytes) (IV iv) (Ciphertext ciphertext) =
+  let aesKey = AES.initAES keyBytes
+  in Plaintext $ AES.decryptCTR aesKey iv ciphertext
 
 createIV :: IO (IV)
 createIV = do
