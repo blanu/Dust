@@ -1,6 +1,8 @@
 Name:                Dust
 Version:             2.0
-Description:         Dust is an Internet protocol designed to resist a number of attacks currently in active use to censor Internet communication. While adherence to the theoretical maxims of cryptographic security are observed where possible, the focus of Dust is on real solutions to real attacks.
+Description:         Dust is a polymorphic protocol engine designed to circumvent Internet filtering based on protocol identification
+Synopsis:            Polymorphic protocol engine
+Category:            Network
 License:             GPL
 License-file:        LICENSE
 Author:              Brandon Wiley
@@ -27,12 +29,8 @@ Library
     cipher-aes
   Extensions:
     ForeignFunctionInterface
-  if os(windows)
-    build-depends: Win32
---    C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
---    extra-lib-dirs=C:\OpenSSL-Win64 /OpenSSL-Win64 C:\OpenSSL-Win64\lib C:\OpenSSL-Win64\bin
---    extra-libraries: ssleay32 eay32
-    Exposed-modules:
+
+  Exposed-modules:
       Dust.Network.TcpServer
       Dust.Network.UdpServer
       Dust.Network.TcpClient
@@ -47,38 +45,28 @@ Library
       Dust.Crypto.ECDSA
       Dust.Crypto.ECDH
       Dust.Crypto.DustCipher
+
+
+--  if os(windows)
+--    build-depends: Win32
+--    C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
+--    extra-lib-dirs=C:\OpenSSL-Win64 /OpenSSL-Win64 C:\OpenSSL-Win64\lib C:\OpenSSL-Win64\bin
+--    extra-libraries: ssleay32 eay32
+
   if os(linux) || os(darwin)
     C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
     Include-Dirs: lib
     extra-libraries: crypto
     Exposed-modules:
-      Dust.Crypto.DustCipher
-      Dust.Crypto.ECDH
       Dust.Crypto.Curve25519
       Dust.Crypto.Ed25519
-      Dust.Crypto.ECDSA
-      Dust.Crypto.Keys
       Dust.Core.DustPacket
       Dust.Core.CryptoProtocol
       Dust.Core.WireProtocol
-      Dust.Network.TcpServer
-      Dust.Network.TcpClient
-      Dust.Network.Util
-      Dust.Network.DustServer
-      Dust.Model.PacketLength
-      Dust.Model.Huffman
-      Dust.Model.Content
-      Dust.Model.Port
-      Dust.Core.Invite
-      Dust.Model.Observations
-      Dust.Model.Packet
-      Dust.Model.Stats
       Dust.Core.WireProtocolHandler
---  if os(darwin)
---    C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
---    Include-Dirs: lib
---    extra-libraries: crypto
---    Exposed-modules:   Dust.Crypto.DustCipher, Dust.Crypto.ECDH, Dust.Crypto.Curve25519, Dust.Crypto.Ed25519, Dust.Crypto.ECDSA, Dust.Crypto.Keys, Dust.Core.DustPacket, Dust.Core.CryptoProtocol, Dust.Core.WireProtocol, Dust.Network.TcpServer, Dust.Network.TcpClient, Dust.Network.Util, Dust.Network.DustServer, Dust.Services.Sneakermesh.Message, Dust.Model.PacketLength, Dust.Model.Huffman, Dust.Model.Content, Dust.Model.Port, Dust.Core.Invite, Dust.Services.Shaper.Shaper, Dust.Model.Observations, Dust.Model.Packet, Dust.Model.Stats, Dust.Core.WireProtocolHandler
+      Dust.Network.DustServer
+      Dust.Model.Port
+      Dust.Model.Packet
 
 test-suite crypto
   type: exitcode-stdio-1.0

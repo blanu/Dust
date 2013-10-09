@@ -16,10 +16,12 @@ import Network.Socket
 
 import Dust.Crypto.Keys
 import Dust.Crypto.ECDH
-import Dust.Core.Protocol
+import Dust.Core.WireProtocolHandler
 import Dust.Network.TcpServer
 import Dust.Crypto.DustCipher
 import Dust.Model.TrafficModel
+import Dust.Network.ProtocolSocket
+import Dust.Core.CryptoProtocol
 
 dustServer :: TrafficGenerator -> (Plaintext -> IO(Plaintext)) -> IO()
 dustServer gen proxyAction = do
@@ -50,8 +52,9 @@ ensureKeys = do
 
 reencode :: Keypair -> IV -> TrafficGenerator -> (Plaintext -> IO(Plaintext)) -> Socket -> IO()
 reencode keypair iv gen proxyAction sock = do
-    session@(Session _ otherPublic _) <- getSession gen keypair sock
-    plaintext <- getPacket gen session sock
+    (session, rest) <- getSession B.empty keypair sock
+    let (Session _ otherPublic _) = session
+    (plaintext, rest') <- getPacket rest session sock
 
     putStrLn $ "Request:" ++ (show plaintext)
 
@@ -61,6 +64,6 @@ reencode keypair iv gen proxyAction sock = do
     putStrLn $ "Response:" ++ (show (B.length resultBytes))
 
     let otherSession = makeSession keypair otherPublic iv
-    putSessionPacket gen otherSession result sock
+    encode otherSession result sock
 
     return ()

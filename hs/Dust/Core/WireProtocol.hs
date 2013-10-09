@@ -11,8 +11,8 @@ module Dust.Core.WireProtocol
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import GHC.Int
-import Data.Binary.Put (Put, putByteString)
-import Data.Binary.Get (Get, getByteString)
+import Data.Serialize.Put (Put, putByteString)
+import Data.Serialize.Get (Get, getByteString)
 
 import Dust.Core.DustPacket
 import Dust.Crypto.DustCipher
