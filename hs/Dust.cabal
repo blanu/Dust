@@ -31,21 +31,21 @@ Library
     ForeignFunctionInterface
 
   Exposed-modules:
-      Dust.Network.TcpServer
-      Dust.Network.UdpServer
-      Dust.Network.TcpClient
-      Dust.Network.Util
-      Dust.Model.PacketLength
-      Dust.Model.Huffman
-      Dust.Model.Content
       Dust.Core.Invite
-      Dust.Model.Observations
-      Dust.Model.Stats
       Dust.Crypto.Keys
       Dust.Crypto.ECDSA
       Dust.Crypto.ECDH
       Dust.Crypto.DustCipher
-
+      Dust.Model.PacketLength
+      Dust.Model.Huffman
+      Dust.Model.Content
+      Dust.Model.TrafficModel
+      Dust.Model.Observations
+      Dust.Model.Stats
+      Dust.Network.TcpServer
+      Dust.Network.UdpServer
+      Dust.Network.TcpClient
+      Dust.Network.Util
 
 --  if os(windows)
 --    build-depends: Win32
@@ -58,15 +58,15 @@ Library
     Include-Dirs: lib
     extra-libraries: crypto
     Exposed-modules:
-      Dust.Crypto.Curve25519
-      Dust.Crypto.Ed25519
       Dust.Core.DustPacket
       Dust.Core.CryptoProtocol
       Dust.Core.WireProtocol
       Dust.Core.WireProtocolHandler
-      Dust.Network.DustServer
+      Dust.Crypto.Curve25519
+      Dust.Crypto.Ed25519
       Dust.Model.Port
       Dust.Model.Packet
+      Dust.Network.DustServer
 
 test-suite crypto
   type: exitcode-stdio-1.0
