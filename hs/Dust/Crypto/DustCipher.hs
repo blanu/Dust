@@ -31,13 +31,13 @@ instance Serialize Ciphertext
 
 encrypt :: EncryptionKey -> IV -> Plaintext -> Ciphertext
 encrypt (EncryptionKey keyBytes) (IV iv) (Plaintext plaintext) =
-  let aesKey = AES.initAES keyBytes
-  in Ciphertext $ AES.encryptCTR aesKey iv plaintext
+  let aesKey = AES.initKey keyBytes
+  in Ciphertext $ AES.encryptCTR aesKey (AES.IV iv) plaintext
 
 decrypt :: EncryptionKey -> IV -> Ciphertext -> Plaintext
 decrypt (EncryptionKey keyBytes) (IV iv) (Ciphertext ciphertext) =
-  let aesKey = AES.initAES keyBytes
-  in Plaintext $ AES.decryptCTR aesKey iv ciphertext
+  let aesKey = AES.initKey keyBytes
+  in Plaintext $ AES.decryptCTR aesKey (AES.IV iv) ciphertext
 
 createIV :: IO (IV)
 createIV = do
