@@ -1,5 +1,5 @@
 Name:                Dust
-Version:             2.0
+Version:             2.1
 Description:         Dust is a polymorphic protocol engine designed to circumvent Internet filtering based on protocol identification
 Synopsis:            Polymorphic protocol engine
 Category:            Network
@@ -26,25 +26,29 @@ Library
     containers,
     directory,
     split,
-    cipher-aes
+    cipher-aes,
+    skein,
+    crypto-api,
+    cryptohash
   Extensions:
     ForeignFunctionInterface
 
   Exposed-modules:
-      Dust.Core.Invite
-      Dust.Crypto.Keys
-      Dust.Crypto.ECDSA
-      Dust.Crypto.ECDH
-      Dust.Crypto.DustCipher
-      Dust.Model.PacketLength
-      Dust.Model.Huffman
-      Dust.Model.Content
-      Dust.Model.TrafficModel
-      Dust.Model.Observations
-      Dust.Model.Stats
-      Dust.Network.TcpServer
-      Dust.Network.UdpServer
-      Dust.Network.TcpClient
+      Dust.Core.Invite,
+      Dust.Crypto.Keys,
+      Dust.Crypto.ECDSA,
+      Dust.Crypto.ECDH,
+      Dust.Crypto.DustCipher,
+      Dust.Crypto.DustPRNG,
+      Dust.Model.PacketLength,
+      Dust.Model.Huffman,
+      Dust.Model.Content,
+      Dust.Model.TrafficModel,
+      Dust.Model.Observations,
+      Dust.Model.Stats,
+      Dust.Network.TcpServer,
+      Dust.Network.UdpServer,
+      Dust.Network.TcpClient,
       Dust.Network.Util
 
 --  if os(windows)

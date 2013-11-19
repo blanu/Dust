@@ -15,7 +15,7 @@ module Dust.Crypto.DustCipher
 import GHC.Generics
 import Data.ByteString
 import Data.Serialize
-import qualified Crypto.Cipher.AES as AES
+import Dust.Crypto.DustPRNG
 import System.Entropy
 
 import Dust.Crypto.Keys
@@ -28,6 +28,13 @@ newtype Ciphertext = Ciphertext ByteString deriving (Show, Eq, Generic)
 instance Serialize IV
 instance Serialize Plaintext
 instance Serialize Ciphertext
+
+data Cipher = Cipher DustPRNG
+
+init :: EncryptionKey -> IV -> Cipher
+init (EncryptionKey key) (IV iv) = do
+  let seed = B.append key iv
+  let prng = newPRNGWithSeed seed
 
 encrypt :: EncryptionKey -> IV -> Plaintext -> Ciphertext
 encrypt (EncryptionKey keyBytes) (IV iv) (Plaintext plaintext) =
