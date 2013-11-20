@@ -6,7 +6,7 @@ where
 
 import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Char8 (pack, unpack)
-import System.IO.Error
+import System.IO.Error (tryIOError)
 import System.Entropy
 import Data.Binary.Get (runGetState)
 import Data.Binary.Put (runPut)
@@ -41,7 +41,7 @@ dustServer gen proxyAction = do
 
 ensureKeys :: IO (Keypair, Bool)
 ensureKeys = do
-    result <- try loadKeypair
+    result <- tryIOError loadKeypair
     case result of
         Left e -> do
             entropy <- getEntropy 32

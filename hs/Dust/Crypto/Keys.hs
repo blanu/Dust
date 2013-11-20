@@ -47,7 +47,6 @@ loadPublic path = do
 loadKey :: FilePath -> IO (ByteString)
 loadKey path = Data.ByteString.readFile path
 
-
 saveKeypair :: Keypair -> IO ()
 saveKeypair (Keypair public private) = do
     savePublic "id.pub" public

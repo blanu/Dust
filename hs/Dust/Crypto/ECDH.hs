@@ -32,7 +32,7 @@ createPrivate :: ByteString -> PrivateKey
 createPrivate bs = let (firstByte,middle,lastByte) = splitSecret bs
                        firstByte' = firstByte .&. 248
                        lastByte'  = (lastByte .&. 127) .|. 64
-                   in PrivateKey (firstByte' `cons` middle `snoc` lastByte')
+                   in PrivateKey ((firstByte' `cons` middle) `snoc` lastByte')
 
 createPublic :: PrivateKey -> PublicKey
 createPublic private = let bps = pack [9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]

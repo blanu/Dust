@@ -26,10 +26,10 @@ Library
     containers,
     directory,
     split,
-    cipher-aes,
     skein,
     crypto-api,
-    cryptohash
+    cryptohash,
+    threefish
   Extensions:
     ForeignFunctionInterface
 
@@ -87,7 +87,7 @@ test-suite crypto
     test-framework-quickcheck2,
 --    test-framework-th,
     bytestring,
-    cipher-aes,
+    threefish,
     cereal,
     ghc-prim,
     QuickCheck
@@ -107,7 +107,7 @@ test-suite core
     test-framework-quickcheck2,
     test-framework-th,
     bytestring,
-    cipher-aes,
+    threefish,
     cereal,
     ghc-prim,
     QuickCheck
@@ -125,4 +125,4 @@ test-suite core
 --     test-framework       >= 0.6,
 --     test-framework-hunit >= 0.2,
 --     test-framework-th,
---     base >= 3 && < 5, bytestring, cipher-aes, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers
+--     base >= 3 && < 5, bytestring, threefish, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers
