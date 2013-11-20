@@ -12,7 +12,7 @@ Cabal-Version:       >=1.8
 
 Library
   Build-Depends:
-    base >= 3 && < 5,
+    base >= 4.6.0.1 && < 5,
     bytestring,
     entropy,
     network,
@@ -126,3 +126,4 @@ test-suite core
 --     test-framework-hunit >= 0.2,
 --     test-framework-th,
 --     base >= 3 && < 5, bytestring, threefish, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers
+
