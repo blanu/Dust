@@ -11,16 +11,16 @@ module Dust.Crypto.ECDH
 import Data.ByteString as B
 import Data.Word
 import Data.Bits
-import System.Entropy
+import Crypto.Threefish.Random
 
 import Dust.Crypto.Keys
 import Dust.Crypto.DustCipher
 import Dust.Crypto.Curve25519
 
-createEphemeral :: IO (Keypair)
-createEphemeral = do
-    entropy <- getEntropy 32
-    return (createKeypair entropy)
+createEphemeral :: SkeinGen -> (Keypair, SkeinGen)
+createEphemeral rand =
+    let (bytes, rand') = randomBytes 32 rand
+    in (createKeypair bytes, rand')
 
 splitSecret :: ByteString -> (Word8,ByteString,Word8)
 splitSecret bs = let firstByte = B.head bs

@@ -7,12 +7,12 @@ where
 import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Char8 (pack, unpack)
 import System.IO.Error (tryIOError)
-import System.Entropy
 import Data.Binary.Get (runGetState)
 import Data.Binary.Put (runPut)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Network.Socket
+import Crypto.Threefish.Random
 
 import Dust.Crypto.Keys
 import Dust.Crypto.ECDH
@@ -25,8 +25,10 @@ import Dust.Core.CryptoProtocol
 
 dustServer :: TrafficGenerator -> (Plaintext -> IO(Plaintext)) -> IO()
 dustServer gen proxyAction = do
+    rand <- newSkeinGen
+
     putStrLn "Loading keys..."
-    (keypair, newKeys) <- ensureKeys
+    (keypair, newKeys, rand') <- ensureKeys rand
 
     if newKeys
         then putStrLn "Generating new keys..."
@@ -35,20 +37,21 @@ dustServer gen proxyAction = do
     let host = "0.0.0.0"
     let port = 6885
 
-    iv <- createIV
+    rand <- newSkeinGen
+    let (iv, rand'') = createIV rand'
 
     server host port (reencode keypair iv gen proxyAction)
 
-ensureKeys :: IO (Keypair, Bool)
-ensureKeys = do
+ensureKeys :: SkeinGen -> IO (Keypair, Bool, SkeinGen)
+ensureKeys rand = do
     result <- tryIOError loadKeypair
     case result of
         Left e -> do
-            entropy <- getEntropy 32
-            let keys = createKeypair entropy
+            let (bytes, rand') = randomBytes 32 rand
+            let keys = createKeypair bytes
             saveKeypair keys
-            return (keys, True)
-        Right keypair -> return (keypair, False)
+            return (keys, True, rand')
+        Right keypair -> return (keypair, False, rand)
 
 reencode :: Keypair -> IV -> TrafficGenerator -> (Plaintext -> IO(Plaintext)) -> Socket -> IO()
 reencode keypair iv gen proxyAction sock = do

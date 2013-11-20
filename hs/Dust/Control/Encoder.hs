@@ -8,12 +8,12 @@ import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Char8 (pack, unpack)
 import System.IO (stdin, stdout)
 import System.IO.Error
-import System.Entropy
 import Data.Binary.Get (runGetState)
 import Data.Binary.Put (runPut)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Network.Socket
+import Crypto.Threefish.Random
 
 import Dust.Crypto.Keys
 import Dust.Crypto.ECDH
@@ -32,14 +32,15 @@ main = do
           putStrLn "encodes bytes from stdin to a series of packets on stdout"
           putStrLn "Usage: encode [keyfile] [modelfile]"
 
+    rand <- newSkeinGen
+    let (iv, rand') = createIV rand
+
     putStrLn "Loading keys..."
-    (keypair, newKeys) <- ensureKeys
+    (keypair, newKeys, rand'') <- ensureKeys rand'
 
     if newKeys
         then putStrLn "Generating new keys..."
         else putStrLn "Loaded keys."
-
-    iv <- createIV
 
     eitherObs <- loadObservations "traffic.model"
     case eitherObs of
@@ -49,16 +50,16 @@ main = do
             let gen  = makeGenerator model
             encode $ encoder keypair iv gen
 
-ensureKeys :: IO (Keypair, Bool)
-ensureKeys = do
-    result <- try loadKeypair
+ensureKeys :: SkeinGen -> IO (Keypair, Bool, SkeinGen)
+ensureKeys rand = do
+    result <- tryIOError loadKeypair
     case result of
         Left e -> do
-            entropy <- getEntropy 32
-            let keys = createKeypair entropy
+            let (bytes, rand') = randomBytes 32 rand
+            let keys = createKeypair bytes
             saveKeypair keys
-            return (keys, True)
-        Right keypair -> return (keypair, False)
+            return (keys, True, rand')
+        Right keypair -> return (keypair, False, rand)
 
 encode :: IO()
 encode = do

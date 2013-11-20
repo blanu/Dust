@@ -11,6 +11,7 @@ import Data.Binary.Put
 import System.Environment (getArgs)
 import System.IO.Error
 import Network.Socket
+import Crypto.Threefish.Random
 
 import Dust.Crypto.Keys
 import Dust.Crypto.ECDH
@@ -26,9 +27,11 @@ dustClient gen idpath payload = do
     let host = "127.0.0.1"
     let port = 6885
 
-    keypair <- createEphemeral
+    rand <- newSkeinGen
+    let (iv, rand') = createIV rand
+
+    let (keypair, rand'') = createEphemeral rand'
     public <- loadPublic idpath
-    iv <- createIV
     let session = makeSession keypair public iv
 
     client host port (handleRequest gen session payload)

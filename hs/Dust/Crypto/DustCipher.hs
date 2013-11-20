@@ -15,11 +15,11 @@ module Dust.Crypto.DustCipher
 import GHC.Generics
 import Data.ByteString
 import Data.Serialize
-import System.Entropy
 import Data.ByteString.Lazy (toChunks, fromChunks, toStrict)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Crypto.Threefish
+import Crypto.Threefish.Random
 import qualified Crypto.Threefish.Skein.StreamCipher as SSC
 
 import Dust.Crypto.Keys
@@ -51,7 +51,7 @@ decrypt (EncryptionKey keyBytes) (IV ivBytes) (Ciphertext ciphertext) =
     (Just key, Just iv) -> Plaintext $ toStrict $ SSC.decrypt key iv lazy
     otherwise           -> Plaintext B.empty
 
-createIV :: IO (IV)
-createIV = do
-    entropy <- getEntropy 32
-    return (IV entropy)
+createIV :: SkeinGen -> (IV, SkeinGen)
+createIV rand =
+    let (ivBytes, rand') = randomBytes 32 rand
+    in (IV ivBytes, rand')

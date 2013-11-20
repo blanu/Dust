@@ -39,7 +39,6 @@ Library
       Dust.Crypto.ECDSA,
       Dust.Crypto.ECDH,
       Dust.Crypto.DustCipher,
-      Dust.Crypto.DustPRNG,
       Dust.Model.PacketLength,
       Dust.Model.Huffman,
       Dust.Model.Content,
