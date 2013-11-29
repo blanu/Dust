@@ -1,5 +1,5 @@
 Name:                Dust
-Version:             2.1
+Version:             2.2.1
 Description:         Dust is a polymorphic protocol engine designed to circumvent Internet filtering based on protocol identification
 Synopsis:            Polymorphic protocol engine
 Category:            Network
@@ -48,7 +48,8 @@ Library
       Dust.Network.TcpServer,
       Dust.Network.UdpServer,
       Dust.Network.TcpClient,
-      Dust.Network.Util
+      Dust.Network.Util,
+      Dust.Network.ProtocolSocket
 
 --  if os(windows)
 --    build-depends: Win32
