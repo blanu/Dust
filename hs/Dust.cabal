@@ -56,26 +56,6 @@ Library
       Dust.Model.Packet
       Dust.Network.DustServer
 
-test-suite crypto
-  type: exitcode-stdio-1.0
-  main-is: TestCrypto.hs
-  ghc-options: -w -threaded -rtsopts -with-rtsopts=-N
-  hs-source-dirs: tests
-
-  build-depends:
-    base,
-    Dust,
-    HUnit >= 1.2,
-    test-framework       >= 0.6,
-    test-framework-hunit >= 0.2,
-    test-framework-quickcheck2,
---    test-framework-th,
-    bytestring,
-    threefish,
-    cereal,
-    ghc-prim,
-    QuickCheck
-
 test-suite core
   type: exitcode-stdio-1.0
   main-is: TestCore.hs
