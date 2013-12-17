@@ -1,0 +1,74 @@
+Name:                Dust-crypto
+Version:             0.1
+Description:         Cryptographic operations used by the Dust polymorphic protocl engine
+Synopsis:            Cryptographic operations
+Category:            Cryptography
+License:             GPL
+License-file:        LICENSE
+Author:              Brandon Wiley
+Maintainer:          brandon@ischool.utexas.edu
+Build-Type:          Simple
+Cabal-Version:       >=1.8
+
+Library
+  Build-Depends:
+    base >= 4.6.0.1 && < 5,
+    bytestring,
+    entropy,
+    network,
+    cereal,
+    ghc-prim,
+    binary,
+    random,
+    random-extras,
+    random-source,
+    random-fu,
+    containers,
+    directory,
+    split,
+    skein,
+    crypto-api,
+    cryptohash,
+    threefish
+  Extensions:
+    ForeignFunctionInterface
+
+  Exposed-modules:
+      Dust.Crypto.Keys,
+      Dust.Crypto.ECDSA,
+      Dust.Crypto.ECDH,
+      Dust.Crypto.DustCipher
+
+--  if os(windows)
+--    build-depends: Win32
+--    C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
+--    extra-lib-dirs=C:\OpenSSL-Win64 /OpenSSL-Win64 C:\OpenSSL-Win64\lib C:\OpenSSL-Win64\bin
+--    extra-libraries: ssleay32 eay32
+
+  if os(linux) || os(darwin)
+    C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
+    Include-Dirs: lib
+    extra-libraries: crypto
+    Exposed-modules:
+      Dust.Crypto.Curve25519
+      Dust.Crypto.Ed25519
+
+test-suite crypto
+  type: exitcode-stdio-1.0
+  main-is: TestCrypto.hs
+  ghc-options: -w -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs: tests
+
+  build-depends:
+    base,
+    Dust,
+    HUnit >= 1.2,
+    test-framework       >= 0.6,
+    test-framework-hunit >= 0.2,
+    test-framework-quickcheck2,
+--    test-framework-th,
+    bytestring,
+    threefish,
+    cereal,
+    ghc-prim,
+    QuickCheck
