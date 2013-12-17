@@ -1,5 +1,5 @@
 Name:                Dust
-Version:             2.3.0
+Version:             2.3.1
 Description:         Dust is a polymorphic protocol engine designed to circumvent Internet filtering based on protocol identification
 Synopsis:            Polymorphic protocol engine
 Category:            Network
@@ -27,9 +27,7 @@ Library
     containers,
     directory,
     split,
-    skein,
     crypto-api,
-    cryptohash,
     threefish
   Extensions:
     ForeignFunctionInterface
