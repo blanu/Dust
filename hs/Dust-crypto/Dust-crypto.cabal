@@ -1,5 +1,5 @@
 Name:                Dust-crypto
-Version:             0.1
+Version:             0.2
 Description:         Cryptographic operations used by the Dust polymorphic protocl engine
 Synopsis:            Cryptographic operations
 Category:            Cryptography
@@ -38,6 +38,7 @@ Library
       Dust.Crypto.ECDSA,
       Dust.Crypto.ECDH,
       Dust.Crypto.DustCipher
+      Dust.Crypto.PRNG
 
 --  if os(windows)
 --    build-depends: Win32
