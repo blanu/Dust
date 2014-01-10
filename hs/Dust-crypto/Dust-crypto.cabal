@@ -12,7 +12,7 @@ Cabal-Version:       >=1.8
 
 Library
   Build-Depends:
-    base >= 4.6.0.1 && < 5,
+    base >= 3 && < 5,
     bytestring,
     entropy,
     network,
@@ -20,9 +20,6 @@ Library
     ghc-prim,
     binary,
     random,
-    random-extras,
-    random-source,
-    random-fu,
     containers,
     directory,
     split,
