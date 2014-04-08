@@ -28,7 +28,8 @@ Library
     directory,
     split,
     crypto-api,
-    threefish
+    threefish,
+    base64-bytestring
   Extensions:
     ForeignFunctionInterface
 
@@ -49,6 +50,7 @@ Library
   if os(linux) || os(darwin)
     Exposed-modules:
       Dust.Core.DustPacket
+      Dust.Core.SignedDustPacket
       Dust.Core.CryptoProtocol
       Dust.Core.WireProtocol
       Dust.Core.WireProtocolHandler

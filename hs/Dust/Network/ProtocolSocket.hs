@@ -2,7 +2,8 @@ module Dust.Network.ProtocolSocket
 (
     getSession,
     getPacket,
-    encode
+    encode,
+    encodeWithProgress
 )
 where
 
@@ -10,6 +11,8 @@ import Network.Socket (Socket)
 import Network.Socket.ByteString (recv, sendAll)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Base64 as B64
+import Debug.Trace
 
 import Dust.Crypto.Keys
 import Dust.Crypto.DustCipher
@@ -37,10 +40,21 @@ decodeBytes sock buffer decoder = do
 encode :: Session -> Plaintext -> Socket -> IO()
 encode session plaintext sock = do
     let (Packets packets) = encodeMessage session plaintext
-    sendPackets packets sock
+ --   putStrLn $ "Sending " ++ show packets
+    sendPackets packets sock Nothing
 
-sendPackets :: [ByteString] -> Socket -> IO()
-sendPackets [] sock = return ()
-sendPackets (bs:packets) sock = do
+encodeWithProgress :: Session -> Plaintext -> Socket -> (Int -> Int -> IO()) -> IO()
+encodeWithProgress session plaintext sock callback = do
+    let (Packets packets) = encodeMessage session plaintext
+--    putStrLn $ "Sending " ++ show packets
+    sendPackets packets sock (Just (callback $ foldl (+) 0 $ map B.length packets))
+
+sendPackets :: [ByteString] -> Socket -> Maybe (Int -> IO()) -> IO()
+sendPackets [] sock callback = return ()
+sendPackets (bs:packets) sock callback = do
     sendAll sock bs
-    sendPackets packets sock
+    case callback of
+        Nothing -> sendPackets packets sock callback
+        Just cb -> do
+            cb $ B.length bs
+            sendPackets packets sock callback

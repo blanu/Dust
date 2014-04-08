@@ -48,6 +48,7 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 typedef uint8_t u8;
 typedef int32_t s32;
@@ -727,4 +728,17 @@ curve25519_donna(u8 *mypublic, const u8 *secret, const u8 *basepoint) {
   freduce_coefficients(z);
   fcontract(mypublic, z);
   return 0;
+}
+
+u8 *curve25519_safe(const u8 *, const u8 *);
+
+u8 *curve25519_safe(const u8 *secret, const u8 *basepoint)
+{
+  u8 *mypublic;
+
+  mypublic=(u8 *)malloc(32*sizeof(u8));
+
+  curve25519_donna(mypublic, secret, basepoint);
+
+  return mypublic;
 }
