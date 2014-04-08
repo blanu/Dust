@@ -23,10 +23,7 @@ Library
     containers,
     directory,
     split,
-    skein,
-    crypto-api,
-    cryptohash,
-    threefish,
+    threefish
     base64-bytestring,
     ed25519,
     curve25519
@@ -74,3 +71,4 @@ test-suite crypto
     cereal,
     ghc-prim,
     QuickCheck
+
