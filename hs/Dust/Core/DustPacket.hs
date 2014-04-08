@@ -20,6 +20,7 @@ import Data.ByteString
 import qualified Data.ByteString as B
 import Data.Serialize
 import Data.Int
+import Debug.Trace
 
 data PlainHeader = PlainHeader {
     payloadLength :: Int32
@@ -46,18 +47,21 @@ makeCipherPacket lengthCiphertext ciphertext = CipherDataPacket (CipherHeader le
 decryptHeader :: (Ciphertext -> Plaintext) -> CipherHeader -> PlainHeader
 decryptHeader cipher (CipherHeader ciphertext) =
     let (Plaintext lengthBytes) = cipher ciphertext
-        lengthValue = decodeHeader lengthBytes
-    in PlainHeader lengthValue
+    in decodeHeader lengthBytes
 
-decodeHeader :: ByteString -> Int32
+decodeHeader :: ByteString -> PlainHeader
 decodeHeader bs =
     case (decode bs)::(Either String Int32) of
-        Left _ -> 0
-        Right value -> value
+        Left error -> PlainHeader 0
+        Right value -> PlainHeader value
+
+encodeHeader :: PlainHeader -> ByteString
+encodeHeader (PlainHeader i) = encode i
 
 encryptData :: (Plaintext -> Ciphertext) -> PlainDataPacket -> CipherDataPacket
-encryptData cipher (PlainDataPacket header plaintext) =
-    let cipherheader = cipher (Plaintext (encode header))
+encryptData cipher (PlainDataPacket header@(PlainHeader i) plaintext) =
+    let plainheader = Plaintext (encodeHeader header)
+        cipherheader = cipher plainheader
         ciphertext = cipher plaintext
     in CipherDataPacket (CipherHeader cipherheader) ciphertext
 

@@ -13,6 +13,7 @@ import qualified Data.ByteString as B
 import GHC.Int
 import Data.Serialize.Put (Put, putByteString)
 import Data.Serialize.Get (Get, getByteString)
+import Debug.Trace
 
 import Dust.Core.DustPacket
 import Dust.Crypto.DustCipher
@@ -24,13 +25,15 @@ import Dust.Core.CryptoProtocol
 getSession :: Keypair -> Get Session
 getSession keypair = do
     public <- getByteString 32
-    iv     <- getByteString 16
-    return $ Session keypair (PublicKey public) (IV iv)
+    iv     <- getByteString 32
+    conf   <- getByteString 32
+    return $ Session keypair (PublicKey public) (IV iv) (Confirmation (Ciphertext conf))
 
 putSession :: Session -> Put
-putSession (Session (Keypair (PublicKey public) _) _ (IV iv)) = do
+putSession (Session (Keypair (PublicKey public) _) _ (IV iv) (Confirmation (Ciphertext conf))) = do
   putByteString public
   putByteString iv
+  putByteString conf
 
 getPacket :: Session -> Get Plaintext
 getPacket session = do

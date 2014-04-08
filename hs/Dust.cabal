@@ -13,7 +13,7 @@ Cabal-Version:       >=1.8
 Library
   Build-Depends:
     base >= 3 && < 5,
-    Dust-crypto,
+    Dust-crypto >= 0.2,
     bytestring,
     entropy,
     network,
@@ -28,7 +28,8 @@ Library
     directory,
     split,
     crypto-api,
-    threefish
+    threefish,
+    base64-bytestring
   Extensions:
     ForeignFunctionInterface
 
@@ -49,6 +50,7 @@ Library
   if os(linux) || os(darwin)
     Exposed-modules:
       Dust.Core.DustPacket
+      Dust.Core.SignedDustPacket
       Dust.Core.CryptoProtocol
       Dust.Core.WireProtocol
       Dust.Core.WireProtocolHandler
@@ -65,7 +67,7 @@ test-suite core
   build-depends:
     base,
     Dust,
-    Dust-crypto,
+    Dust-crypto >= 0.2,
     HUnit >= 1.2,
     test-framework       >= 0.6,
     test-framework-hunit >= 0.2,

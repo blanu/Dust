@@ -1,22 +1,24 @@
 module Dust.Crypto.PRNG
 (
-  DustGen,
-  newDustGen,
+  DustPRNG(..),
+  newPRNG,
   randomBytes
 )
 where
 
-import Data.ByteString (ByteString)
-import qualified Crypto.Threefish.Random as CTR
+import Data.ByteString
 
-data DustGen = DustGen CTR.SkeinGen
+import Crypto.Threefish.Random hiding (randomBytes)
+import qualified Crypto.Threefish.Random as TR
 
-newDustGen :: IO DustGen
-newDustGen = do
-  gen <- CTR.newSkeinGen
-  return $ DustGen gen
+newtype DustPRNG = DustPRNG SkeinGen
 
-randomBytes :: Int -> DustGen -> (ByteString, DustGen)
-randomBytes n (DustGen gen) =
-  let (bytes, gen') = CTR.randomBytes n gen
-  in (bytes, DustGen gen')
+newPRNG :: IO DustPRNG
+newPRNG = do
+  gen <- newSkeinGen
+  return $ DustPRNG gen
+
+randomBytes :: Int -> DustPRNG -> (ByteString, DustPRNG)
+randomBytes i (DustPRNG gen) = 
+  let (bytes, gen') = TR.randomBytes i gen
+  in (bytes, DustPRNG gen')

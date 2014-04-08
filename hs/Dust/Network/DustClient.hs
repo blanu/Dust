@@ -30,7 +30,7 @@ dustClient gen idpath payload = do
     rand <- newSkeinGen
     let (iv, rand') = createIV rand
 
-    let (keypair, rand'') = createEphemeral rand'
+    keypair <- createKeypair
     public <- loadPublic idpath
     let session = makeSession keypair public iv
 

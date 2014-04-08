@@ -1,5 +1,5 @@
 Name:                Dust-crypto
-Version:             0.1
+Version:             0.2
 Description:         Cryptographic operations used by the Dust polymorphic protocl engine
 Synopsis:            Cryptographic operations
 Category:            Cryptography
@@ -24,6 +24,9 @@ Library
     directory,
     split,
     threefish
+    base64-bytestring,
+    ed25519,
+    curve25519
   Extensions:
     ForeignFunctionInterface
 
@@ -31,8 +34,9 @@ Library
       Dust.Crypto.Keys,
       Dust.Crypto.ECDSA,
       Dust.Crypto.ECDH,
-      Dust.Crypto.DustCipher,
+      Dust.Crypto.DustCipher
       Dust.Crypto.PRNG
+      Dust.Crypto.Hash
 
 --  if os(windows)
 --    build-depends: Win32
@@ -41,7 +45,7 @@ Library
 --    extra-libraries: ssleay32 eay32
 
   if os(linux) || os(darwin)
-    C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
+    C-sources: lib/curve25519-donna.c
     Include-Dirs: lib
     extra-libraries: crypto
     Exposed-modules:
@@ -67,3 +71,4 @@ test-suite crypto
     cereal,
     ghc-prim,
     QuickCheck
+

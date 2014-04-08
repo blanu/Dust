@@ -15,6 +15,8 @@ import qualified Data.ByteString.Lazy as BL
 import GHC.Int
 import Data.Serialize.Put (Put, runPut)
 import Data.Serialize.Get (runGetState)
+import Debug.Trace
+import qualified Data.ByteString.Base64 as B64
 
 import Dust.Core.DustPacket
 import Dust.Crypto.DustCipher
@@ -31,6 +33,9 @@ encodeMessage session plaintext = do
   let header = runPut (putSession session)
   let packet = runPut (putPacket session plaintext)
   Packets [B.append header packet]
+
+showSession :: Session -> String
+showSession (Session (Keypair (PublicKey public ) _) _ _ _) = show $ B64.encode public
 
 decodeMessage :: Keypair -> ByteString -> Either String (Plaintext, ByteString)
 decodeMessage keypair buffer = do
