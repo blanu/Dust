@@ -23,10 +23,12 @@ Library
     containers,
     directory,
     split,
-    threefish
+    threefish,
     base64-bytestring,
     ed25519,
-    curve25519
+    curve25519,
+    skein,
+    crypto-api
   Extensions:
     ForeignFunctionInterface
 
