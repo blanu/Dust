@@ -8,7 +8,7 @@ module Dust.Network.ProtocolSocket
 where
 
 import Network.Socket (Socket)
-import Network.Socket.ByteString (recv, sendAll)
+import Network.Socket.ByteString (recv, send)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
@@ -41,20 +41,26 @@ encode :: Session -> Plaintext -> Socket -> IO()
 encode session plaintext sock = do
     let (Packets packets) = encodeMessage session plaintext
  --   putStrLn $ "Sending " ++ show packets
-    sendPackets packets sock Nothing
+    sendPackets packets sock 0 Nothing
 
 encodeWithProgress :: Session -> Plaintext -> Socket -> (Int -> Int -> IO()) -> IO()
 encodeWithProgress session plaintext sock callback = do
     let (Packets packets) = encodeMessage session plaintext
 --    putStrLn $ "Sending " ++ show packets
-    sendPackets packets sock (Just (callback $ foldl (+) 0 $ map B.length packets))
+    sendPackets packets sock 0 (Just (callback $ foldl (+) 0 $ map B.length packets))
 
-sendPackets :: [ByteString] -> Socket -> Maybe (Int -> IO()) -> IO()
-sendPackets [] sock callback = return ()
-sendPackets (bs:packets) sock callback = do
-    sendAll sock bs
+sendPackets :: [ByteString] -> Socket -> Int -> Maybe (Int -> IO()) -> IO()
+sendPackets [] sock count callback = return ()
+sendPackets (bs:packets) sock count callback = do
+    sent <- sendAll sock bs count callback
+    sendPackets packets sock (count+sent) callback
+
+sendAll :: Socket -> ByteString -> Int -> Maybe (Int -> IO()) -> IO (Int)
+sendAll sock bs count callback = do
+    sent <- send sock bs
     case callback of
-        Nothing -> sendPackets packets sock callback
+        Nothing -> when (sent < B.length bs) $ sendAll sock (B.drop sent bs) (count+sent) callback
         Just cb -> do
-            cb $ B.length bs
-            sendPackets packets sock callback
+            cb (count+sent)
+            when (sent < B.length bs) $ sendAll sock (B.drop sent bs) (count+sent) callback
+

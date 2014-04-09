@@ -26,7 +26,8 @@ Library
     threefish
     base64-bytestring,
     ed25519,
-    curve25519
+    curve25519,
+    skein
   Extensions:
     ForeignFunctionInterface
 
