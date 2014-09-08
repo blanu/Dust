@@ -32,7 +32,13 @@ encodeMessage :: Session -> Plaintext -> Packets
 encodeMessage session plaintext = do
   let header = runPut (putSession session)
   let packet = runPut (putPacket session plaintext)
-  Packets [B.append header packet]
+  Packets $ splitPackets $ B.append header packet
+
+splitPackets :: ByteString -> [ByteString]
+splitPackets bs = do
+    if B.length bs < 1000
+        then [bs]
+        else B.take 1000 bs : (splitPackets $ B.drop 1000 bs)
 
 showSession :: Session -> String
 showSession (Session (Keypair (PublicKey public ) _) _ _ _) = show $ B64.encode public

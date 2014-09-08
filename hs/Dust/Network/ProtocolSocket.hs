@@ -12,6 +12,7 @@ import Network.Socket.ByteString (recv, send)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
+import Control.Monad (when)
 import Debug.Trace
 
 import Dust.Crypto.Keys
@@ -27,6 +28,7 @@ getPacket buffer session sock = decodeBytes sock buffer (decodePacket session)
 
 decodeBytes :: Socket -> ByteString -> (ByteString -> Either String (a, ByteString)) -> IO (a, ByteString)
 decodeBytes sock buffer decoder = do
+--    bs <- recv sock 1000
     bs <- recv sock 1
     if (B.length bs) == 0
         then decodeBytes sock buffer decoder
@@ -58,9 +60,14 @@ sendPackets (bs:packets) sock count callback = do
 sendAll :: Socket -> ByteString -> Int -> Maybe (Int -> IO()) -> IO (Int)
 sendAll sock bs count callback = do
     sent <- send sock bs
+--    putStrLn $ "Sent " ++ (show sent)
     case callback of
-        Nothing -> when (sent < B.length bs) $ sendAll sock (B.drop sent bs) (count+sent) callback
+        Nothing -> do
+            if sent < B.length bs
+                then sendAll sock (B.drop sent bs) (count+sent) callback
+                else return sent
         Just cb -> do
             cb (count+sent)
-            when (sent < B.length bs) $ sendAll sock (B.drop sent bs) (count+sent) callback
-
+            if sent < B.length bs
+                then sendAll sock (B.drop sent bs) (count+sent) callback
+                else return sent
