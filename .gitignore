@@ -1,10 +1,7 @@
-hs/dist
-hs/id.pub
-hs/id.priv
-dust.sublime-workspace
-hs/sneakermesh
-hs/captures
-hs/Dust-crypto/dist
+Dust/dist
+Dust/id.pub
+Dust/id.priv
+Dust-crypto/dist
 **/*.pyc
 **/*.so
 **/*.dylib

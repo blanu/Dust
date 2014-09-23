@@ -1,6 +1,6 @@
 Name:                Dust-crypto
-Version:             0.2
-Description:         Cryptographic operations used by the Dust polymorphic protocl engine
+Version:             0.3
+Description:         Cryptographic operations used by the Dust polymorphic protocol engine
 Synopsis:            Cryptographic operations
 Category:            Cryptography
 License:             GPL
@@ -14,23 +14,12 @@ Library
   Build-Depends:
     base >= 3 && < 5,
     bytestring,
-    entropy,
-    network,
     cereal,
     ghc-prim,
-    binary,
-    random,
-    containers,
-    directory,
-    split,
+    nacl,
     threefish,
-    base64-bytestring,
-    ed25519,
-    curve25519,
     skein,
     crypto-api
-  Extensions:
-    ForeignFunctionInterface
 
   Exposed-modules:
       Dust.Crypto.Keys,
@@ -39,20 +28,6 @@ Library
       Dust.Crypto.DustCipher
       Dust.Crypto.PRNG
       Dust.Crypto.Hash
-
---  if os(windows)
---    build-depends: Win32
---    C-sources: lib/curve25519-donna.c, lib/ed25519-donna/ed25519.c
---    extra-lib-dirs=C:\OpenSSL-Win64 /OpenSSL-Win64 C:\OpenSSL-Win64\lib C:\OpenSSL-Win64\bin
---    extra-libraries: ssleay32 eay32
-
-  if os(linux) || os(darwin)
-    C-sources: lib/curve25519-donna.c
-    Include-Dirs: lib
-    extra-libraries: crypto
-    Exposed-modules:
-      Dust.Crypto.Curve25519
-      Dust.Crypto.Ed25519
 
 test-suite crypto
   type: exitcode-stdio-1.0
@@ -73,4 +48,3 @@ test-suite crypto
     cereal,
     ghc-prim,
     QuickCheck
-

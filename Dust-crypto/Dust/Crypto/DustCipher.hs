@@ -20,7 +20,6 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Crypto.Threefish
 import qualified Crypto.Threefish.Skein.StreamCipher as SSC
-import Debug.Trace
 
 import Dust.Crypto.Keys
 import Dust.Crypto.PRNG
@@ -50,7 +49,7 @@ decrypt (EncryptionKey keyBytes) (IV ivBytes) (Ciphertext ciphertext) =
       maybeIv = toBlock ivBytes
   in case (maybeKey, maybeIv) of
     (Just key, Just iv) -> Plaintext $ toStrict $ SSC.decrypt key iv lazy
-    otherwise           -> trace ("Bad decryption: " ++ show (maybeIv, ivBytes, B.length ivBytes)) $ Plaintext B.empty
+    otherwise           -> Plaintext B.empty
 
 createIV :: DustPRNG -> (IV, DustPRNG)
 createIV rand =
