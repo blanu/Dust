@@ -7,7 +7,7 @@ import Network
 import Data.ByteString
 
 import Dust.Crypto.Keys
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import Dust.Model.TrafficModel
 
 data Invite = Invite {

@@ -17,15 +17,15 @@ Library
     cereal,
     ghc-prim,
     nacl,
-    threefish,
     skein,
-    crypto-api
+    crypto-api,
+    entropy
 
   Exposed-modules:
       Dust.Crypto.Keys,
       Dust.Crypto.ECDSA,
       Dust.Crypto.ECDH,
-      Dust.Crypto.DustCipher
+      Dust.Crypto.Cipher
       Dust.Crypto.PRNG
       Dust.Crypto.Hash
 

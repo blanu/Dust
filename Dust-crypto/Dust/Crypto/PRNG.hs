@@ -1,24 +1,49 @@
 module Dust.Crypto.PRNG
 (
-  DustPRNG(..),
+  DustPRNG,
   newPRNG,
+  makePRNG,
   randomBytes
 )
 where
 
-import Data.ByteString
+import qualified Data.ByteString as B
+import System.Entropy
+import Dust.Crypto.Hash
 
-import Crypto.Threefish.Random hiding (randomBytes)
-import qualified Crypto.Threefish.Random as TR
-
-newtype DustPRNG = DustPRNG SkeinGen
+data DustPRNG = DustPRNG B.ByteString B.ByteString -- buffer seed
 
 newPRNG :: IO DustPRNG
 newPRNG = do
-  gen <- newSkeinGen
-  return $ DustPRNG gen
+  seed <- getEntropy 32
+  let buffer = B.replicate 32 0 `B.append` seed
+  return $ makePRNG buffer
 
-randomBytes :: Int -> DustPRNG -> (ByteString, DustPRNG)
-randomBytes i (DustPRNG gen) = 
-  let (bytes, gen') = TR.randomBytes i gen
-  in (bytes, DustPRNG gen')
+makePRNG :: B.ByteString -> DustPRNG
+makePRNG seed = do
+  let h = digest seed
+  let (buffer, seed) = B.splitAt 16 h
+  DustPRNG buffer seed
+
+randomBytes :: Int -> DustPRNG -> (B.ByteString, DustPRNG)
+randomBytes i prng = do
+  if enoughBytes i prng
+    then takeBytes i prng
+    else randomBytes i (generateBytes prng)
+
+enoughBytes :: Int -> DustPRNG -> Bool
+enoughBytes i (DustPRNG buffer seed) = B.length buffer >= i
+
+generateBytes :: DustPRNG -> DustPRNG
+generateBytes (DustPRNG buffer seed) = do
+  let h = digest seed
+  let (bs, seed') = B.splitAt 16 h
+  DustPRNG (B.append buffer bs) seed'
+
+takeBytes :: Int -> DustPRNG -> (B.ByteString, DustPRNG)
+takeBytes i prng@(DustPRNG buffer seed) =
+  if enoughBytes i prng
+    then do
+      let (result, buffer') = B.splitAt i buffer
+      (result, DustPRNG buffer' seed)
+    else (B.empty, prng)

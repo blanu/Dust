@@ -28,7 +28,6 @@ Library
     directory,
     split,
     crypto-api,
-    threefish,
     base64-bytestring
   Extensions:
     ForeignFunctionInterface
@@ -93,4 +92,3 @@ test-suite core
 --     test-framework-hunit >= 0.2,
 --     test-framework-th,
 --     base >= 3 && < 5, bytestring, threefish, entropy, network, cereal, ghc-prim, binary, random, random-extras, random-source, random-fu, containers
-

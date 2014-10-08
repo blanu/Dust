@@ -16,7 +16,7 @@ import Crypto.Threefish.Random
 import Dust.Crypto.Keys
 import Dust.Crypto.ECDH
 import Dust.Core.Protocol
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import Dust.Core.DustPacket
 import Dust.Network.TcpClient
 import Dust.Model.TrafficModel

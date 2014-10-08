@@ -11,7 +11,7 @@ import Data.Binary.Put (Put, putByteString)
 import Data.Binary.Get (Get, getByteString)
 
 import Dust.Core.DustPacket
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import Dust.Crypto.ECDH
 import Dust.Crypto.Keys
 import Dust.Model.TrafficModel

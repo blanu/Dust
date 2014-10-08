@@ -16,7 +16,7 @@ import Data.Serialize.Get (Get, getByteString)
 import Debug.Trace
 
 import Dust.Core.DustPacket
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import Dust.Crypto.ECDH
 import Dust.Crypto.Keys
 import Dust.Model.TrafficModel
@@ -39,18 +39,19 @@ getPacket :: Session -> Get Plaintext
 getPacket session = do
   packetBytes <- getByteString 4
   let cipherHeader = CipherHeader (Ciphertext packetBytes)
-  let cipher = makeDecrypt session
+  let cipher = makeCipher session
   let plainPacketHeader = decryptHeader cipher cipherHeader
   let PlainHeader packetLength = plainPacketHeader
   let packetLen = (fromIntegral packetLength)::Int
 
   payloadBytes <- getByteString packetLen
   let ciphertext = Ciphertext payloadBytes
-  return $ cipher ciphertext
+  let (plaintext, cipher') = decrypt cipher ciphertext
+  return plaintext
 
 putPacket :: Session -> Plaintext -> Put
 putPacket session plaintext = do
   let packet = makePlainPacket plaintext
-  let (CipherDataPacket (CipherHeader (Ciphertext header)) (Ciphertext payload)) = encryptData (makeEncrypt session) packet
+  let (CipherDataPacket (CipherHeader (Ciphertext header)) (Ciphertext payload)) = encryptData (makeCipher session) packet
   putByteString header
   putByteString payload

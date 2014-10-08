@@ -16,7 +16,7 @@ import Control.Monad (when)
 import Debug.Trace
 
 import Dust.Crypto.Keys
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import Dust.Core.CryptoProtocol
 import Dust.Core.WireProtocolHandler
 

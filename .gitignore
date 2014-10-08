@@ -1,7 +1,8 @@
-Dust/dist
-Dust/id.pub
-Dust/id.priv
+**/dist
+**/id.pub
+**/id.priv
 Dust-crypto/dist
 **/*.pyc
 **/*.so
 **/*.dylib
+Dust-command/http.model

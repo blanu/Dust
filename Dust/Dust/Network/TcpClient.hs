@@ -8,7 +8,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 
 import Dust.Network.Util
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 
 client :: String -> PortNumber -> (Socket -> IO(Plaintext)) -> IO(Plaintext)
 client host port handleRequest = withSocketsDo $ do

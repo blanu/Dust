@@ -9,7 +9,7 @@ import qualified Crypto.DH.Curve25519 as Curve25519
 import qualified Crypto.Key as CK
 
 import Dust.Crypto.Keys
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import Dust.Crypto.PRNG
 
 createKeypair :: IO Keypair

@@ -19,7 +19,7 @@ import Debug.Trace
 import qualified Data.ByteString.Base64 as B64
 
 import Dust.Core.DustPacket
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import Dust.Crypto.ECDH
 import Dust.Crypto.Keys
 import Dust.Model.TrafficModel

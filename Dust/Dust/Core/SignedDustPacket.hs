@@ -10,7 +10,7 @@ module Dust.Core.SignedDustPacket
 ) where
 
 import GHC.Generics
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import Data.ByteString
 import qualified Data.ByteString as B
 import Data.Serialize

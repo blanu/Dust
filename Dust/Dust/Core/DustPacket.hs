@@ -15,7 +15,7 @@ module Dust.Core.DustPacket
 ) where
 
 import GHC.Generics
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import Data.ByteString
 import qualified Data.ByteString as B
 import Data.Serialize
@@ -44,9 +44,9 @@ makePlainPacket (Plaintext bs) = PlainDataPacket (PlainHeader (length32 bs)) (Pl
 makeCipherPacket :: Ciphertext -> Ciphertext -> CipherDataPacket
 makeCipherPacket lengthCiphertext ciphertext = CipherDataPacket (CipherHeader lengthCiphertext) ciphertext
 
-decryptHeader :: (Ciphertext -> Plaintext) -> CipherHeader -> PlainHeader
+decryptHeader :: Cipher -> CipherHeader -> PlainHeader
 decryptHeader cipher (CipherHeader ciphertext) =
-    let (Plaintext lengthBytes) = cipher ciphertext
+    let (Plaintext lengthBytes, cipher') = decrypt cipher ciphertext
     in decodeHeader lengthBytes
 
 decodeHeader :: ByteString -> PlainHeader
@@ -58,16 +58,16 @@ decodeHeader bs =
 encodeHeader :: PlainHeader -> ByteString
 encodeHeader (PlainHeader i) = encode i
 
-encryptData :: (Plaintext -> Ciphertext) -> PlainDataPacket -> CipherDataPacket
+encryptData :: Cipher -> PlainDataPacket -> CipherDataPacket
 encryptData cipher (PlainDataPacket header@(PlainHeader i) plaintext) =
     let plainheader = Plaintext (encodeHeader header)
-        cipherheader = cipher plainheader
-        ciphertext = cipher plaintext
+        (cipherheader, cipher') = encrypt cipher plainheader
+        (ciphertext, cipher'') = encrypt cipher' plaintext
     in CipherDataPacket (CipherHeader cipherheader) ciphertext
 
-decryptData :: (Ciphertext -> Plaintext) -> CipherDataPacket -> PlainDataPacket
+decryptData :: Cipher-> CipherDataPacket -> PlainDataPacket
 decryptData cipher (CipherDataPacket header ciphertext) =
-    let plaintext@(Plaintext bs) = cipher ciphertext
+    let (plaintext@(Plaintext bs), cipher') = decrypt cipher ciphertext
     in PlainDataPacket (PlainHeader (length32 bs)) plaintext
 
 length32 :: ByteString -> Int32

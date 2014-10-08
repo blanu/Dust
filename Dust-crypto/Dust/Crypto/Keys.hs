@@ -7,6 +7,7 @@ module Dust.Crypto.Keys
    Keypair(..),
 
    loadKeypair,
+   ensureKeys,
    saveKeypair,
    loadPublic,
 
@@ -17,6 +18,9 @@ module Dust.Crypto.Keys
 import GHC.Generics
 import Data.Serialize
 import Data.ByteString
+import System.IO.Error
+
+import Dust.Crypto.PRNG
 
 newtype PublicKey = PublicKey { publicBytes :: ByteString } deriving (Show, Eq, Generic)
 newtype PrivateKey = PrivateKey { privateBytes :: ByteString } deriving (Show, Eq, Generic)
@@ -28,10 +32,20 @@ data Keypair = Keypair {
     private :: PrivateKey
 } deriving (Show, Eq)
 
-loadKeypair :: IO (Keypair)
-loadKeypair = do
-    public <- loadPublic "id.pub"
-    private <- loadPrivate "id.priv"
+ensureKeys :: String -> (IO Keypair) -> IO (Keypair, Bool)
+ensureKeys keypath creator = do
+    result <- tryIOError $ loadKeypair keypath
+    case result of
+        Right keypair -> return (keypair, False)
+        Left _ -> do
+            keys <- creator
+            saveKeypair keypath keys
+            return (keys, True)
+
+loadKeypair :: String -> IO (Keypair)
+loadKeypair keypath = do
+    public <- loadPublic $ keypath ++ "/id.pub"
+    private <- loadPrivate $ keypath ++ "/id.priv"
     return (Keypair public private)
 
 loadPrivate :: FilePath -> IO (PrivateKey)
@@ -47,10 +61,10 @@ loadPublic path = do
 loadKey :: FilePath -> IO (ByteString)
 loadKey path = Data.ByteString.readFile path
 
-saveKeypair :: Keypair -> IO ()
-saveKeypair (Keypair public private) = do
-    savePublic "id.pub" public
-    savePrivate "id.priv" private
+saveKeypair :: String -> Keypair -> IO ()
+saveKeypair keypath (Keypair public private) = do
+    savePublic (keypath ++ "id.pub") public
+    savePrivate (keypath ++ "id.priv") private
 
 savePrivate :: FilePath -> PrivateKey -> IO ()
 savePrivate path (PrivateKey bs) = do
