@@ -7,3 +7,6 @@ Dust-crypto/dist
 **/*.dylib
 Dust-command/*.model
 Dust-command/*.json
+Dust-command/*.commands
+Dust-command/*.commands2
+Dust-command/*.py

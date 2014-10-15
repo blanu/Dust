@@ -3,45 +3,41 @@
 module Dust.Model.PacketLength
 (
     PacketLengthModel(..),
-    loadLengthModel,
-    probsToCDF,
     nextLength
 )
 where
 
-import System.Random
-import GHC.Generics
-import Data.Serialize
-import Data.Random.Shuffle.Weighted
-import Data.Random.RVar
-import Data.Random
-import Data.Random.Source.IO
-import Data.Random.Source.Std
-import Data.Map
+import GHC.Generics (Generic)
 import qualified Data.ByteString as B
+import Data.Serialize (Serialize, decode)
+import Control.Monad.State.Lazy (State(..), get, put)
+import Data.Word (Word16)
+import Debug.Trace
+
+import Dust.Crypto.PRNG (PRNG, randomDouble)
 
 data PacketLengthModel = PacketLengthModel [Double] deriving (Eq, Show, Generic)
 
 instance Serialize PacketLengthModel
 
-loadLengthModel :: FilePath -> IO (Map Double Int)
-loadLengthModel path = do
-   probs <- loadProbs path
-   return $ probsToCDF probs
+nextLength :: [Double] -> State PRNG Word16
+nextLength weights = do
+    prng <- get
+    let (r, prng') = randomDouble prng
+    traceShow r $ put prng'
+    let result = weightedSample weights r
+    return result
+    -- let dist = weightedSampleCDF 1 cdf
+    -- arr <- runRVar dist StdRandom :: IO [Int]
+    -- return (head arr)
 
-loadProbs :: FilePath -> IO [Double]
-loadProbs path = do
-    s <- B.readFile path
-    let result = (decode s)::(Either String [Double])
-    case result of
-        Left error -> return ([])
-        Right arr -> return(arr)
+weightedSample :: [Double] -> Double -> Word16
+weightedSample weights r = traceShow weights $ weightedSampleWithIndex 0 weights r
 
-probsToCDF :: [Double] -> Map Double Int
-probsToCDF probs = cdfMapFromList $ zip probs [1..(length probs)]
-
-nextLength :: Map Double Int -> IO Int
-nextLength cdf = do
-    let dist = weightedSampleCDF 1 cdf
-    arr <- runRVar dist StdRandom :: IO [Int]
-    return (head arr)
+weightedSampleWithIndex :: Word16 -> [Double] -> Double -> Word16
+weightedSampleWithIndex index [] r = index
+weightedSampleWithIndex index (weight:weights) r = do
+  let r' = traceShow (r,weight,r-weight) $ r - weight
+  if r < 0
+    then traceShow (r,index) $ index
+    else traceShow (r,index) $ weightedSampleWithIndex (index+1) weights r'

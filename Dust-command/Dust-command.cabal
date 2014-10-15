@@ -1,0 +1,23 @@
+name:                Dust-command
+version:             0.1.0.0
+synopsis:            Executable providing access to the Dust engine from a separate process
+homepage:            https://github.com/blanu/Dust
+license:             GPL-2
+license-file:        LICENSE
+author:              Brandon Wiley
+maintainer:          brandon@ischool.utexas.edu
+category:            Network
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable Dust-command
+  main-is: Dust/Control/Main.hs
+  build-depends:
+    base >=4.7 && <4.8,
+    Dust,
+    Dust-crypto,
+    bytestring,
+    binary,
+    mtl,
+    lens
+  default-language:    Haskell2010

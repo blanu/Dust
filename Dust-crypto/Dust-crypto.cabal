@@ -19,7 +19,10 @@ Library
     nacl,
     skein,
     crypto-api,
-    entropy
+    entropy,
+    mtl,
+    cereal,
+    random
 
   Exposed-modules:
       Dust.Crypto.Keys,
@@ -47,4 +50,6 @@ test-suite crypto
     threefish,
     cereal,
     ghc-prim,
-    QuickCheck
+    QuickCheck,
+    mtl,
+    binary

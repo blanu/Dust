@@ -28,7 +28,10 @@ Library
     directory,
     split,
     crypto-api,
-    base64-bytestring
+    base64-bytestring,
+    lens,
+    mtl,
+    normaldistribution
   Extensions:
     ForeignFunctionInterface
 
@@ -38,16 +41,12 @@ Library
       Dust.Model.Huffman,
       Dust.Model.Content,
       Dust.Model.TrafficModel,
-      Dust.Model.Observations,
       Dust.Model.Stats,
       Dust.Network.TcpServer,
       Dust.Network.UdpServer,
       Dust.Network.TcpClient,
       Dust.Network.Util,
       Dust.Network.ProtocolSocket
-
-  if os(linux) || os(darwin)
-    Exposed-modules:
       Dust.Core.DustPacket
       Dust.Core.SignedDustPacket
       Dust.Core.CryptoProtocol
@@ -76,7 +75,9 @@ test-suite core
     threefish,
     cereal,
     ghc-prim,
-    QuickCheck
+    QuickCheck,
+    lens,
+    mtl
 
 -- test-suite model
 --   type: exitcode-stdio-1.0
