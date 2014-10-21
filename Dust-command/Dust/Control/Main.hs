@@ -46,7 +46,7 @@ command keypath modelpath = do
   case eitherModel of
     Left _ -> putStrLn "Failure to load model"
     Right model -> do
-      let gen  = TrafficGenerator model rand
+      let gen  = TrafficGenerator model rand (newStream keypair) (newStream keypair)
       hSetBuffering stdin NoBuffering
 
       -- Parse commands

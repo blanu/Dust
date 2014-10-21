@@ -26,7 +26,7 @@ import Data.Bits
 import Dust.Model.PacketLength
 import qualified Dust.Model.Content as C
 import Dust.Model.Port
-import Dust.Model.TrafficModel
+import Dust.Model.TrafficModel hiding (Stream)
 
 data Ethernet = Ethernet {
   ethDest :: ByteString, -- 6 bytes
@@ -84,10 +84,10 @@ getIP = do
   let hl = shift (shift b0 4) (-4)
   let f = (fromIntegral $ shift s6 (-13))::Word8
   let fo = shift (shift s6 3) (-3)
-  
+
   return $ IP v hl b1 s2 s4 f fo b8 b9 s10 l12 l14 v20
 
-data Transport = 
+data Transport =
   TCP {
     srcport :: Word16,
     destport:: Word16,
@@ -100,7 +100,7 @@ data Transport =
     tcpchk  :: Word16,
     urgent  :: Word16,
     tcptops :: ByteString
-  } 
+  }
   | UDP {
     srcport :: Word16,
     destport:: Word16,
@@ -127,7 +127,7 @@ getTCP = do
 
   let off = shift b12 (-4)
   let rsv = shift (shift b12 4) (-4)
-  
+
   v20 <- getByteString (fromIntegral ((off - 5) * 4)::Int)
 
   return $ TCP s0 s2 l4 l8 off rsv b13 s14 s16 s18 v20
@@ -145,7 +145,7 @@ getUDP = do
   return $ UDP s0 s2 s4 s6
 
 data Packet = Packet Ethernet IP Transport ByteString deriving (Generic, Show)
-instance Serialize Packet 
+instance Serialize Packet
 
 data Stream = Stream Protocol Word16 [Packet] deriving (Generic, Show)
 instance Serialize Stream

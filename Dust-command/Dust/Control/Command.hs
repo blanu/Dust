@@ -10,6 +10,7 @@ import Data.Word
 import Data.Binary (encode)
 import Control.Monad.State.Lazy
 import Control.Lens
+import Debug.Trace
 
 import Dust.Model.TrafficModel
 import Dust.Crypto.PRNG
@@ -17,9 +18,16 @@ import Dust.Control.Protocol
 import Dust.Control.State
 
 processCommand :: ControlRequest -> State TrafficGenerator (Maybe BL.ByteString)
+processCommand Duration = do
+  gen <- get
+  let (result, gen') = runState generateDuration gen
+  put gen'
+  trace ("duration " ++ show result) $ return $ Just $ encode result  
 processCommand (PacketCount ms) = do
-  let count = 0 :: Word16
-  return $ Just $ encode count
+  gen <- get
+  let (result, gen') = runState (generatePacketCount ms) gen
+  put gen'
+  trace ("count " ++ show ms ++ " " ++ show result) $ return $ Just $ encode result
 processCommand EncodedReady = do
   gen <- get
   let (result, gen') = runState generateLength gen

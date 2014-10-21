@@ -24,7 +24,7 @@ import Dust.Crypto.ECDH
 import Dust.Crypto.Keys
 import Dust.Crypto.Hash
 import Dust.Crypto.Cipher
-import Dust.Model.TrafficModel
+import Dust.Model.TrafficModel hiding (Stream)
 
 data Session = Session Keypair PublicKey IV Confirmation deriving (Show, Eq)
 data Confirmation = Confirmation Ciphertext deriving (Show, Eq)

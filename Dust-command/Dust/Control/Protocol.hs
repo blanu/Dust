@@ -17,7 +17,8 @@ import qualified Data.ByteString.Lazy as BL
 import Data.Word (Word8, Word16)
 
 data ControlRequest =
-    PacketCount Word16
+    Duration
+  | PacketCount Word16
   | EncodedReady
   | PutDecoded B.ByteString
   | GetEncoded Word16
@@ -50,10 +51,6 @@ getControlRequest :: Get (Maybe ControlRequest)
 getControlRequest = do
   command <- getWord8
   case command of
-    0x00 -> do
-      arg <- getWord16be
-      return $ Just $ PacketCount arg
-
     0x01 -> return $ Just EncodedReady
     0x02 -> do
       len <- getWord16be
@@ -71,4 +68,10 @@ getControlRequest = do
     0x13 -> do
       arg <- getWord16be
       return $ Just $ GetEncoded arg
+
+    0x21 -> return $ Just $ Duration
+    0x22 -> do
+      arg <- getWord16be
+      return $ Just $ PacketCount arg
+
     otherwise -> return Nothing
