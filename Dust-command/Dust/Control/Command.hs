@@ -22,7 +22,7 @@ processCommand Duration = do
   gen <- get
   let (result, gen') = runState generateDuration gen
   put gen'
-  trace ("duration " ++ show result) $ return $ Just $ encode result  
+  trace ("duration " ++ show result) $ return $ Just $ encode result
 processCommand (PacketCount ms) = do
   gen <- get
   let (result, gen') = runState (generatePacketCount ms) gen
@@ -34,6 +34,9 @@ processCommand EncodedReady = do
   put gen'
   return $ Just $ encode result
 processCommand (PutDecoded bs) = do
+  gen <- get
+  let gen' = runState putDecoded gen
+  put gen'
   return Nothing
 processCommand (GetEncoded len) = do
   let bs = B.empty

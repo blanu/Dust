@@ -11,7 +11,9 @@ module Dust.Model.TrafficModel
     saveModel,
     generateDuration,
     generatePacketCount,
-    generateLength
+    generateLength,
+    putDecoded,
+    putEncoded
 )
 where
 
@@ -141,6 +143,24 @@ generateLength = do
   let (result, prng') = normal' (mean,sigma) prng
   genPrng .= prng'
   return $ round result
+
+putDecoded :: B.ByteString -> State TrafficGenerator ()
+putDecoded bs = outgoingStream.decoded %= flip B.append bs
+
+putEncoded :: B.ByteString -> State TrafficGenerator ()
+putEncoded bs = incomingStream.encoded %= flip B.append bs
+
+encodedReady :: State TrafficGenerator Word16
+encodedReady = do
+  gen <- get
+  let buffer = outgoingStream.encoded ^. gen
+  return $ fromIntegral $ B.length buffer
+
+decodedReady :: State TrafficGenerator Word16
+decodedReady = do
+  gen <- get
+  let buffer = incomingStream.decoded ^. gen
+  return $ fromIntegral $ B.length buffer
 
 -- makeGenerator :: TrafficModel -> TrafficGenerator
 -- makeGenerator model = undefined
