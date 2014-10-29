@@ -22,30 +22,66 @@ processCommand Duration = do
   gen <- get
   let (result, gen') = runState generateDuration gen
   put gen'
-  trace ("duration " ++ show result) $ return $ Just $ encode result
+  trace ("duration -> " ++ show result) $ return $ Just $ encode result
 processCommand (PacketCount ms) = do
   gen <- get
   let (result, gen') = runState (generatePacketCount ms) gen
   put gen'
-  trace ("count " ++ show ms ++ " " ++ show result) $ return $ Just $ encode result
+  trace ("count " ++ show ms ++ " -> " ++ show result) $ return $ Just $ encode result
 processCommand EncodedReady = do
   gen <- get
-  let (result, gen') = runState generateLength gen
+  pad <- use $ config.padding
+  if pad
+    then do
+      let (result, gen') = runState generateLength gen
+      put gen'
+      trace ("encoded ready -> " ++ show result) $ return $ Just $ encode result
+    else do
+      let (result, gen') = runState encodedReady gen
+      put gen'
+      trace ("encoded ready -> " ++ show result) $ return $ Just $ encode result
+processCommand (DecodedReady) = do
+  gen <- get
+  let (result, gen') = runState decodedReady gen
   put gen'
-  return $ Just $ encode result
+  trace ("decoded ready -> " ++ show result) $ return $ Just $ encode result
+processCommand (PutEncoded bs) = do
+  gen <- get
+  let (_, gen') = runState (putEncoded bs) gen
+  put gen'
+  trace ("put encoded " ++ (show $ B.length bs)) $ return Nothing
 processCommand (PutDecoded bs) = do
   gen <- get
-  let gen' = runState putDecoded gen
+  let (_, gen') = runState (putDecoded bs) gen
   put gen'
-  return Nothing
+  trace ("put decoded " ++ (show $ B.length bs)) $ return Nothing
 processCommand (GetEncoded len) = do
-  let bs = B.empty
-  return $ Just $ encode bs
-processCommand (DecodedReady) = do
-  let count = 0 :: Word16
-  return $ Just $ encode count
-processCommand (PutEncoded bs) = do
-  return Nothing
+  gen <- get
+  let ilen = fromIntegral len
+  pad <- use $ config.padding
+  let (maybeResult, gen') = runState (getEncoded len) gen
+  traceShow maybeResult $ put gen'
+  case maybeResult of
+    Nothing -> do
+      if pad
+        then do
+          let (padding, gen'') = runState (generatePadding ilen) gen
+          traceShow padding $ put gen''
+          return $ Just (padding ^. from strict)
+        else return Nothing
+    Just result -> do
+      let blen = B.length result
+      let remaining = ilen-blen
+      if pad && remaining>0
+        then do
+          let (padding, gen'') = runState (generatePadding remaining) gen
+          traceShow padding $ put gen''
+          return $ Just $ BL.append (encode result) (padding ^. from strict)
+        else trace ("get encoded " ++ show len ++ " -> " ++ (show $ B.length result)) $ return $ Just $ encode result
 processCommand (GetDecoded len) = do
-  let bs = B.empty
-  return $ Just $ encode bs
+  gen <- get
+  let (maybeResult, gen') = runState (getDecoded len) gen
+  traceShow maybeResult $ put gen'
+  case maybeResult of
+    Nothing -> trace "Get decoded returned Nothing" $ return Nothing
+    Just result -> trace ("get decoded " ++ show len ++ " -> " ++ (show $ B.length result)) $ return $ Just $ encode result

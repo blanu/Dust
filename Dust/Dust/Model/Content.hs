@@ -6,7 +6,8 @@ module Dust.Model.Content
     loadContentModel,
     makeContentModel,
     encodeContent,
-    decodeContent
+    decodeContent,
+    treeFromProbs
 )
 where
 
@@ -39,17 +40,23 @@ makeContentModel counts =
     let tree = H.countsToTree counts
     in ContentModel $ tree
 
-encodeContent :: (HuffmanTree Word8) -> B.ByteString -> B.ByteString
-encodeContent tree input =
---    let codez = H.codes tree
---        bytes = B.unpack input
---        bits = H.padToEight $ H.encode codez bytes
---    in (B.concat . BL.toChunks) $ H.bitpack bits
-    input
+treeFromProbs :: [Double] -> ContentModel
+treeFromProbs probs = do
+  let maxint = 2147483647
+  let chars = [0..255] :: [Word8]
+  let counts = (map fromIntegral $ map round $ map (* maxint) probs) :: [Int]
+  let pairs = zip chars counts
+  ContentModel $ H.countsToTree pairs
 
-decodeContent :: (HuffmanTree Word8) -> B.ByteString -> B.ByteString
-decodeContent tree input =
---    let bits = H.bitunpack input
---        bytes = H.decode tree bits
---    in B.pack bytes
-    input
+encodeContent :: ContentModel -> B.ByteString -> B.ByteString
+encodeContent (ContentModel tree) input =
+    let codez = H.codes tree
+        bytes = B.unpack input
+        bits = H.padToEight $ H.encode codez bytes
+    in (B.concat . BL.toChunks) $ H.bitpack bits
+
+decodeContent :: ContentModel -> B.ByteString -> B.ByteString
+decodeContent (ContentModel tree) input =
+    let bits = H.bitunpack input
+        bytes = H.decode tree bits
+    in B.pack bytes

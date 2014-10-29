@@ -8,7 +8,8 @@ module Dust.Crypto.Cipher
   Ciphertext(..),
   Cipher,
 
-  newCipher,
+  newCipherWithKey,
+  newCipherIV,
   encrypt,
   decrypt,
   createIV
@@ -36,8 +37,13 @@ instance Serialize Ciphertext
 
 data Cipher = Cipher PRNG
 
-newCipher :: EncryptionKey -> IV -> Cipher
-newCipher (EncryptionKey keyBytes) (IV ivBytes) = do
+newCipherWithKey :: EncryptionKey -> Cipher
+newCipherWithKey (EncryptionKey keyBytes) = do
+  let prng = makePRNG keyBytes
+  Cipher prng
+
+newCipherIV :: EncryptionKey -> IV -> Cipher
+newCipherIV (EncryptionKey keyBytes) (IV ivBytes) = do
   let prng = makePRNG (B.append keyBytes ivBytes)
   Cipher prng
 

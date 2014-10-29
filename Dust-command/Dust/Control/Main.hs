@@ -19,6 +19,7 @@ import Dust.Model.TrafficModel
 import Dust.Control.Command
 import Dust.Control.Lazy
 import Dust.Control.State
+import Dust.Core.CryptoProtocol (Handshake(..))
 
 main :: IO()
 main = do
@@ -46,8 +47,9 @@ command keypath modelpath = do
   case eitherModel of
     Left _ -> putStrLn "Failure to load model"
     Right model -> do
-      let gen  = TrafficGenerator model rand (newStream keypair) (newStream keypair)
+      let gen  = TrafficGenerator model rand (newStream keypair) (newStream keypair) (Begin keypair) minimalConfig
       hSetBuffering stdin NoBuffering
+      --hSetBuffering stdout NoBuffering
 
       -- Parse commands
       input <- byteSource

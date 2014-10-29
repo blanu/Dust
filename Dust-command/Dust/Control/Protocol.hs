@@ -67,7 +67,7 @@ getControlRequest = do
       return $ Just $ PutEncoded arg
     0x13 -> do
       arg <- getWord16be
-      return $ Just $ GetEncoded arg
+      return $ Just $ GetDecoded arg
 
     0x21 -> return $ Just $ Duration
     0x22 -> do
