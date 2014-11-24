@@ -13,7 +13,7 @@ import Test.QuickCheck.Gen
 import Data.ByteString as B (ByteString, length)
 import Data.ByteString.Char8 (pack, useAsCString, packCString)
 
-import Dust.Crypto.DustCipher
+import Dust.Crypto.Cipher
 import qualified Dust.Crypto.ECDH as ECDH
 import qualified Dust.Crypto.ECDSA as ECDSA
 import Dust.Crypto.Keys
@@ -90,14 +90,14 @@ case_encrypt_decrypt = let key = EncryptionKey (pack "1234567890123456")
 main :: IO ()
 main =
  defaultMain [
-     testGroup "ECDH25519" [ 
+     testGroup "ECDH25519" [
          testCase "ECDH_createPrivate" case_ECDH_createPrivate,
          testCase "ECDH_createPublic" case_ECDH_createPublic,
          testCase "ECDH_createKeypair" case_ECDH_createKeypair,
          testCase "ECDH_createShared" case_ECDH_createShared,
          testCase "ECDH_keypair_save_load" case_ECDH_keypair_save_load,
          testCase "encrypt_decrypt" case_encrypt_decrypt,
-        
+
          testProperty "ECDH_pubkey_size" prop_ECDH_pubkey_size,
          testProperty "ECDSA_pubkey_size" prop_ECDSA_pubkey_size
        ]
