@@ -2,7 +2,7 @@ That is only been testing using Haskell platform 2014.2.0.0 64-bit for OS X. It 
 For best results, follow the instructions on stackage.org to configure your system to use the Stackage packages for your version of Haskell.
 Attempts to install Dust using Hackage packages have generally been met with frustration.
 
-Install Dust:
+Install Dust-command:
 cabal install --only-dependencies
 cabal configure
 cabal build

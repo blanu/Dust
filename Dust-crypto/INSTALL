@@ -1,6 +1,10 @@
-cd Dust/hs
-cabal configure
+That is only been testing using Haskell platform 2014.2.0.0 64-bit for OS X. It may work with other versions of Haskell.
+For best results, follow the instructions on stackage.org to configure your system to use the Stackage packages for your version of Haskell.
+Attempts to install Dust using Hackage packages have generally been met with frustration.
+
+Install Dust-crypto:
+First install hs-nacl: Get hs-nacl here and follow the instructions to install it: https://github.com/thoughtpolice/hs-nacl
 cabal install --only-dependencies
+cabal configure
 cabal build
 cabal install
-
