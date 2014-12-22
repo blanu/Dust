@@ -6,8 +6,7 @@ You must provide your own model files!
 
 Run ./build.sh, which does the following:
 
-# Install stat library
-go get github.com/gonum/stat
+# Install stat library (included in repo)
 go build github.com/gonum/stat
 go install github.com/gonum/stat
 go install github.com/gonum/test

@@ -12,4 +12,3 @@ Dust-command/*.commands2
 Dust-command/*.py
 go/pkg
 go/bin
-go/src/github.com
