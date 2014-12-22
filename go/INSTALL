@@ -1,4 +1,8 @@
-Put your model files in src/dust/models
+Requirements: Go 1.4, Python 3.x, PyYAML
+
+Put your model files in src/dust/models/.
+You cannot build without model files.
+You must provide your own model files!
 
 Run ./build.sh, which does the following:
 
