@@ -1,0 +1,19 @@
+name: Test
+duration:
+  dist: exponential
+  params:
+    - 1
+length:
+  dist: normal
+  params:
+    - 1
+    - 1
+flow:
+  dist: poisson
+  params:
+    - 1
+content:
+  dist: multinomial
+  params:
+    - 0.5
+    - 0.5

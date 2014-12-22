@@ -1,0 +1,46 @@
+package Dust
+
+import (
+  "github.com/gonum/stat/dist"
+)
+
+$duration.data
+$packet_count.data
+$packet_length.data
+$encode.data
+$add_padding.data
+
+type $name struct {
+}
+
+func (self $name) Duration() uint16 {
+  $duration.body
+}
+
+func (self $name) PacketCount(milliseconds uint16) uint16 {
+  $packet_count.body
+}
+
+func (self $name) PacketLength() uint16 {
+  $packet_length.body
+}
+
+func (self $name) Encode(bytes []byte) []byte {
+  $encode.body
+}
+
+func (self $name) AddPadding(bytes []byte, length uint16) []byte {
+  $add_padding.body
+}
+
+func (self $name) RandomBytes(len uint16) []byte {
+  $random_bytes.body
+}
+
+func (self $name) Decode(bytes []byte) []byte {
+  $decode.body
+}
+
+func (self $name) StripPadding(bytes []byte) []byte {
+  $strip_padding.body
+}

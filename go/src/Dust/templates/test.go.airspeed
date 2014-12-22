@@ -1,0 +1,13 @@
+package Dust
+
+import (
+  "testing"
+)
+
+func Test${name}Duration(t *testing.T) {
+  var instance=&${name}{}
+  var result=instance.Duration()
+  if result<0 {
+    t.Errorf("Negative duration %d", result)
+  }
+}

@@ -1,0 +1,17 @@
+Put your model files in src/dust/models
+
+Run ./build.sh, which does the following:
+
+# Install stat library
+go get github.com/gonum/stat
+go build github.com/gonum/stat
+go install github.com/gonum/stat
+go install github.com/gonum/test
+
+# Generate a custom Dust library for your models
+go generate Dust
+
+# Install your custom Dust library
+go build Dust
+go install Dust
+go test Dust

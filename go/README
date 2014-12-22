@@ -1,0 +1,4 @@
+Dust/go contains a compiler for the Dust statistical model specification to Go
+Though the output is a Go library, the compiler is written in Python.
+You therefore need both Go 1.4 and Python 3.x in order to run the compiler.
+
