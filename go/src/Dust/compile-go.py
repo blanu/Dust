@@ -22,11 +22,11 @@ def convertModel(data):
   model['duration']=genDuration(data['duration']['dist'], data['duration']['params'])
   model['packet_length']=genLength(data['length']['dist'], data['length']['params'])
   model['packet_count']=genFlow(data['flow']['dist'], data['flow']['params'])
-  model['encode']={'body': 'return bytes', 'data': 'var contentDist=[]float64 {0.5,0.5}'}
+  model['random_bytes']=genContent(data['content']['dist'], data['content']['params'])
+  model['encode']={'body': 'return bytes'}
   model['decode']={'body': 'return bytes'}
-  model['add_padding']={'body': 'return bytes', 'data': 'var paddingDist=Multinomial(contentDist)'}
+  model['add_padding']={'body': 'return bytes'}
   model['strip_padding']={'body': 'return bytes'}
-  model['random_bytes']={'body': 'return nil'}
 
   return model
 
@@ -39,8 +39,8 @@ def genDuration(dist, params):
 
 def genExponential(varname, param):
   return {
-    'data': "var %s=Exponential(%d)" % (varname, param),
-    'body': "var d=&dist.Exponential{Rate: float64(%s)}\nreturn uint16(d.Rand())" % (varname)
+    'data': "var %s=&dist.Exponential{Rate: float64(%s)}" % (varname, param),
+    'body': "return uint16(%s.Rand())" % (varname)
   }
 
 def genLength(dist, params):
@@ -52,8 +52,8 @@ def genLength(dist, params):
 
 def genNormal(varname, mu, sigma):
   return {
-    'data': "var %s=&Normal{Mean:%f, Sd:%f}" % (varname, mu, sigma),
-    'body': "var d=dist.Normal{Mu: float64(%s.Mean), Sigma: float64(%s.Sd)}\nreturn uint16(d.Rand())" % (varname, varname)
+    'data': "var %s=dist.Normal{Mu: float64(%f), Sigma: float64(%f)}" % (varname, mu, sigma),
+    'body': "return uint16(%s.Rand())" % (varname)
   }
 
 def genFlow(dist, params):
@@ -66,9 +66,34 @@ def genFlow(dist, params):
 # FIXME - Find code for generating a proper Poisson distribution
 def genPoisson(varname, param):
   return {
-    'data': "var %s=&Normal{Mean:%f, Sd:%f}" % (varname, param, param),
-    'body': "var d=dist.Normal{Mu: float64(%s.Mean), Sigma: float64(%s.Sd)}\nreturn uint16(d.Rand())" % (varname, varname)
+    'data': "var %s=&dist.Poisson{Expected: float64(%f)}" % (varname, param),
+    'body': "return uint16(%s.Rand())" % (varname)
   }
+
+def genContent(dist, params):
+  if dist=='multinomial':
+    return genMultinomial("contentDist", params)
+  else:
+    print('Unknown content dist %s' % dist)
+
+def genMultinomial(varname, params):
+  return {
+    'data': "var %sWeights=[]float64 %s\nvar %s=&dist.Multinomial{Weights: %sWeights}" % (varname, genArray(params), varname, varname),
+    'body': """
+      var bytes=make([]byte, requestedLength)
+      for index := range bytes {
+        bytes[index]=byte(%s.Rand())
+      }
+
+      return bytes
+      """
+      % (varname)
+  }
+
+def genArray(arr):
+  print('arr:')
+  print(arr)
+  return '{'+', '.join(map(str, arr))+'}'
 
 templateName='model.go.airspeed'
 testTemplateName='test.go.airspeed'

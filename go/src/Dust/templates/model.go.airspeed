@@ -7,8 +7,7 @@ import (
 $duration.data
 $packet_count.data
 $packet_length.data
-$encode.data
-$add_padding.data
+$random_bytes.data
 
 type $name struct {
 }
@@ -33,7 +32,7 @@ func (self $name) AddPadding(bytes []byte, length uint16) []byte {
   $add_padding.body
 }
 
-func (self $name) RandomBytes(len uint16) []byte {
+func (self $name) RandomBytes(requestedLength uint16) []byte {
   $random_bytes.body
 }
 

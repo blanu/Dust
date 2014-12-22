@@ -33,5 +33,14 @@ func main() {
     fmt.Printf("Length: %d\n", result)
   }
 
+  fmt.Println("Testing padding...")
+
+  for x := 0; x<10; x++ {
+    var bytes []byte = instance.RandomBytes(10)
+    for index := range bytes {
+      fmt.Printf("Random byte: %d\n", bytes[index])
+    }
+  }
+
   fmt.Println("Done.")
 }
