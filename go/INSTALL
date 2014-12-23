@@ -9,7 +9,7 @@ Run ./build.sh, which does the following:
 # Install stat library (included in repo)
 go build github.com/gonum/stat
 go install github.com/gonum/stat
-go install github.com/gonum/test
+go test github.com/gonum/stat
 
 # Generate a custom Dust library for your models
 go generate Dust
