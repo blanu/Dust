@@ -8,6 +8,7 @@ $duration.data
 $packet_count.data
 $packet_length.data
 $random_bytes.data
+$encode.data
 
 type $name struct {
 }

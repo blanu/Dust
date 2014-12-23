@@ -22,9 +22,9 @@ def convertModel(data):
   model['duration']=genDuration(data['duration']['dist'], data['duration']['params'])
   model['packet_length']=genLength(data['length']['dist'], data['length']['params'])
   model['packet_count']=genFlow(data['flow']['dist'], data['flow']['params'])
+  model['encode']=genEncoder(data['huffman'])
+  model['decode']=genDecoder()
   model['random_bytes']=genContent(data['content']['dist'], data['content']['params'])
-  model['encode']={'body': 'return bytes'}
-  model['decode']={'body': 'return bytes'}
   model['add_padding']={'body': 'return bytes'}
   model['strip_padding']={'body': 'return bytes'}
 
@@ -78,7 +78,7 @@ def genContent(dist, params):
 
 def genMultinomial(varname, params):
   return {
-    'data': "var %sWeights=[]float64 %s\nvar %s=&dist.Multinomial{Weights: %sWeights}" % (varname, genArray(params), varname, varname),
+    'data': "var %sWeights=[]float64 %s\nvar %s=&dist.Multinomial{Weights: %sWeights}" % (varname, genArray(convertToProbs(params)), varname, varname),
     'body': """
       var bytes=make([]byte, requestedLength)
       for index := range bytes {
@@ -90,10 +90,51 @@ def genMultinomial(varname, params):
       % (varname)
   }
 
+def convertToProbs(arr):
+  total=float(sum(arr))
+  return map(lambda item: float(item)/total, arr)
+
+def genEncoder(params):
+  varname="contentDist"
+  return {
+    'data': "var huffman=[][]bool %s\nvar encoder *HuffmanEncoder=nil" % (genBoolArrays(params)),
+    'body': """
+      if encoder==nil {
+        encoder=GenerateHuffmanEncoder(huffman)
+        print(encoder.String())
+      }
+
+      return encoder.encode(bytes)
+      """
+  }
+
+def genDecoder():
+  varname="contentDist"
+  return {
+    'body': """
+      if encoder==nil {
+        encoder=GenerateHuffmanEncoder(huffman)
+        print(encoder.String())
+      }
+
+      return encoder.decode(bytes)
+      """
+  }
+
 def genArray(arr):
-  print('arr:')
-  print(arr)
   return '{'+', '.join(map(str, arr))+'}'
+
+def genBoolArrays(arr):
+  return '{'+', '.join(map(genBoolArray, arr))+'}'
+
+def genBoolArray(arr):
+  return '{'+', '.join(map(boolstr, arr))+'}'
+
+def boolstr(b):
+  if b:
+    return 'true'
+  else:
+    return 'false'
 
 templateName='model.go.airspeed'
 testTemplateName='test.go.airspeed'

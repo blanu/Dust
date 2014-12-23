@@ -42,5 +42,14 @@ func main() {
     }
   }
 
+  fmt.Println("Testing encoding...")
+
+  var testBytes = []byte {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+  var resultBytes []byte = instance.Encode(testBytes)
+  var decoded     []byte = instance.Decode(resultBytes)
+  for index := range resultBytes {
+    fmt.Printf("Encoded byte: %d -> %d <- %d\n", testBytes[index], resultBytes[index], decoded[index])
+  }
+
   fmt.Println("Done.")
 }
