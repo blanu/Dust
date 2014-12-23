@@ -1,7 +1,6 @@
-echo "Building stat"
-go build github.com/gonum/stat
-go install github.com/gonum/stat
-go test github.com/gonum/stat
+echo "Building dist"
+go build dist
+go install dist
 
 echo "Building Dust"
 go generate Dust
