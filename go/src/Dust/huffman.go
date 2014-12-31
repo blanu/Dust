@@ -104,13 +104,13 @@ func (self code) String() string {
   return buffer.String()
 }
 
-func (self *HuffmanEncoder) encode(bytes []byte) []byte {
+func (self *HuffmanEncoder) Encode(bytes []byte) (encoded []byte, buffer []byte, err error) {
   var bits = bytesToBits(bytes)
 
   return self.encodeBits(bits)
 }
 
-func (self *HuffmanEncoder) decode(bytes []byte) []byte {
+func (self *HuffmanEncoder) Decode(bytes []byte) (decoded []byte, buffer []byte, err error) {
   fmt.Printf("Decoding %d bytes\n", len(bytes))
   var bits = self.decodeBits(bytes)
   fmt.Printf("Decoded %d bits\n", len(bits))

@@ -1,5 +1,6 @@
 import os
 import yaml
+import json
 import subprocess
 from airspeed import CachingFileLoader
 
@@ -8,7 +9,14 @@ def parse(filename):
   data=f.read()
   f.close()
 
-  obj=yaml.load(data)
+  ext=filename.split('.')[1]
+  if ext=='yaml':
+    obj=yaml.load(data)
+  elif ext=="json":
+    obj=json.loads(data)
+  else:
+    print('Unknown file extension '+ext)
+    obj=None
   return obj
 
 def save(data, filename):
@@ -16,15 +24,15 @@ def save(data, filename):
   f.write(data)
   f.close()
 
-def convertModel(data):
+def convertModel(name, data):
   model={}
-  model['name']=data['name']
+  model['name']=name.capitalize()
   model['duration']=genDuration(data['duration']['dist'], data['duration']['params'])
-  model['packet_length']=genLength(data['length']['dist'], data['length']['params'])
-  model['packet_count']=genFlow(data['flow']['dist'], data['flow']['params'])
-  model['encode']=genEncoder(data['huffman'])
+  model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'])
+  model['packet_count']=genFlow(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'])
+  model['encode']=genEncoder(data['incomingModel']['huffman'])
   model['decode']=genDecoder()
-  model['random_bytes']=genContent(data['content']['dist'], data['content']['params'])
+  model['random_bytes']=genContent(data['incomingModel']['content']['dist'], data['incomingModel']['content']['params'])
   model['add_padding']={'body': 'return bytes'}
   model['strip_padding']={'body': 'return bytes'}
 
@@ -142,26 +150,26 @@ testTemplateName='test.go.airspeed'
 models=os.listdir('models')
 for modelName in models:
   print(modelName)
-  modelName=modelName.split('.')[0]
-  yamlName='models/'+modelName+'.yaml'
-  outputName=modelName+'.go'
-  testOutputName=modelName+'_test.go'
+  modelBasename=modelName.split('.')[0]
+  modelFilename='models/'+modelName
+  outputName=modelBasename+'.go'
+  testOutputName=modelBasename+'_test.go'
 
   loader = CachingFileLoader('templates')
 
-  model=parse(yamlName)
-  context=convertModel(model)
+  model=parse(modelFilename)
+  context=convertModel(modelBasename, model)
 
-  print("Generating %s" % (modelName+'.go'))
+  print("Generating %s" % (modelBasename+'.go'))
   template = loader.load_template(templateName)
   body=template.merge(context, loader=loader)
   save(body, outputName)
-  print("Formatting %s" % (modelName+'.go'))
+  print("Formatting %s" % (modelBasename+'.go'))
   subprocess.call(['gofmt', '-s=true', '-w=true', outputName])
 
-  print("Generating %s" % (modelName+'_test.go'))
+  print("Generating %s" % (modelBasename+'_test.go'))
   template = loader.load_template(testTemplateName)
   body=template.merge(context, loader=loader)
   save(body, testOutputName)
-  print("Formatting %s" % (modelName+'_test.go'))
+  print("Formatting %s" % (modelBasename+'_test.go'))
   subprocess.call(['gofmt', '-s=true', '-w=true', testOutputName])
