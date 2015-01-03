@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 	
-	"caolta3iaejox3z4madc5wmp4z.uuid/dust4go/Dust"
+	"caolta3iaejox3z4madc5wmp4z.uuid/Dust4go/Dust"
 )
 
 const progName = "DustTool"

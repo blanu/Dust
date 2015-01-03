@@ -8,7 +8,7 @@ import (
 	"net"
 	"os"
 	
-	. "caolta3iaejox3z4madc5wmp4z.uuid/dust4go/DustCrypto"
+	. "caolta3iaejox3z4madc5wmp4z.uuid/Dust4go/DustCrypto"
 )
 
 type CryptoServerIdentity struct {
