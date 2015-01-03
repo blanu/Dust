@@ -25,6 +25,7 @@ func (spriv *CryptoServerPrivate) DestroyPrivate() {
 
 var (
 	ErrUnrecognizedAddressType = errors.New("unrecognized address type")
+	ErrMissingParameters = errors.New("missing parameters")
 )
 
 func cryptoIdBytes(netAddr interface{}) ([]byte, error) {

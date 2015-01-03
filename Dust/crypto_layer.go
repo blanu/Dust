@@ -12,7 +12,6 @@ import (
 var (
 	ErrBadHandshake = errors.New("bad handshake")
 	ErrBadDecode = errors.New("bad decode")
-	ErrMissingParameters = errors.New("missing parameters")
 )
 
 type cryptoFrame []byte
