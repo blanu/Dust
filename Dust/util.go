@@ -2,6 +2,7 @@ package Dust
 
 import (
 	"fmt"
+	"os"
 )
 
 type PanicError struct {
@@ -17,3 +18,8 @@ func ReportExitTo(cell *error) {
 		*cell = &PanicError{panicked}
 	}
 }
+
+func debugf(control string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, control + "\n", args...)
+}
+
