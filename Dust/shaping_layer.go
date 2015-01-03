@@ -120,7 +120,7 @@ type Shaper struct {
 func (sh *Shaper) handleRead(subn int) error {
 	// TODO: don't mix up the shaping with the reader.  When we get real models this will go away.
 	//
-	// We own inBuf until 
+	// We own inBuf until we cycle the reader again.
 	sh.inPos += subn
 	if sh.inPos < len(sh.inBuf) {
 		sh.reader.cycle(sh.inPos)
