@@ -200,6 +200,18 @@ func parseExecRemote(direction direction) func() (ioPair, error) {
 	}
 }
 
+func copyThen(dst io.Writer, src io.Reader, errorOut *error, afterThunk func()) {
+	defer func() {
+		// TODO: move ReportExitTo somewhere reasonable (is there a stdlib equivalent for this?  Is it
+		// bad?)
+		Dust.ReportExitTo(errorOut)
+		afterThunk()
+	}()
+	
+	_, err := io.Copy(dst, src)
+	*errorOut = err
+}
+
 func dustProxy(dustSide ioPair, plainSide ioPair, direction direction) error {
 	var cs *Dust.CryptoSession
 	
@@ -231,12 +243,31 @@ func dustProxy(dustSide ioPair, plainSide ioPair, direction direction) error {
 		}
 	}
 
-	Dust.SpawnShaper(cs, dustSide)
-	go io.Copy(plainSide, cs)
-	go io.Copy(cs, plainSide)
+	shaper, err := Dust.NewShaper(cs, dustSide.rd, dustSide.wr)
+	if err != nil {
+		return err
+	}
 
-	_ = <-make(chan bool, 0)
-	return nil
+	exitChan := make(chan interface{}, 4)
+	shaper.SpawnThen(func() { exitChan <- shaper })
+	var inCopyError, outCopyError error
+	go copyThen(plainSide.wr, cs, &inCopyError, func() { exitChan <- plainSide.wr })
+	go copyThen(cs, plainSide.rd, &outCopyError, func() { exitChan <- plainSide.rd })
+
+	for i := 0; i < 3; i++ {
+		_ = <-exitChan
+	}
+
+	shaperError := shaper.Error()
+	if shaperError != nil {
+		return shaperError
+	} else if inCopyError != nil {
+		return inCopyError
+	} else if outCopyError != nil {
+		return outCopyError
+	} else {
+		return nil
+	}
 }
 
 func main() {
