@@ -3,6 +3,8 @@ package Dust
 import (
 	"io"
 	"time"
+
+	"caolta3iaejox3z4madc5wmp4z.uuid/Dust4go/DustModel"
 )
 
 type shaperReader struct {
@@ -98,8 +100,6 @@ func (st *shaperTimer) stop() {
 	close(st.durationChan)
 }
 
-// INCOMPLETE: this uses a trivial, hardcoded model rather than any actual shaping model
-
 type Shaper struct {
 	crypto *CryptoSession
 	shapedIn io.Reader
@@ -107,28 +107,23 @@ type Shaper struct {
 	heldError error
 
 	reader *shaperReader
+	decodeModel DustModel.DecodeModel
 	inBuf []byte
-	inPos int
 	
 	timer *shaperTimer
+	encodeModel DustModel.EncodeModel
 	outBuf []byte
+	outPending []byte
+	pullBuf []byte
 	
 	controlChan chan int
 	statusChan chan int
 }
 
 func (sh *Shaper) handleRead(subn int) error {
-	// TODO: don't mix up the shaping with the reader.  When we get real models this will go away.
-	//
 	// We own inBuf until we cycle the reader again.
-	sh.inPos += subn
-	if sh.inPos < len(sh.inBuf) {
-		sh.reader.cycle(sh.inPos)
-		return nil
-	}
-	
-	valid := uint16(sh.inBuf[0]) << 8 | uint16(sh.inBuf[1])
-	_, err := sh.crypto.PushRead(sh.inBuf[2:2+valid])
+	decoded := sh.decodeModel.DecodeBytes(sh.inBuf[:subn])
+	_, err := sh.crypto.PushRead(decoded)
 	if err != nil {
 		return err
 	}
@@ -138,24 +133,45 @@ func (sh *Shaper) handleRead(subn int) error {
 }
 
 func (sh *Shaper) handleTimer() error {
-	sh.timer.cycle(1000 * time.Millisecond)
+	outLen := sh.encodeModel.NextPacketLength()
+	sh.timer.cycle(sh.encodeModel.NextPacketSleep())
 
-	n, err := sh.crypto.PullWrite(sh.outBuf[2:])
-	if err != nil && err != io.ErrNoProgress {
-		return err
+	// TODO: probably slow.
+
+	outValid := 0
+	outTail := sh.outBuf[:outLen]
+	for len(outTail) > 0 {
+		if len(sh.outPending) > 0 {
+			// TODO: refactor with other copy* functions (move them out of crypto_layer
+			// probably)...
+			copied := copy(outTail, sh.outPending)
+			outValid += copied
+			outTail = outTail[copied:]
+			sh.outPending = sh.outPending[copied:]
+			continue
+		}
+
+		pullN, err := sh.crypto.PullWrite(sh.pullBuf)
+		if err != nil && err != io.ErrNoProgress {
+			return err
+		}
+
+		encoded := sh.encodeModel.EncodeBytes(sh.pullBuf[:pullN])
+		copied := copy(outTail, encoded)
+		outValid += copied
+		outTail = outTail[copied:]
+		encodedTail := encoded[copied:]
+		if len(encodedTail) > 0 {
+			sh.outPending = append(sh.outPending, encodedTail...)
+		}
+
+		if err != nil {
+			// It was an ErrNoProgress, else we'd have returned above.
+			break
+		}
 	}
 
-	// Normally, n should be exactly what we requested, but it might not be.  When we have actual models
-	// we need to handle the discrepancy better (e.g., by fiddling the crypto layer so that it _really is_
-	// always exactly what we requested---but that seems to require protocol changes just now).
-
-	if n > 65535 {
-		panic("weird n value")
-	}
-	sh.outBuf[0] = uint8(n >> 8)
-	sh.outBuf[1] = uint8(n & 0xff)
-	
-	n, err = sh.shapedOut.Write(sh.outBuf[:])
+	_, err := sh.shapedOut.Write(sh.outBuf[:outValid])
 	if err != nil {
 		return err
 	}
@@ -210,8 +226,7 @@ func (sh *Shaper) run(afterThunk func()) {
 	go sh.reader.run()
 	go sh.timer.run()
 
-	sh.inPos = 0
-	sh.reader.cycle(sh.inPos)
+	sh.reader.cycle(0)
 
 	for {
 		shouldExit := sh.handleOneStateChange()
@@ -221,15 +236,29 @@ func (sh *Shaper) run(afterThunk func()) {
 	}
 }
 
-func NewShaper(crypto *CryptoSession, in io.Reader, out io.Writer) (*Shaper, error) {
+func NewShaper(
+	crypto *CryptoSession,
+	in io.Reader,
+	decodeModel DustModel.DecodeModel,
+	out io.Writer,
+	encodeModel DustModel.EncodeModel,
+) (*Shaper, error) {
+	// INCOMPLETE: does not handle connection duration.
+	
 	sh := &Shaper{
 		crypto: crypto,
 		shapedIn: in,
 		shapedOut: out,
 
+		reader: nil, // initialized below
+		decodeModel: decodeModel,
 		inBuf: make([]byte, shaperBufSize),
 
-		outBuf: make([]byte, shaperBufSize),
+		timer: nil, // initialized below
+		encodeModel: encodeModel,
+		outBuf: make([]byte, encodeModel.MaxPacketLength()),
+		outPending: nil,
+		pullBuf: make([]byte, shaperBufSize),
 
 		heldError: nil,
 		controlChan: make(chan int, 1),

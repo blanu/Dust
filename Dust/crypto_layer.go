@@ -14,11 +14,16 @@ var (
 	ErrBadDecode = errors.New("bad decode")
 )
 
+const (
+	maxInFrameSize = 65535
+	maxOutFrameSize = 127
+)
+
 type cryptoFrame []byte
 
 func newPlainDataFrame(data []byte) cryptoFrame {
 	if len(data) > 65535 {
-		panic("data too long for frame")
+		panic("data too long for frame representation")
 	}
 	
 	payloadSize := len(data) + 33
@@ -212,8 +217,9 @@ func copyNew(slice []byte) []byte {
 
 // PullWrite tries to pull post-encryption bytes into p, using in-band framing to intersperse any plain data
 // available to write with enough padding frames to completely fill p immediately.  In some handshake states,
-// err may be set to ErrNoProgress to indicate that we actually can't send anything, which is kind of
-// terrible.  This method must be called from the outward-facing side of the CryptoSession.
+// err may be set to ErrNoProgress with n < len(p) to indicate that we actually can't send anything more,
+// which is kind of terrible.  Note that we may still have n > 0 in that case.  This method must be called
+// from the outward-facing side of the CryptoSession.
 func (cs *CryptoSession) PullWrite(p []byte) (n int, err error) {
 	n, err = 0, nil
 	for len(p) > 0 {
@@ -319,7 +325,7 @@ func (cs *CryptoSession) beginInCipher() {
 
 	// Eeeek, raw shared secret as stream cipher key!
 	cs.inCipher = NewStreamCipher(cs.sessionKey, inIV)
-	cs.dataReassembly = beginReassembly(65535 + 2 + 32)
+	cs.dataReassembly = beginReassembly(maxInFrameSize + 2 + 32)
 	cs.handshakeReassembly = nil
 }
 
@@ -571,11 +577,14 @@ func (cs *CryptoSession) Read(p []byte) (n int, err error) {
 // Write queues the plaintext data p for transmission via cs, blocking if intermediary buffers are full.  The
 // signature is that of io.Writer.Write.
 func (cs *CryptoSession) Write(p []byte) (n int, err error) {
+	// TODO: should we really do the framing here?  Right now, maxOutFrameSize is a kludge to make sure
+	// very low-performance models don't get _too_ much delay from long frames.
+	
 	n, err = 0, nil
 	for len(p) > 0 {
 		data := p
-		if len(data) > 65535 {
-			data = data[:65535]
+		if len(data) > maxOutFrameSize {
+			data = data[:maxOutFrameSize]
 		}
 
 		// After the send, the frame is owned by the other side and all the actual crypto will happen at
