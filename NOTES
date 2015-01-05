@@ -18,8 +18,7 @@ This currently uses a very raw, primitive isochronous pseudo-model.  Real models
 is fixed up.  Loopback communication has successfully been established with the pseudo-model.
 
 ** Test proxy
-This would roughly work if the keys weren't hardcoded with only the public half in the source tree.  The
-CLI needs to be redone.
+This mostly seems to work, protocol-wise.
 
 There's some wonkiness surrounding the composition of goroutines somewhere in here; it's not clear whether
 it's here or in the shaping layer, but the symptom is ungraceful exits or maybe deadlock when the connection
