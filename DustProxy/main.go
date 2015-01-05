@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -14,28 +15,23 @@ import (
 
 const progName = "DustProxy"
 const usageMessageRaw = `
-Usage: DustProxy --incomplete {in|out} {tcp HOST PORT | exec PROGRAM ARGS...}
+Usage: DustProxy --incomplete PROXY-SPEC
 Options:
   --incomplete
 	Acknowledge that this executable does not implement
 	the full Dust stack and is just a shell of its future
 	self.  Required.
 
-Connection directions:
-  in	Convert between Dust on stdin/stdout and plain remote.
-  out	Convert between plain stdin/stdout and Dust remote.
-
-Remote types:
-  tcp	Make a TCP connection to HOST:PORT.
-  exec	Spawn PROGRAM with ARGS and use its stdin/stdout.
-
-Examples with socat:
-  Connecting side:
-	socat tcp-listen:13686,bind=127.0.0.1,fork,reuseaddr \
-	  exec:'DustProxy out tcp dusty-foo-service.example 13687'
-  Listening side:
-	socat tcp-listen:13687,fork,reuseaddr \
-	  exec:'DustProxy in tcp localhost 13686'
+Proxy specification syntax:
+  in IDENTITY-FILE PROGRAM ARGS...
+	Using the address, port, and private key in IDENTITY-FILE,
+	listen for Dust connections.  For each such connection,
+	spawn a process running PROGRAM with ARGS and attach the
+	connection to its stdin/stdout.
+  out ADDR:PORT PARAMS...
+	Connect to the Dust server at ADDR:PORT, using PARAMS as
+	though from a torrc Bridge line.  Attach the connection to
+	stdin/stdout of this process.
 `
 
 var ourFlags *flag.FlagSet
@@ -78,14 +74,6 @@ func endOfArgs() {
 	}
 }
 
-type direction int
-
-const (
-	directionUnknown direction = iota
-	directionIn
-	directionOut
-)
-
 type ioPair struct {
 	rd io.ReadCloser
 	wr io.WriteCloser
@@ -124,80 +112,45 @@ func (w *writerHalf) Close() error {
 	return w.conn.CloseWrite()
 }
 
-func parseTcpRemote(direction direction) func() (ioPair, error) {
-	hostArg := nextArg("host")
-	portArg := nextArg("port")
-	network := "tcp"
-
-	return func() (remote ioPair, err error) {
-		var conn net.Conn
-		var err_ error
-		defer func() {
-			if err != nil && conn != nil {
-				_ = conn.Close()
-			}
-		}()
-		
-		// We combine the host and port early here because that might allow net.Dial to do smarter
-		// resolution.  Similarly we assume it'll bomb if it finds the port to be invalid, so no
-		// explicit strconv check above.
-		if conn, err_ = net.Dial(network, net.JoinHostPort(hostArg, portArg)); err_ != nil {
-			err = err_
-			return
-		}
-
-		// Expect it to really be a TCPConn so we can CloseRead and CloseWrite on it.
-		tcp, ok := conn.(*net.TCPConn)
-		if !ok {
-			panic("somehow, not a TCP connection")
-		}
-
-		// We have to wrap the connection because otherwise Close() will close the whole thing when we
-		// want to be able to close only one side.  This leaks the socket FD even after both sides
-		// have been shut down, but we'd exit soon anyway.  Don't do that in a longer-running process.
-		remote = ioPair{&readerHalf{tcp}, &writerHalf{tcp}}
-		return
-	}
+func stdioPair() ioPair {
+	return ioPair{os.Stdin, os.Stdout}
 }
 
-func parseExecRemote(direction direction) func() (ioPair, error) {
-	prog := nextArg("program")
-	progArgs := remainingArgs()
+func tcpPair(tcp *net.TCPConn) ioPair {
+	return ioPair{&readerHalf{tcp}, &writerHalf{tcp}}
+}
 
-	return func() (remote ioPair, err error) {
-		var rd io.ReadCloser
-		var wr io.WriteCloser
-		defer func() {
-			if err != nil {
-				if rd != nil {
-					_ = rd.Close()
-				}
-				if wr != nil {
-					_ = wr.Close()
-				}
+func spawnPair(prog string, progArgs []string) (result ioPair, err error) {
+	var rd io.ReadCloser
+	var wr io.WriteCloser
+	defer func() {
+		if err != nil {
+			if rd != nil {
+				_ = rd.Close()
 			}
-		}()
+			if wr != nil {
+				_ = wr.Close()
+			}
+		}
+	}()
 		
-		cmd := exec.Command(prog, progArgs...)
-		rd, err = cmd.StdoutPipe()
-		if err != nil {
-			return
-		}
-		wr, err = cmd.StdinPipe()
-		if err != nil {
-			return
-		}
-
-		err = cmd.Start()
-		if err != nil {
-			return
-		}
-
-		// This leaks a zombie subprocess, but that's okay because we'd exit soon anyway.  Don't do
-		// that in a longer-running process.
-		remote = ioPair{rd, wr}
+	cmd := exec.Command(prog, progArgs...)
+	rd, err = cmd.StdoutPipe()
+	if err != nil {
 		return
 	}
+	wr, err = cmd.StdinPipe()
+	if err != nil {
+		return
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return
+	}
+
+	result = ioPair{rd, wr}
+	return
 }
 
 func copyThen(dst io.Writer, src io.Reader, errorOut *error, afterThunk func()) {
@@ -212,37 +165,7 @@ func copyThen(dst io.Writer, src io.Reader, errorOut *error, afterThunk func()) 
 	*errorOut = err
 }
 
-func dustProxy(dustSide ioPair, plainSide ioPair, direction direction) error {
-	var cs *Dust.CryptoSession
-	
-	switch direction {
-	default:
-		panic("weird direction")
-		// TODO: put these cases in separate functions
-	case directionIn:
-		// INCOMPLETE: hardcoded
-		path := strings.Join([]string{os.Getenv("HOME"), "/tmp/foo-key"}, "")
-		spriv, err := Dust.LoadCryptoServerPrivateFile(net.IPv4zero, 0, path)
-		if err != nil {
-			return err
-		}
-		cs, err = Dust.BeginCryptoServer(spriv)
-		if err != nil {
-			return err
-		}
-	case directionOut:
-		// INCOMPLETE: hardcoded
-		bridgeParams := map[string]string{"p": "TS3JPXCKPOUE4BM4PQCDVZTHKOO3DUT5IQ4BTVBOJRRURMOWFU6Q"}
-		sid, err := Dust.LoadCryptoServerIdentityBridgeLine(net.IPv4zero, 0, bridgeParams)
-		if err != nil {
-			return err
-		}
-		cs, err = Dust.BeginCryptoClient(sid)
-		if err != nil {
-			return err
-		}
-	}
-
+func doProxy(cs *Dust.CryptoSession, dustSide ioPair, plainSide ioPair) error {
 	shaper, err := Dust.NewShaper(cs, dustSide.rd, dustSide.wr)
 	if err != nil {
 		return err
@@ -270,7 +193,104 @@ func dustProxy(dustSide ioPair, plainSide ioPair, direction direction) error {
 	}
 }
 
+func incomingSpawn(conn *net.TCPConn, spriv *Dust.CryptoServerPrivate, prog string, progArgs []string) error {
+	commit := false
+	defer func() {
+		if !commit {
+			conn.Close()
+		}
+	}()
+
+	cs, err := Dust.BeginCryptoServer(spriv)
+	if err != nil {
+		return err
+	}
+		
+	// TODO: clean up spawned processes properly
+	dustSide := tcpPair(conn)
+	plainSide, err := spawnPair(prog, progArgs)
+	if err != nil {
+		return err
+	}
+
+	commit = true
+	go doProxy(cs, dustSide, plainSide)
+	return nil
+}
+
+func listenAndSpawn(spriv *Dust.CryptoServerPrivate, prog string, progArgs []string) error {
+	listener, err := net.ListenTCP("tcp", spriv.ListenAddr())
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "Listening on %s\n", listener.Addr().String())
+	defer listener.Close()
+	
+	for {
+		conn, err := listener.AcceptTCP()
+		if err != nil {
+			return err
+		}
+
+		// TODO: be able to drop connections except from a specific remote address,
+		// to limit visibility during testing
+
+		_ = incomingSpawn(conn, spriv, prog, progArgs)
+	}
+}
+
+func listenFromArgs() (func() error, error) {
+	idPath := nextArg("IDENTITY-FILE")
+	spriv, err := Dust.LoadCryptoServerPrivateFile(idPath)
+	if err != nil {
+		return nil, err
+	}
+
+	prog := nextArg("PROGRAM")
+	progArgs := remainingArgs()
+	return func() error { return listenAndSpawn(spriv, prog, progArgs) }, nil
+}
+
+func dialAndStdio(sid *Dust.CryptoServerIdentity) error {
+	cs, err := Dust.BeginCryptoClient(sid)
+	if err != nil {
+		return err
+	}
+
+	conn, err := net.DialTCP("tcp", nil, sid.DialAddr())
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "Connected to %s\n", conn.RemoteAddr().String())
+	
+	dustSide := tcpPair(conn)
+	plainSide := stdioPair()
+	return doProxy(cs, dustSide, plainSide)
+}
+
+func dialFromArgs() (func() error, error) {
+	connString := nextArg("CONNECT-ADDRESS")
+
+	params := make(map[string]string)
+	for _, param := range remainingArgs() {
+		pair := strings.SplitN(param, "=", 2)
+		if len(pair) != 2 {
+			return nil, errors.New("malformed bridge-like parameter (expected equals sign)")
+		}
+		
+		params[pair[0]] = pair[1]
+	}
+
+	sid, err := Dust.LoadCryptoServerIdentityBridgeLine(connString, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return func() error { return dialAndStdio(sid) }, nil
+}
+
 func main() {
+	var err error
 	ourFlags = flag.NewFlagSet(progName, flag.ContinueOnError)
 	ourFlags.Usage = func() {
 		io.WriteString(os.Stderr, usageMessage())
@@ -286,51 +306,27 @@ func main() {
 		usageErrorf("%s", argErr.Error())
 	}
 	
-	var direction direction
-	dirArg := nextArg("direction")
+	var requestedCommand func() error
+	dirArg := nextArg("DIRECTION")
 	switch dirArg {
 	default:
 		usageErrorf("bad direction \"%s\"", dirArg)
 	case "in":
-		direction = directionIn
+		requestedCommand, err = listenFromArgs()
 	case "out":
-		direction = directionOut
+		requestedCommand, err = dialFromArgs()
 	}
 
-	var beginRemote func() (ioPair, error)
-	typArg := nextArg("remote-type")
-	switch typArg {
-	default:
-		usageErrorf("unknown remote-type \"%s\"", typArg)
-	case "tcp":
-		beginRemote = parseTcpRemote(direction)
-	case "exec":
-		beginRemote = parseExecRemote(direction)
+	if err != nil {
+		exitError(err)
 	}
-
-	endOfArgs()
 
 	if !*incompleteAck {
 		usageErrorf("this executable is incomplete; you must use --incomplete")
 	}
 
-	local := ioPair{os.Stdin, os.Stdout}
-	remote, err := beginRemote()
+	err = requestedCommand()
 	if err != nil {
-		exitError(err)
-	}
-
-	var dustSide, plainSide ioPair
-	switch direction {
-	default:
-		panic("weird direction")
-	case directionIn:
-		dustSide, plainSide = local, remote
-	case directionOut:
-		dustSide, plainSide = remote, local
-	}
-
-	if err := dustProxy(dustSide, plainSide, direction); err != nil {
 		exitError(err)
 	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"strings"
 	
@@ -14,17 +13,34 @@ const progName = "DustTool"
 
 var ErrBadArgs = errors.New("bad arguments")
 
-func errorExit(err error) {
-	exitCode := 1
-	if err == ErrBadArgs {
-		exitCode = 64
-	}
+const usageMessageRaw = `
+Usage: DustTool newid FILE HOST:PORT
+`
 
-	fmt.Fprintf(os.Stderr, "%s: %s\n", progName, err.Error())
-	os.Exit(exitCode)
+func usageMessage() string {
+	return strings.TrimLeft(usageMessageRaw, "\n")
 }
 
-func doMake(path string) error {
+func usageErrorf(detailFmt string, detailArgs ...interface{}) {
+	detail := fmt.Sprintf(detailFmt, detailArgs...)
+	fmt.Fprintf(os.Stderr, "%s: %s\n%s", progName, detail, usageMessage())
+	os.Exit(64)
+}
+
+func exitError(err error) {
+	fmt.Fprintf(os.Stderr, "%s: %s\n", progName, err.Error())
+	os.Exit(1)
+}
+
+func joinBridgeParams(params map[string]string) string {
+	parts := make([]string, 0, len(params))
+	for k, v := range params {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
+	}
+	return strings.Join(parts, " ")
+}
+
+func writeNewIdentity(path string, addrString string) error {
 	var spriv *Dust.CryptoServerPrivate
 	var err error
 	defer func() {
@@ -32,8 +48,8 @@ func doMake(path string) error {
 			spriv.DestroyPrivate()
 		}
 	}()
-	
-	spriv, err = Dust.NewCryptoServerPrivate(net.IPv4zero, 0)
+
+	spriv, err = Dust.NewCryptoServerPrivate(addrString)
 	if err != nil {
 		return err
 	}
@@ -41,34 +57,31 @@ func doMake(path string) error {
 	if err = spriv.SavePrivateFile(path); err != nil {
 		return err
 	}
-	fmt.Fprintf(os.Stdout, "Private key saved to: %s\n", path)
+	fmt.Fprintf(os.Stdout, "Identity file saved to: %s\n", path)
 
 	// TODO: clean up handling of address, name, other metadata here?
-	bridgeParams := spriv.BridgeParams()
-	bridgeParts := make([]string, 0, 1)
-	for k, v := range bridgeLine {
-		bridgeParts = append(bridgeParts, fmt.Sprintf("%s=%s", k, v))
-	}
-	bridgeString := strings.Join(bridgeParts, " ")
-	fmt.Fprintf(os.Stdout, "Bridge parameters: %s\n", bridgeString)
+	realAddrString := spriv.ListenAddr().String()
+	paramsString := joinBridgeParams(spriv.BridgeParams())
+	fmt.Fprintf(os.Stdout, "Bridge x %s %s\n", realAddrString, paramsString)
 	return nil
 }
 
 func main() {
-	// TODO: clean up arg parsing
-	if len(os.Args) < 3 {
-		errorExit(ErrBadArgs)
+	// TODO: proper arg parsing
+	if len(os.Args) < 4 {
+		usageErrorf("not enough arguments")
 	}
 	
 	subcommand := os.Args[1]
-	if subcommand != "genkey" {
-		errorExit(ErrBadArgs)
+	if subcommand != "newid" {
+		usageErrorf("unrecognized subcommand \"%s\"", subcommand)
 	}
 
 	path := os.Args[2]
+	addrString := os.Args[3]
 
-	err := doMake(path)
+	err := writeNewIdentity(path, addrString)
 	if err != nil {
-		errorExit(err)
+		exitError(err)
 	}
 }

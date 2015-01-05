@@ -10,13 +10,23 @@ import (
 )
 
 type CryptoServerIdentity struct {
+	tcpAddr *net.TCPAddr
 	idBytes []byte
 	longtermPublic PublicKey
 }
 
+func (sid *CryptoServerIdentity) DialAddr() *net.TCPAddr {
+	return sid.tcpAddr
+}
+
 type CryptoServerPrivate struct {
+	tcpAddr *net.TCPAddr
 	idBytes []byte
 	longtermPair KeyPair
+}
+
+func (spriv *CryptoServerPrivate) ListenAddr() *net.TCPAddr {
+	return spriv.tcpAddr
 }
 
 func (spriv *CryptoServerPrivate) DestroyPrivate() {
@@ -26,6 +36,8 @@ func (spriv *CryptoServerPrivate) DestroyPrivate() {
 var (
 	ErrUnrecognizedAddressType = errors.New("unrecognized address type")
 	ErrMissingParameters = errors.New("missing parameters")
+	ErrFileTooShort = errors.New("file too short")
+	ipv4MappedPrefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
 )
 
 func cryptoIdBytes(netAddr interface{}) ([]byte, error) {
@@ -42,14 +54,18 @@ func cryptoIdBytes(netAddr interface{}) ([]byte, error) {
 		l4Flag = 0x00
 	}
 
-	// INCOMPLETE: this is wrong, as sometimes net.IP stores 16-octet slices with IPv4-mapped format.  Ugh.
 	switch len(ip) {
 	default:
 		return nil, ErrUnrecognizedAddressType
 	case net.IPv4len:
 		l3Flag = 0x00
 	case net.IPv6len:
-		l3Flag = 0x01
+		// Sometimes net.IP stores IPv4 addresses in 16-byte slices too.  Sigh.
+		if bytes.Equal(ip[:len(ipv4MappedPrefix)], ipv4MappedPrefix) {
+			l3Flag = 0x00
+		} else {
+			l3Flag = 0x01
+		}
 	}
 
 	idBytes := bytes.Join([][]byte{
@@ -64,15 +80,22 @@ const (
 )
 
 func LoadCryptoServerIdentityBridgeLine(
-	address net.IP, port int,
+	addrString string,
 	params map[string]string,
 ) (*CryptoServerIdentity, error) {
+	// TODO: probably don't allow resolving here.  Use explicit host/port split and IP address parsing
+	// instead.
+	tcpAddr, err := net.ResolveTCPAddr("tcp", addrString)
+	if err != nil {
+		return nil, err
+	}
+	
 	publicString, found := params[bridgeParamPublicKey]
 	if !found {
 		return nil, ErrMissingParameters
 	}
 
-	idBytes, err := cryptoIdBytes(&net.TCPAddr{IP: address, Port: port})
+	idBytes, err := cryptoIdBytes(tcpAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +103,10 @@ func LoadCryptoServerIdentityBridgeLine(
 	if err != nil {
 		return nil, err
 	}
-	return &CryptoServerIdentity{idBytes, longtermPublic}, nil
+	return &CryptoServerIdentity{tcpAddr, idBytes, longtermPublic}, nil
 }
 
 func LoadCryptoServerPrivateFile(
-	address net.IP, port int,
 	path string,
 ) (*CryptoServerPrivate, error) {
 	var file *os.File
@@ -99,6 +121,20 @@ func LoadCryptoServerPrivateFile(
 		return nil, err
 	}
 
+	var n int
+	addrRepr := make([]byte, 18)
+	n, err = file.Read(addrRepr)
+	if err != nil {
+		return nil, err
+	}
+	if n != len(addrRepr) {
+		return nil, ErrFileTooShort
+	}
+
+	ip := net.IP(addrRepr[0:16])
+	port := int(uint16(addrRepr[16]) << 8 | uint16(addrRepr[17]))
+	tcpAddr := &net.TCPAddr{IP: ip, Port: port}
+
 	var privateRepr SecretBytes
 	ok := false
 	defer func() {
@@ -108,17 +144,17 @@ func LoadCryptoServerPrivateFile(
 	}()
 	privateRepr = NewSecretBytes()
 	
-	n, err := file.Read(privateRepr.Slice())
+	n, err = file.Read(privateRepr.Slice())
 	if err != nil {
 		return nil, err
 	}
 	if n != 32 {
-		return nil, ErrBadPrivateKey
+		return nil, ErrFileTooShort
 	}
 	_ = file.Close()
 	file = nil
 	
-	idBytes, err := cryptoIdBytes(&net.TCPAddr{IP: address, Port: port})
+	idBytes, err := cryptoIdBytes(tcpAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +165,18 @@ func LoadCryptoServerPrivateFile(
 		return nil, err
 	}
 
-	spriv := &CryptoServerPrivate{idBytes, longtermPair}
+	spriv := &CryptoServerPrivate{tcpAddr, idBytes, longtermPair}
 	ok = true
 	return spriv, nil
 }
 
-func NewCryptoServerPrivate(address net.IP, port int) (*CryptoServerPrivate, error) {
-	idBytes, err := cryptoIdBytes(&net.TCPAddr{IP: address, Port: port})
+func NewCryptoServerPrivate(addrString string) (*CryptoServerPrivate, error) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", addrString)
+	if err != nil {
+		return nil, err
+	}
+	
+	idBytes, err := cryptoIdBytes(tcpAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +192,7 @@ func NewCryptoServerPrivate(address net.IP, port int) (*CryptoServerPrivate, err
 		return nil, err
 	}
 
-	spriv := &CryptoServerPrivate{idBytes, longtermPair}
+	spriv := &CryptoServerPrivate{tcpAddr, idBytes, longtermPair}
 	ok = true
 	return spriv, nil
 }
@@ -159,20 +200,29 @@ func NewCryptoServerPrivate(address net.IP, port int) (*CryptoServerPrivate, err
 func (spriv *CryptoServerPrivate) SavePrivateFile(path string) error {
 	var file *os.File
 	var err error
+	commit := false
 	defer func() {
 		if file != nil {
-			file.Close()
+			_ = file.Close()
+			if !commit {
+				_ = os.Remove(path)
+			}
 		}
 	}()
+	
+	addrRepr := make([]byte, 18)
+	copy(addrRepr[0:16], spriv.tcpAddr.IP.To16())
+	port := spriv.tcpAddr.Port
+	addrRepr[16] = uint8(port >> 8)
+	addrRepr[17] = uint8(port & 0xff)
 	
 	if file, err = os.OpenFile(path, os.O_CREATE | os.O_EXCL | os.O_WRONLY, 0600); err != nil {
 		return err
 	}
-
+	if _, err = file.Write(addrRepr); err != nil {
+		return err
+	}
 	if _, err = file.Write(spriv.longtermPair.PrivateSlice()); err != nil {
-		_ = file.Close()
-		file = nil
-		_ = os.Remove(path)
 		return err
 	}
 
@@ -182,6 +232,7 @@ func (spriv *CryptoServerPrivate) SavePrivateFile(path string) error {
 		return err
 	}
 
+	commit = true
 	return nil
 }
 
