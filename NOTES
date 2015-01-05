@@ -1,6 +1,11 @@
 #+TITLE: Notes on Dust4go
 
 * State
+** Packaging
+Need to add copyright information and packaging documentation.
+
+Root package name is currently "caolta3iaejox3z4madc5wmp4z.uuid/Dust4go".
+
 ** Crypto primitives
 No viable Skein-256-256 has been verified present yet, so that [[id:ed97541b-2413-4568-8b83-53709baa6715][still needs to be pulled in]] or else written
 locally.  Curve25519 is in, along with its Elligator form (using [[https://github.com/agl/ed25519/tree/master/extra25519][agl's extra25519]]) but could use test vectors.
@@ -14,8 +19,9 @@ Most of this should probably work now, modulo the stubbed-out crypto primitives,
 against anything else yet and needs another verification pass.
 
 ** Shaping layer
-This currently uses a very raw, primitive isochronous pseudo-model.  Real models are on their way once the API
-is fixed up.  Loopback communication has successfully been established with the pseudo-model.
+There's an API for models, but the only model right now is a silly pseudo-model.  Loopback communication has
+been verified working with this model, modulo some protocol-design difficulties (via the Dust spec) regarding
+handshake latency versus shaping padding.
 
 ** Test proxy
 This mostly seems to work, protocol-wise.
