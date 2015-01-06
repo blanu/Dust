@@ -1,0 +1,15 @@
+package Dust
+
+import (
+  #foreach($model in $models)
+  "Dust/models/$model"
+  #end
+)
+
+func GetModels() map[string]Dust {
+  var models=make(map[string]Dust)
+  #foreach($model in $models)
+  models["$model"]=${model}.New()
+  #end
+  return models
+}

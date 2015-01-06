@@ -1,0 +1,18 @@
+package Dust
+
+import (
+  "testing"
+  #foreach($model in $models)
+  "Dust/models/$model"
+  #end
+)
+
+func TestModelsDuration(t *testing.T) {
+  #foreach($model in $models)
+  var ${model}Instance=${model}.New()
+  var ${model}Result=${model}Instance.Duration()
+  if ${model}Result<0 {
+    t.Errorf("Negative duration %d", ${model}Result)
+  }
+  #end
+}

@@ -1,16 +1,27 @@
-package Dust
+package $packagename
 
 import (
   "dist"
+  "Dust/huffman"
 )
 
-$duration.data
-$packet_count.data
-$packet_length.data
-$random_bytes.data
-$encode.data
-
 type $name struct {
+  $duration.decl
+  $packet_count.decl
+  $packet_length.decl
+  $random_bytes.decl
+  $encode.decl
+}
+
+func New() $name {
+  $weights
+  $huffman
+  return $name{
+    $duration.data
+    $packet_count.data
+    $packet_length.data
+    $random_bytes.data
+    $encode.data}
 }
 
 func (self $name) Duration() uint16 {
@@ -29,18 +40,10 @@ func (self $name) Encode(bytes []byte) []byte {
   $encode.body
 }
 
-func (self $name) AddPadding(bytes []byte, length uint16) []byte {
-  $add_padding.body
-}
-
-func (self $name) RandomBytes(requestedLength uint16) []byte {
-  $random_bytes.body
-}
-
 func (self $name) Decode(bytes []byte) []byte {
   $decode.body
 }
 
-func (self $name) StripPadding(bytes []byte) []byte {
-  $strip_padding.body
+func (self $name) RandomBytes(requestedLength uint16) []byte {
+  $random_bytes.body
 }

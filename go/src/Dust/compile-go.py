@@ -5,11 +5,12 @@ import subprocess
 from airspeed import CachingFileLoader
 
 def parse(filename):
+  print('Parsing '+filename)
   f=open(filename)
   data=f.read()
   f.close()
 
-  ext=filename.split('.')[1]
+  ext=filename.split('/')[-1].split('.')[1]
   if ext=='yaml':
     obj=yaml.load(data)
   elif ext=="json":
@@ -26,15 +27,16 @@ def save(data, filename):
 
 def convertModel(name, data):
   model={}
+  model['packagename']=name
   model['name']=name.capitalize()
   model['duration']=genDuration(data['duration']['dist'], data['duration']['params'])
   model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'])
   model['packet_count']=genFlow(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'])
+  model['huffman']=genHuffman(data['incomingModel']['huffman'])
   model['encode']=genEncoder(data['incomingModel']['huffman'])
   model['decode']=genDecoder()
+  model['weights']=genWeights("contentDist", data['incomingModel']['content']['params'])
   model['random_bytes']=genContent(data['incomingModel']['content']['dist'], data['incomingModel']['content']['params'])
-  model['add_padding']={'body': 'return bytes'}
-  model['strip_padding']={'body': 'return bytes'}
 
   return model
 
@@ -47,8 +49,9 @@ def genDuration(dist, params):
 
 def genExponential(varname, param):
   return {
-    'data': "var %s=&dist.Exponential{Rate: float64(%s)}" % (varname, param),
-    'body': "return uint16(%s.Rand())" % (varname)
+    'decl': "%s dist.Exponential" % (varname),
+    'data': "%s: dist.Exponential{Rate: float64(%s)}," % (varname, param),
+    'body': "return uint16(self.%s.Rand())" % (varname)
   }
 
 def genLength(dist, params):
@@ -60,8 +63,9 @@ def genLength(dist, params):
 
 def genNormal(varname, mu, sigma):
   return {
-    'data': "var %s=dist.Normal{Mu: float64(%f), Sigma: float64(%f)}" % (varname, mu, sigma),
-    'body': "return uint16(%s.Rand())" % (varname)
+    'decl': "%s dist.Normal" % (varname),
+    'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f)}," % (varname, mu, sigma),
+    'body': "return uint16(self.%s.Rand())" % (varname)
   }
 
 def genFlow(dist, params):
@@ -74,8 +78,9 @@ def genFlow(dist, params):
 # FIXME - Find code for generating a proper Poisson distribution
 def genPoisson(varname, param):
   return {
-    'data': "var %s=&dist.Poisson{Expected: float64(%f)}" % (varname, param),
-    'body': "return uint16(%s.Rand())" % (varname)
+    'decl': "%s dist.Poisson" % (varname),
+    'data': "%s: dist.Poisson{Expected: float64(%f)}," % (varname, param),
+    'body': "return uint16(self.%s.Rand())" % (varname)
   }
 
 def genContent(dist, params):
@@ -84,13 +89,17 @@ def genContent(dist, params):
   else:
     print('Unknown content dist %s' % dist)
 
+def genWeights(varname, params):
+  return "var %sWeights = []float64 %s" % (varname, genArray(convertToProbs(params)))
+
 def genMultinomial(varname, params):
   return {
-    'data': "var %sWeights=[]float64 %s\nvar %s=&dist.Multinomial{Weights: %sWeights}" % (varname, genArray(convertToProbs(params)), varname, varname),
+    'decl': "%s dist.Multinomial" % (varname),
+    'data': "%s: dist.Multinomial{Weights: %sWeights}," % (varname, varname),
     'body': """
       var bytes=make([]byte, requestedLength)
       for index := range bytes {
-        bytes[index]=byte(%s.Rand())
+        bytes[index]=byte(self.%s.Rand())
       }
 
       return bytes
@@ -102,17 +111,18 @@ def convertToProbs(arr):
   total=float(sum(arr))
   return map(lambda item: float(item)/total, arr)
 
+def genHuffman(params):
+  return "var huffmanCodes = [][]bool %s" % (genBoolArrays(params))
+
 def genEncoder(params):
   varname="contentDist"
   return {
-    'data': "var huffman=[][]bool %s\nvar encoder *HuffmanEncoder=nil" % (genBoolArrays(params)),
+    'decl': "encoder *huffman.HuffmanEncoder",
+    'data': "encoder: huffman.GenerateHuffmanEncoder(huffmanCodes)",
     'body': """
-      if encoder==nil {
-        encoder=GenerateHuffmanEncoder(huffman)
-        print(encoder.String())
-      }
+      print(self.encoder.String())
 
-      return encoder.encode(bytes)
+      return self.encoder.Encode(bytes)
       """
   }
 
@@ -120,12 +130,9 @@ def genDecoder():
   varname="contentDist"
   return {
     'body': """
-      if encoder==nil {
-        encoder=GenerateHuffmanEncoder(huffman)
-        print(encoder.String())
-      }
+      print(self.encoder.String())
 
-      return encoder.decode(bytes)
+      return self.encoder.Decode(bytes)
       """
   }
 
@@ -147,13 +154,19 @@ def boolstr(b):
 templateName='model.go.airspeed'
 testTemplateName='test.go.airspeed'
 
-models=os.listdir('models')
+models=os.listdir('../../models')
+modelBases=[]
+if not os.path.exists('models'):
+  os.mkdir('models')
 for modelName in models:
   print(modelName)
   modelBasename=modelName.split('.')[0]
-  modelFilename='models/'+modelName
-  outputName=modelBasename+'.go'
-  testOutputName=modelBasename+'_test.go'
+  modelBases.append(modelBasename)
+  if not os.path.exists('models/'+modelBasename):
+    os.mkdir('models/'+modelBasename)
+  modelFilename='../../models/'+modelName
+  outputName='models/'+modelBasename+'/'+modelBasename+'.go'
+  testOutputName='models/'+modelBasename+'/'+modelBasename+'_test.go'
 
   loader = CachingFileLoader('templates')
 
@@ -173,3 +186,19 @@ for modelName in models:
   save(body, testOutputName)
   print("Formatting %s" % (modelBasename+'_test.go'))
   subprocess.call(['gofmt', '-s=true', '-w=true', testOutputName])
+
+context={'models': modelBases}
+print("Generating models.go")
+template = loader.load_template("models.go.airspeed")
+body=template.merge(context, loader=loader)
+save(body, "models.go")
+print("Formatting models.go")
+subprocess.call(['gofmt', '-s=true', '-w=true', "models.go"])
+
+context={'models': modelBases}
+print("Generating models_test.go")
+template = loader.load_template("models_test.go.airspeed")
+body=template.merge(context, loader=loader)
+save(body, "models_test.go")
+print("Formatting models_test.go")
+subprocess.call(['gofmt', '-s=true', '-w=true', "models_test.go"])

@@ -1,14 +1,12 @@
 package Dust
 
 type Dust interface {
-  duration() uint16
-  packet_count(milliseconds uint16) uint16
-  packet_length() uint16
-  encode(bytes []byte) []byte
-  add_padding(bytes []byte, length uint16) []byte
-  random_bytes(len uint16) []byte
-  decode(bytes []byte) []byte
-  strip_padding(bytes []byte) []byte
+	Duration() uint16
+	PacketCount(milliseconds uint16) uint16
+	PacketLength() uint16
+	Encode(bytes []byte) []byte
+	Decode(bytes []byte) []byte
+	RandomBytes(len uint16) []byte
 }
 
 //go:generate python compile-go.py
