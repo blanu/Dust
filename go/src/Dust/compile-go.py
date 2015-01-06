@@ -80,7 +80,7 @@ def genPoisson(varname, param):
   return {
     'decl': "%s dist.Poisson" % (varname),
     'data': "%s: dist.Poisson{Expected: float64(%f)}," % (varname, param),
-    'body': "return uint16(self.%s.Rand())" % (varname)
+    'body': "var total uint16 = 0\nfor iteration := 0; iteration < int(milliseconds); iteration++ {\n  total=total+uint16(self.%s.Rand())\n}\n\nreturn total" % (varname)
   }
 
 def genContent(dist, params):
