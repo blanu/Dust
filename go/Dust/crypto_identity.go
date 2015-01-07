@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 	
-	. "caolta3iaejox3z4madc5wmp4z.uuid/Dust4go/DustCrypto"
+	. "github.com/blanu/Dust/go/DustCrypto"
 )
 
 type CryptoServerIdentity struct {

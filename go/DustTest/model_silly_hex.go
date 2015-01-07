@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"caolta3iaejox3z4madc5wmp4z.uuid/Dust4go/Dust"
+	"github.com/blanu/Dust/go/Dust"
 )
 
 type sillyHexModel struct {

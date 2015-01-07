@@ -10,8 +10,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"caolta3iaejox3z4madc5wmp4z.uuid/Dust4go/Dust"
-	"caolta3iaejox3z4madc5wmp4z.uuid/Dust4go/DustTest"
+	"github.com/blanu/Dust/go/Dust"
+	"github.com/blanu/Dust/go/DustTest"
 )
 
 const progName = "DustProxy"
