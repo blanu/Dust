@@ -18,14 +18,14 @@ var (
 func NewSillyHexModel() EncodeDecodeModel {
 	return &sillyHexModel{
 		topNybble: -1,
-		lenNext: 20,
-		lenMin: 20,
-		lenStep: 20,
-		lenMax: 100,
-		sleepNext: 200 * time.Millisecond,
-		sleepMin: 200 * time.Millisecond,
-		sleepStep: 50 * time.Millisecond,
-		sleepMax: 500 * time.Millisecond,
+		lenNext: 200,
+		lenMin: 200,
+		lenStep: 200,
+		lenMax: 1000,
+		sleepNext: 20 * time.Millisecond,
+		sleepMin: 20 * time.Millisecond,
+		sleepStep: 5 * time.Millisecond,
+		sleepMax: 50 * time.Millisecond,
 	}
 }
 
