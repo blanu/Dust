@@ -1,8 +1,10 @@
-package DustModel
+package DustTest
 
 import (
 	"math/rand"
 	"time"
+
+	"caolta3iaejox3z4madc5wmp4z.uuid/Dust4go/Dust"
 )
 
 type sillyHexModel struct {
@@ -15,7 +17,7 @@ var (
 	hexAlphabet = []byte("0123456789abcdef")
 )
 
-func NewSillyHexModel() EncodeDecodeModel {
+func NewSillyHexModel() Dust.EncodeDecodeModel {
 	return &sillyHexModel{
 		topNybble: -1,
 		lenNext: 200,

@@ -3,8 +3,6 @@ package Dust
 import (
 	"io"
 	"time"
-
-	"caolta3iaejox3z4madc5wmp4z.uuid/Dust4go/DustModel"
 )
 
 type shaperReader struct {
@@ -107,11 +105,11 @@ type Shaper struct {
 	heldError error
 
 	reader *shaperReader
-	decodeModel DustModel.DecodeModel
+	decodeModel DecodeModel
 	inBuf []byte
 	
 	timer *shaperTimer
-	encodeModel DustModel.EncodeModel
+	encodeModel EncodeModel
 	outBuf []byte
 	outPending []byte
 	pullBuf []byte
@@ -239,9 +237,9 @@ func (sh *Shaper) run(afterThunk func()) {
 func NewShaper(
 	crypto *CryptoSession,
 	in io.Reader,
-	decodeModel DustModel.DecodeModel,
+	decodeModel DecodeModel,
 	out io.Writer,
-	encodeModel DustModel.EncodeModel,
+	encodeModel EncodeModel,
 ) (*Shaper, error) {
 	// INCOMPLETE: does not handle connection duration.
 	

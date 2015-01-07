@@ -1,4 +1,4 @@
-package DustModel
+package Dust
 
 import (
 	"time"
