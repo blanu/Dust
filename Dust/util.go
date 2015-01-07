@@ -22,4 +22,3 @@ func ReportExitTo(cell *error) {
 func debugf(control string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, control + "\n", args...)
 }
-
