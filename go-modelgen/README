@@ -1,4 +1,5 @@
-(This is kind of broken right now.  Sorry!  --DasyatidPrime)
+(This is kind of broken right now.  Sorry!  I think it was kind of broken already
+though...  --DasyatidPrime)
 
 Dust/go contains a compiler for the Dust statistical model specification to Go
 Though the output is a Go library, the compiler is written in Python.
