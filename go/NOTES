@@ -1,10 +1,16 @@
-#+TITLE: Notes on Dust4go
+#+TITLE: Notes on Dust Go implementation
 
 * State
 ** Packaging
-Need to add copyright information and packaging documentation.
+Copyright/licensing information:
 
-Root package name is currently "caolta3iaejox3z4madc5wmp4z.uuid/Dust4go".
+  - Most of the code currently in go/ is by (and copyrighted by) Drake Wilson and is expected to
+    wind up MIT-licensed as this section resolves.
+
+  - DustModel/dist was moved from a fork of another Go package by blanu earlier, and it refers to
+    its own LICENSE file which may not have been copied; it claims to be BSD-style.
+
+Need better external documentation in general as things become more stable.
 
 ** Crypto primitives
 No viable Skein-256-256 has been verified present yet, so that [[id:ed97541b-2413-4568-8b83-53709baa6715][still needs to be pulled in]] or else written
@@ -24,7 +30,7 @@ been verified working with this model, modulo some protocol-design difficulties 
 handshake latency versus shaping padding.
 
 ** Test proxy
-This mostly seems to work, protocol-wise.
+This mostly seems to work, protocol-wise, modulo all the broken parts above.
 
 There's some wonkiness surrounding the composition of goroutines somewhere in here; it's not clear whether
 it's here or in the shaping layer, but the symptom is ungraceful exits or maybe deadlock when the connection
@@ -43,10 +49,12 @@ This mostly works but should have a cleaner CLI.
   - https://github.com/dchest/skein only does Skein-512, but the Dust protocol specifies Skein-256-256.
   - https://github.com/wernerd/Skein3Fish is GPLv3 which is probably unusable here.
   - https://github.com/tildeleb/hashland is MIT and supposedly has a Skein-256, but there's some ambiguity
-    surrounding the "Make sure licensing and author information is accurate" in the README.
+    surrounding the "Make sure licensing and author information is accurate" in the README (ironically,
+    this NOTES file has something quite similar above!).
 
 ** TODO Pull in actual models
-This seems like it might actually need an API discussion first.
+API discussions have been had to some extent, but go-modelgen hasn't been properly updated, so it's currently
+broken.
 
 ** TODO Better CLI for key tool
 ** TODO Better CLI for test proxy
