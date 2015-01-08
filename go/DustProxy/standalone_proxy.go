@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/blanu/Dust/go/Dust"
-	"github.com/blanu/Dust/go/DustTest"
+	"github.com/blanu/Dust/go/DustModel/sillyHex"
 )
 
 const progName = "DustProxy"
@@ -167,7 +167,7 @@ func copyThen(dst io.Writer, src io.Reader, errorOut *error, afterThunk func()) 
 }
 
 func doProxy(cs *Dust.CryptoSession, dustSide ioPair, plainSide ioPair) error {
-	model := DustTest.NewSillyHexModel()
+	model := sillyHex.NewSillyHexModel()
 	
 	shaper, err := Dust.NewShaper(cs, dustSide.rd, model, dustSide.wr, model)
 	if err != nil {

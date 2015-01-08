@@ -1,4 +1,4 @@
-package DustTest
+package sillyHex
 
 import (
 	"math/rand"
