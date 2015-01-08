@@ -17,7 +17,7 @@ var (
 	hexAlphabet = []byte("0123456789abcdef")
 )
 
-func NewSillyHexModel() Dust.EncodeDecodeModel {
+func NewSillyHexModel() Dust.Model {
 	return &sillyHexModel{
 		topNybble: -1,
 		lenNext: 200,

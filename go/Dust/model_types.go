@@ -21,7 +21,7 @@ type DecodeModel interface {
 	DecodeBytes(p []byte) []byte
 }
 
-type EncodeDecodeModel interface {
+type Model interface {
 	EncodeModel
 	DecodeModel
 }
