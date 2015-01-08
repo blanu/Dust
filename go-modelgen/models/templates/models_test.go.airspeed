@@ -1,4 +1,4 @@
-package Dust
+package models_test
 
 import (
   "testing"

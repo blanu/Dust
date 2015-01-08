@@ -2,6 +2,7 @@ import os
 import yaml
 import json
 import subprocess
+import re
 from airspeed import CachingFileLoader
 
 def parse(filename):
@@ -153,22 +154,24 @@ def boolstr(b):
 
 templateName='model.go.airspeed'
 testTemplateName='test.go.airspeed'
+loader = CachingFileLoader('templates')
 
-models=os.listdir('../../models')
+def looksLikeModelFile(name):
+  return re.search(r'\.(?:yaml|json)\Z', name)
+
+modelDir='./data'
+models=filter(looksLikeModelFile, os.listdir(modelDir))
 modelBases=[]
-if not os.path.exists('models'):
-  os.mkdir('models')
 for modelName in models:
   print(modelName)
   modelBasename=modelName.split('.')[0]
   modelBases.append(modelBasename)
-  if not os.path.exists('models/'+modelBasename):
-    os.mkdir('models/'+modelBasename)
-  modelFilename='../../models/'+modelName
-  outputName='models/'+modelBasename+'/'+modelBasename+'.go'
-  testOutputName='models/'+modelBasename+'/'+modelBasename+'_test.go'
-
-  loader = CachingFileLoader('templates')
+  modelFilename=modelDir+'/'+modelName
+  outputDir='generated/'+modelBasename
+  if not os.path.exists(outputDir):
+    os.mkdir(outputDir)
+  outputName=outputDir+'/'+modelBasename+'.go'
+  testOutputName=outputDir+'/'+modelBasename+'_test.go'
 
   model=parse(modelFilename)
   context=convertModel(modelBasename, model)

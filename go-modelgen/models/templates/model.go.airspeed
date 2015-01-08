@@ -1,8 +1,10 @@
 package $packagename
 
 import (
-  "dist"
-  "Dust/huffman"
+  "time"
+  "github.com/blanu/Dust/go/Dust"
+  "github.com/blanu/Dust/go/DustModel/dist"
+  "github.com/blanu/Dust/go/DustModel/huffman"
 )
 
 type $name struct {
@@ -24,26 +26,26 @@ func New() $name {
     $encode.data}
 }
 
-func (self $name) Duration() uint16 {
+func (self $name) wholeStreamDurationMillis() uint16 {
   $duration.body
+}
+
+func (self $name) WholeStreamDuration() time.Duration {
+  return self.wholeStreamDurationMillis() * time.Millisecond
 }
 
 func (self $name) PacketCount(milliseconds uint16) uint16 {
   $packet_count.body
 }
 
-func (self $name) PacketLength() uint16 {
+func (self $name) NextPacketLength() uint16 {
   $packet_length.body
 }
 
-func (self $name) Encode(bytes []byte) []byte {
+func (self $name) EncodeBytes(bytes []byte) []byte {
   $encode.body
 }
 
-func (self $name) Decode(bytes []byte) []byte {
+func (self $name) DecodeBytes(bytes []byte) []byte {
   $decode.body
-}
-
-func (self $name) RandomBytes(requestedLength uint16) []byte {
-  $random_bytes.body
 }
