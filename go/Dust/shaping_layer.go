@@ -134,37 +134,25 @@ func (sh *Shaper) handleTimer() error {
 	outLen := sh.encodeModel.NextPacketLength()
 	sh.timer.cycle(sh.encodeModel.NextPacketSleep())
 
-	// TODO: probably slow.
-
 	outValid := 0
 	outTail := sh.outBuf[:outLen]
 	for len(outTail) > 0 {
 		if len(sh.outPending) > 0 {
-			// TODO: refactor with other copy* functions (move them out of crypto_layer
-			// probably)...
-			copied := copy(outTail, sh.outPending)
-			outValid += copied
-			outTail = outTail[copied:]
-			sh.outPending = sh.outPending[copied:]
+			outValid += copyAdvance(&outTail, &sh.outPending)
 			continue
 		}
 
 		pullN, err := sh.crypto.PullWrite(sh.pullBuf)
-		if err != nil && err != io.ErrNoProgress {
+		if err != nil && err != ErrStuck {
 			return err
 		}
-
-		encoded := sh.encodeModel.EncodeBytes(sh.pullBuf[:pullN])
-		copied := copy(outTail, encoded)
-		outValid += copied
-		outTail = outTail[copied:]
-		encodedTail := encoded[copied:]
+		encodedTail := sh.encodeModel.EncodeBytes(sh.pullBuf[:pullN])
+		outValid += copyAdvance(&outTail, &encodedTail)
 		if len(encodedTail) > 0 {
 			sh.outPending = append(sh.outPending, encodedTail...)
 		}
 
 		if err != nil {
-			// It was an ErrNoProgress, else we'd have returned above.
 			break
 		}
 	}
