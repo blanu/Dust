@@ -1,4 +1,5 @@
 #+TITLE: Notes on Dust Go implementation
+Updated: [2015-01-16 Fri]
 
 * State
 ** Packaging
@@ -13,9 +14,8 @@ Copyright/licensing information:
 Need better external documentation in general as things become more stable.
 
 ** Crypto primitives
-No viable Skein-256-256 has been verified present yet, so that [[id:ed97541b-2413-4568-8b83-53709baa6715][still needs to be pulled in]] or else written
-locally.  Curve25519 is in, along with its Elligator form (using [[https://github.com/agl/ed25519/tree/master/extra25519][agl's extra25519]]) but could use test vectors.
-HMAC is using Go's native HMAC mechanism.
+Skein-512-256 is being used instead of Skein-256-256, and the MAC/stream stuff is a little ambiguous right
+now versus the original Dust specification used.  We're using dchest's Skein, which needs to be audited.
 
 The SecretBytes API is a little wonky given Go's memory and execution model, and is mostly voodoo.  Possibly
 it should be taken out entirely.
@@ -25,39 +25,44 @@ Most of this should probably work now, modulo the stubbed-out crypto primitives,
 against anything else yet and needs another verification pass.
 
 ** Shaping layer
-There's an API for models, but the only model right now is a silly pseudo-model.  Loopback communication has
-been verified working with this model, modulo some protocol-design difficulties (via the Dust spec) regarding
-handshake latency versus shaping padding.
+There's an API for models; blanu is working on the model generator, plus there's a silly pseudo-model
+available.  Loopback communication has been verified working with this model, modulo some protocol-design
+difficulties (via the Dust spec) regarding handshake latency versus shaping padding.
 
 ** Test proxy
 This mostly seems to work, protocol-wise, modulo all the broken parts above.
 
 There's some wonkiness surrounding the composition of goroutines somewhere in here; it's not clear whether
 it's here or in the shaping layer, but the symptom is ungraceful exits or maybe deadlock when the connection
-goes away.
+goes away.  This may have been fixed by now.
 
 ** Key tool
 This mostly works but should have a cleaner CLI.
 
 * Tasks
-** TODO Pull in actual Skein
-   :PROPERTIES:
-   :ID:       ed97541b-2413-4568-8b83-53709baa6715
-   :END:
-"Where's the Skein"?
+** Document overview of packages
+** Document _actual_ crypto protocol being implemented
+(as this differs from the original Dust spec in a few ways already)
+** Document remaining top-level types/functions/etc.
+** Document buffer ownership better in crypto layer
+** Make sure goroutine composition works reasonably
+** Clean up concrete versus interface type exports
+** Lock down CLI for test proxy
+** Lock down CLI for key tool
+** Lock down file format for private identity files
+*** Consider allowing a PBKDF for this
+** Modify protocol further 
+*** Avoid bogus key material reuse
+*** Avoid stuck states during handshaking
+** Decide what to do with SecretBytes: propagate destroy signals or remove entirely
+Finalizers are useful as a stopgap if they're kept.  The Skein stuff probably needs
+to be copied in-tree and then modified to allow zeroing the structure... ?
 
-  - https://github.com/dchest/skein only does Skein-512, but the Dust protocol specifies Skein-256-256.
-  - https://github.com/wernerd/Skein3Fish is GPLv3 which is probably unusable here.
-  - https://github.com/tildeleb/hashland is MIT and supposedly has a Skein-256, but there's some ambiguity
-    surrounding the "Make sure licensing and author information is accurate" in the README (ironically,
-    this NOTES file has something quite similar above!).
-
-** TODO Pull in actual models
-API discussions have been had to some extent, but go-modelgen hasn't been properly updated, so it's currently
-broken.
-
-** TODO Better CLI for key tool
-** TODO Better CLI for test proxy
+It should probably be possible to use move semantics for SecretBytes, which would make
+the ownership transitions safer.
+** Get needed entropy earlier in CryptoSession initialization to avoid later failures
+** Figure out MTU situation
+** Higher-performance buffer discipline for models?
 
 * (metadata)
 
