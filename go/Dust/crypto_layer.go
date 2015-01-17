@@ -17,8 +17,8 @@ var (
 )
 
 const (
-	maxInFrameSize = 65535
-	maxOutFrameSize = 127
+	maxInFrameDataSize = 65535
+	maxOutFrameDataSize = 127
 )
 
 type cryptoState int
@@ -214,7 +214,7 @@ func (cs *CryptoSession) beginInCipher() {
 
 	// Eeeek, raw shared secret as stream cipher key!
 	cs.inCipher = NewStreamCipher(cs.sessionKey, inIV)
-	cs.dataReassembly = beginReassembly(maxInFrameSize + 2 + 32)
+	cs.dataReassembly = beginReassembly(maxInFrameDataSize + 35)
 	cs.handshakeReassembly = nil
 }
 
@@ -472,14 +472,14 @@ func (cs *CryptoSession) Read(p []byte) (n int, err error) {
 // Write queues the plaintext data p for transmission via cs, blocking if intermediary buffers are full.  The
 // signature is that of io.Writer.Write.
 func (cs *CryptoSession) Write(p []byte) (n int, err error) {
-	// TODO: should we really do the framing here?  Right now, maxOutFrameSize is a kludge to make sure
+	// TODO: should we really do the framing here?  Right now, maxOutFrameDataSize is a kludge to make sure
 	// very low-performance models don't get _too_ much delay from long frames.
 	
 	n, err = 0, nil
 	for len(p) > 0 {
 		data := p
-		if len(data) > maxOutFrameSize {
-			data = data[:maxOutFrameSize]
+		if len(data) > maxOutFrameDataSize {
+			data = data[:maxOutFrameDataSize]
 		}
 
 		// After the send, the frame is owned by the other side and all the actual crypto will happen at
