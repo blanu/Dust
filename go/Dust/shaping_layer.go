@@ -169,6 +169,7 @@ func (sh *Shaper) handleTimer() error {
 		}
 
 		if err != nil {
+			// It was an ErrStuck, otherwise we'd have returned above.
 			break
 		}
 	}

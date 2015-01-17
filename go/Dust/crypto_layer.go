@@ -62,7 +62,11 @@ type CryptoSession struct {
 	localPair KeyPair
 	remotePublic PublicKey
 	
-	// Set if state is Streaming or Failed.
+	// Depending on state:
+	// 
+	//   - Streaming :: a valid session key
+	//   - Failed :: a bogus session key to keep the connection open on the outside
+	//   - (otherwise) :: unset
 	sessionKey SecretBytes
 
 	// Incoming data must be processed against this first, if set, before inCipher.  The reassembly
