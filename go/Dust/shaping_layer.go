@@ -52,11 +52,23 @@ func (sr *shaperReader) run() {
 }
 
 func (sr *shaperReader) cycle(offset int) {
-	sr.recycleChan <- offset
+	select {
+	case sr.recycleChan <- offset:
+		return
+	case _, any := <-sr.advanceChan:
+		if any {
+			panic("cycling reader in wrong state")
+		} else {
+			panic("reader died")
+		}
+	}
 }
 
 func (sr *shaperReader) stop() {
 	close(sr.recycleChan)
+	for _, any := <-sr.advanceChan; any; _, any = <-sr.advanceChan {
+		// Drain channel.
+	}
 }
 
 type shaperTimer struct {
@@ -67,6 +79,7 @@ type shaperTimer struct {
 
 func newShaperTimer() *shaperTimer {
 	return &shaperTimer{
+		// These must be buffered so that cycle() doesn't hang if the timer unexpectedly dies.
 		durationChan: make(chan time.Duration, 1),
 		timingChan: make(chan time.Time, 1),
 	}
@@ -96,6 +109,9 @@ func (st *shaperTimer) cycle(dur time.Duration) {
 
 func (st *shaperTimer) stop() {
 	close(st.durationChan)
+	for _, any := <-st.timingChan; any; _, any = <-st.timingChan {
+		// Drain channel.
+	}
 }
 
 type Shaper struct {
