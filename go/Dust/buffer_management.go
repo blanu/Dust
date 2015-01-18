@@ -9,9 +9,8 @@ func copyAdvance(out *[]byte, in *[]byte) int {
 	return n
 }
 
-// reassembly holds a slice of the valid part of a dedicated array into which new bytes will be appended
-// at the end until some condition is met.  The length of the slice is the valid length, therefore, and
-// the capacity is the maximum.
+// A reassembly is a prefix of a dedicated array.  New bytes are generally appended between len() and cap(),
+// advancing len(), until some condition is met.
 type reassembly []byte
 
 // beginReassembly returns a fresh, empty reassembly with the given capacity.

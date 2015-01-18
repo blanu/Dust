@@ -9,6 +9,11 @@ import (
 	. "github.com/blanu/Dust/go/DustCrypto"
 )
 
+// TODO: rename to CryptoServerPublic?  Maybe bundle models in here and make DustServerIdentity... ?
+
+// TODO: make address space generic in terms of exported type signatures, even though all that is handled
+// in this library version is TCP addresses
+
 type CryptoServerIdentity struct {
 	tcpAddr *net.TCPAddr
 	idBytes []byte
