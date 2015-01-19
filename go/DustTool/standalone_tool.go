@@ -41,15 +41,19 @@ func joinBridgeParams(params map[string]string) string {
 }
 
 func writeNewIdentity(path string, addrString string) error {
-	var spriv *Dust.CryptoServerPrivate
+	var spriv *Dust.ServerPrivate
 	var err error
 	defer func() {
 		if spriv != nil {
-			spriv.DestroyPrivate()
+			// TODO: type fixup
+			//spriv.DestroyPrivate()
 		}
 	}()
 
-	spriv, err = Dust.NewCryptoServerPrivate(addrString)
+	// TODO: un-hardcode
+	bline := Dust.BridgeLine{addrString, map[string]string{"cm": "sillyHex", "sm": "sillyHex"}}
+
+	spriv, err = Dust.NewServerPrivateBridgeLine(bline)
 	if err != nil {
 		return err
 	}
@@ -60,8 +64,9 @@ func writeNewIdentity(path string, addrString string) error {
 	fmt.Fprintf(os.Stdout, "Identity file saved to: %s\n", path)
 
 	// TODO: clean up handling of address, name, other metadata here?
-	realAddrString := spriv.ListenAddr().String()
-	paramsString := joinBridgeParams(spriv.BridgeParams())
+	realBline := spriv.Public().BridgeLine()
+	realAddrString := realBline.Address
+	paramsString := joinBridgeParams(realBline.Params)
 	fmt.Fprintf(os.Stdout, "Bridge x %s %s\n", realAddrString, paramsString)
 	return nil
 }

@@ -509,10 +509,16 @@ func (cs *CryptoSession) Init(state cryptoState, serverInfo interface{}) error {
 	return nil
 }
 
-func BeginCryptoClient(sid *CryptoServerIdentity) (*CryptoSession, error) {
+func BeginCryptoClient(spub *ServerPublic) (*CryptoSession, error) {
+	csid := &CryptoServerIdentity{
+		tcpAddr: spub.tcpAddr,
+		idBytes: spub.idBytes,
+		longtermPublic: spub.longtermPublic,
+	}
+	
 	var err error
 	cs := &CryptoSession{}
-	if err = cs.Init(cryptoStateHandshakeClient, sid); err != nil {
+	if err = cs.Init(cryptoStateHandshakeClient, csid); err != nil {
 		return nil, err
 	}
 
@@ -521,10 +527,16 @@ func BeginCryptoClient(sid *CryptoServerIdentity) (*CryptoSession, error) {
 	return cs, nil
 }
 
-func BeginCryptoServer(spriv *CryptoServerPrivate) (*CryptoSession, error) {
+func BeginCryptoServer(spriv *ServerPrivate) (*CryptoSession, error) {
+	cspriv := &CryptoServerPrivate{
+		tcpAddr: spriv.tcpAddr,
+		idBytes: spriv.idBytes,
+		longtermPair: spriv.longtermPair,
+	}
+	
 	var err error
 	cs := &CryptoSession{}
-	if err = cs.Init(cryptoStateHandshakeServer, spriv); err != nil {
+	if err = cs.Init(cryptoStateHandshakeServer, cspriv); err != nil {
 		return nil, err
 	}
 

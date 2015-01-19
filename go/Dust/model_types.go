@@ -42,4 +42,9 @@ type ShapingCodec interface {
 	ShapingDecoder
 }
 
-type ModelConstructor func(map[string]string params) (ShapingEncoder, ShapingDecoder, error)
+type ShapingModel interface {
+	MakeClientCodec() (ShapingEncoder, ShapingDecoder, error)
+	MakeServerCodec() (ShapingEncoder, ShapingDecoder, error)
+}
+
+type ShapingModelConstructor func(params map[string]string) (ShapingModel, error)

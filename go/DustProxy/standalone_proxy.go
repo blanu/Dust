@@ -196,7 +196,7 @@ func doProxy(cs *Dust.CryptoSession, dustSide ioPair, plainSide ioPair) error {
 	}
 }
 
-func incomingSpawn(conn *net.TCPConn, spriv *Dust.CryptoServerPrivate, prog string, progArgs []string) error {
+func incomingSpawn(conn *net.TCPConn, spriv *Dust.ServerPrivate, prog string, progArgs []string) error {
 	commit := false
 	defer func() {
 		if !commit {
@@ -221,7 +221,7 @@ func incomingSpawn(conn *net.TCPConn, spriv *Dust.CryptoServerPrivate, prog stri
 	return nil
 }
 
-func listenAndSpawn(spriv *Dust.CryptoServerPrivate, prog string, progArgs []string) error {
+func listenAndSpawn(spriv *Dust.ServerPrivate, prog string, progArgs []string) error {
 	listener, err := net.ListenTCP("tcp", spriv.ListenAddr())
 	if err != nil {
 		return err
@@ -244,7 +244,7 @@ func listenAndSpawn(spriv *Dust.CryptoServerPrivate, prog string, progArgs []str
 
 func listenFromArgs() (func() error, error) {
 	idPath := nextArg("IDENTITY-FILE")
-	spriv, err := Dust.LoadCryptoServerPrivateFile(idPath)
+	spriv, err := Dust.LoadServerPrivateFile(idPath)
 	if err != nil {
 		return nil, err
 	}
@@ -254,13 +254,13 @@ func listenFromArgs() (func() error, error) {
 	return func() error { return listenAndSpawn(spriv, prog, progArgs) }, nil
 }
 
-func dialAndStdio(sid *Dust.CryptoServerIdentity) error {
-	cs, err := Dust.BeginCryptoClient(sid)
+func dialAndStdio(spub *Dust.ServerPublic) error {
+	cs, err := Dust.BeginCryptoClient(spub)
 	if err != nil {
 		return err
 	}
 
-	conn, err := net.DialTCP("tcp", nil, sid.DialAddr())
+	conn, err := net.DialTCP("tcp", nil, spub.DialAddr())
 	if err != nil {
 		return err
 	}
@@ -284,12 +284,12 @@ func dialFromArgs() (func() error, error) {
 		params[pair[0]] = pair[1]
 	}
 
-	sid, err := Dust.LoadCryptoServerIdentityBridgeLine(connString, params)
+	spub, err := Dust.LoadServerPublicBridgeLine(Dust.BridgeLine{connString, params})
 	if err != nil {
 		return nil, err
 	}
 
-	return func() error { return dialAndStdio(sid) }, nil
+	return func() error { return dialAndStdio(spub) }, nil
 }
 
 func main() {

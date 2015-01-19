@@ -84,6 +84,7 @@ type KeyPair interface {
 	DestroyPrivate()
 	ECDH(public PublicKey, sbOut SecretBytes)
 	PrivateSlice() []byte
+	PrivateBase32() string
 }
 
 type keyPair struct {
@@ -157,4 +158,28 @@ func LoadKeyPairOwningPrivate(raw SecretBytes) (KeyPair, error) {
 
 func (kp *keyPair) PrivateSlice() []byte {
 	return kp.private.(SecretBytes).Slice()
+}
+
+func (kp *keyPair) PrivateBase32() string {
+	padded := base32.StdEncoding.EncodeToString(kp.private.Slice())
+	unpadded := strings.TrimRight(padded, `=`)
+	if len(unpadded) != 52 {
+		panic("weird Base32 consistency error")
+	}
+	return unpadded
+}
+
+func LoadPrivateKeyBase32(s string) (KeyPair, error) {
+	if len(s) != 52 {
+		return nil, ErrBadPrivateKey
+	}
+
+	b, err := base32.StdEncoding.DecodeString(strings.Join([]string{s, `====`}, ""))
+	if err != nil || len(b) != 32 {
+		return nil, ErrBadPrivateKey
+	}
+
+	raw := NewSecretBytes()
+	copy(raw.Slice(), b)
+	return LoadKeyPairOwningPrivate(raw)
 }
