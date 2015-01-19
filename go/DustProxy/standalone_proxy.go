@@ -11,7 +11,8 @@ import (
 	"strings"
 
 	"github.com/blanu/Dust/go/Dust"
-	"github.com/blanu/Dust/go/DustModel/sillyHex"
+	"github.com/blanu/Dust/go/Dust/procman"
+	_ "github.com/blanu/Dust/go/DustModel/sillyHex"
 )
 
 const progName = "DustProxy"
@@ -88,6 +89,16 @@ func (pair ioPair) Write(p []byte) (n int, err error) {
 	return pair.wr.Write(p)
 }
 
+func (pair ioPair) Close() error {
+	err1 := pair.rd.Close()
+	err2 := pair.wr.Close()
+	if err1 != nil {
+		return err1
+	} else {
+		return err2
+	}
+}
+
 type (
 	readerHalf struct {
 		conn *net.TCPConn
@@ -154,46 +165,34 @@ func spawnPair(prog string, progArgs []string) (result ioPair, err error) {
 	return
 }
 
-func copyThen(dst io.Writer, src io.Reader, errorOut *error, afterThunk func()) {
-	defer func() {
-		// TODO: move ReportExitTo somewhere reasonable (is there a stdlib equivalent for this?  Is it
-		// bad?)
-		Dust.ReportExitTo(errorOut)
-		afterThunk()
-	}()
+func doProxy(dconn Dust.Connection, plainSide ioPair) error {
+	// TODO: on client side, doesn't hang around for full duration
+	defer dconn.Close()
+
+	copyThunk := func(dst io.Writer, src io.Reader) func() error {
+		return func() error {
+			// TODO: this doesn't respect kill signaling
+			_, err := io.Copy(dst, src)
+			return err
+		}
+	}
 	
-	_, err := io.Copy(dst, src)
-	*errorOut = err
-}
+	var inCopy, outCopy procman.Link
+	inCopy.InitLink(copyThunk(plainSide.wr, dconn))
+	outCopy.InitLink(copyThunk(dconn, plainSide.rd))
+	defer inCopy.CloseDetach()
+	defer outCopy.CloseDetach()
+	inCopy.Spawn()
+	outCopy.Spawn()
 
-func doProxy(cs *Dust.CryptoSession, dustSide ioPair, plainSide ioPair) error {
-	codec := sillyHex.NewSillyHexCodec()
-	
-	shaper, err := Dust.NewShaper(cs, dustSide.rd, codec, dustSide.wr, codec)
-	if err != nil {
-		return err
+	select {
+	case _, _ = <-inCopy.Exit:
+	case _, _ = <-outCopy.Exit:
+	//case _, _ = <-dconn.Exit:
 	}
 
-	exitChan := make(chan interface{}, 4)
-	shaper.SpawnThen(func() { exitChan <- shaper })
-	var inCopyError, outCopyError error
-	go copyThen(plainSide.wr, cs, &inCopyError, func() { exitChan <- plainSide.wr })
-	go copyThen(cs, plainSide.rd, &outCopyError, func() { exitChan <- plainSide.rd })
-
-	for i := 0; i < 3; i++ {
-		_ = <-exitChan
-	}
-
-	shaperError := shaper.Error()
-	if shaperError != nil {
-		return shaperError
-	} else if inCopyError != nil {
-		return inCopyError
-	} else if outCopyError != nil {
-		return outCopyError
-	} else {
-		return nil
-	}
+	// TODO: error propagation
+	return nil
 }
 
 func incomingSpawn(conn *net.TCPConn, spriv *Dust.ServerPrivate, prog string, progArgs []string) error {
@@ -204,20 +203,24 @@ func incomingSpawn(conn *net.TCPConn, spriv *Dust.ServerPrivate, prog string, pr
 		}
 	}()
 
-	cs, err := Dust.BeginCryptoServer(spriv)
+	dconn, err := Dust.BeginServer(conn, spriv)
 	if err != nil {
 		return err
 	}
-		
+	defer func() {
+		if !commit {
+			dconn.Close()
+		}
+	}()
+	
 	// TODO: clean up spawned processes properly
-	dustSide := tcpPair(conn)
 	plainSide, err := spawnPair(prog, progArgs)
 	if err != nil {
 		return err
 	}
 
 	commit = true
-	go doProxy(cs, dustSide, plainSide)
+	go doProxy(dconn, plainSide)
 	return nil
 }
 
@@ -255,20 +258,21 @@ func listenFromArgs() (func() error, error) {
 }
 
 func dialAndStdio(spub *Dust.ServerPublic) error {
-	cs, err := Dust.BeginCryptoClient(spub)
-	if err != nil {
-		return err
-	}
-
 	conn, err := net.DialTCP("tcp", nil, spub.DialAddr())
 	if err != nil {
 		return err
 	}
 	fmt.Fprintf(os.Stderr, "Connected to %s\n", conn.RemoteAddr().String())
+
+	// TODO: the Dust side should probably have most of its initialization happen before the dial so that
+	// there's less risk of dialing visibly and then getting hosed on some other part of initialization.
 	
-	dustSide := tcpPair(conn)
-	plainSide := stdioPair()
-	return doProxy(cs, dustSide, plainSide)
+	dconn, err := Dust.BeginClient(conn, spub)
+	if err != nil {
+		return err
+	}
+
+	return doProxy(dconn, stdioPair())
 }
 
 func dialFromArgs() (func() error, error) {

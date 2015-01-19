@@ -1,8 +1,8 @@
-package Dust
+package bufman
 
 // Copy as many bytes as possible from *in to *out, and advance the start pointers of both *in and *out past
 // the copied bytes.
-func copyAdvance(out *[]byte, in *[]byte) int {
+func CopyAdvance(out *[]byte, in *[]byte) int {
 	n := copy(*out, *in)
 	*in = (*in)[n:]
 	*out = (*out)[n:]
@@ -11,16 +11,16 @@ func copyAdvance(out *[]byte, in *[]byte) int {
 
 // A reassembly is a prefix of a dedicated array.  New bytes are generally appended between len() and cap(),
 // advancing len(), until some condition is met.
-type reassembly []byte
+type Reassembly []byte
 
-// beginReassembly returns a fresh, empty reassembly with the given capacity.
-func beginReassembly(size int) reassembly {
+// BeginReassembly returns a fresh, empty reassembly with the given capacity.
+func BeginReassembly(size int) Reassembly {
 	return make([]byte, 0, size)
 }
 
-// copyReassemble copies bytes from *in to the blank portion of *out.  It updates *out to reflect the
+// CopyReassemble copies bytes from *in to the blank portion of *out.  It updates *out to reflect the
 // new valid length, sets *in to the unconsumed tail, and returns the number of bytes copied.
-func copyReassemble(out *reassembly, in *[]byte) int {
+func CopyReassemble(out *Reassembly, in *[]byte) int {
 	avail := (*out)[len(*out):cap(*out)]
 	n := copy(avail, *in)
 	*in = (*in)[n:]
@@ -28,10 +28,10 @@ func copyReassemble(out *reassembly, in *[]byte) int {
 	return n
 }
 
-// transformReassemble is like copyReassemble, but uses a transformation function from a slice to a slice of
+// TransformReassemble is like copyReassemble, but uses a transformation function from a slice to a slice of
 // equal length on the data.
-func transformReassemble(
-	out *reassembly, in *[]byte,
+func TransformReassemble(
+	out *Reassembly, in *[]byte,
 	transform func(dst []byte, src []byte),
 ) int {
 	avail := (*out)[len(*out):cap(*out)]
@@ -46,25 +46,25 @@ func transformReassemble(
 	return n
 }
 
-// fixedSizeReassemblyComplete returns true iff the reassembly buffer is completely full; it is assumed
+// FixedSizeComplete returns true iff the reassembly buffer is completely full; it is assumed
 // to have been created with the correct fixed size for the expected data.
-func (reassembly reassembly) fixedSizeComplete() bool {
+func (reassembly Reassembly) FixedSizeComplete() bool {
 	return len(reassembly) == cap(reassembly)
 }
 
-// data returns the slice of valid bytes in reassembly.
-func (reassembly reassembly) data() []byte {
+// Data returns the slice of valid bytes in reassembly.
+func (reassembly Reassembly) Data() []byte {
 	return reassembly
 }
 
-// validLen returns the number of valid bytes in reassembly.
-func (reassembly reassembly) validLen() int {
+// ValidLen returns the number of valid bytes in reassembly.
+func (reassembly Reassembly) ValidLen() int {
 	return len(reassembly)
 }
 
-// consume alters reassembly so that all but the first n bytes are copied to the front and become the
+// Consume alters reassembly so that all but the first n bytes are copied to the front and become the
 // new valid region.
-func (reassembly *reassembly) consume(n int) {
+func (reassembly *Reassembly) Consume(n int) {
 	switch {
 	case n > len(*reassembly):
 		panic("consuming more bytes than are available in reassembly buffer")
@@ -76,8 +76,8 @@ func (reassembly *reassembly) consume(n int) {
 	}
 }
 
-// copyNew returns a fresh slice containing the same bytes as an existing slice.
-func copyNew(slice []byte) []byte {
+// CopyNew returns a fresh slice containing the same bytes as an existing slice.
+func CopyNew(slice []byte) []byte {
 	out := make([]byte, len(slice))
 	copy(out, slice)
 	return out

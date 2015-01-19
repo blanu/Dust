@@ -1,40 +1,25 @@
-package Dust
+package crypting
 
 import (
 	"bytes"
 	"errors"
 	"net"
-	
-	. "github.com/blanu/Dust/go/DustCrypto"
+
+	"github.com/blanu/Dust/go/Dust/cryptions"
 )
 
-// TODO: continue restructuring these along with highlevel_api.go stuff
-
-// TODO: make address space generic in terms of exported type signatures, even though all that is handled
-// in this library version is TCP addresses
-
-type CryptoServerIdentity struct {
-	tcpAddr *net.TCPAddr
-	idBytes []byte
-	longtermPublic PublicKey
+type Public struct {
+	IdBytes []byte
+	LongtermPublic cryptions.PublicKey
 }
 
-func (sid *CryptoServerIdentity) DialAddr() *net.TCPAddr {
-	return sid.tcpAddr
+type Private struct {
+	IdBytes []byte
+	LongtermPair cryptions.KeyPair
 }
 
-type CryptoServerPrivate struct {
-	tcpAddr *net.TCPAddr
-	idBytes []byte
-	longtermPair KeyPair
-}
-
-func (spriv *CryptoServerPrivate) ListenAddr() *net.TCPAddr {
-	return spriv.tcpAddr
-}
-
-func (spriv *CryptoServerPrivate) DestroyPrivate() {
-	spriv.longtermPair.DestroyPrivate()
+func (priv *Private) Destroy() {
+	priv.LongtermPair.DestroyPrivate()
 }
 
 var (
@@ -42,7 +27,7 @@ var (
 	ipv4MappedPrefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
 )
 
-func cryptoIdBytes(netAddr interface{}) ([]byte, error) {
+func IdentityBytesOfNetworkAddress(netAddr interface{}) ([]byte, error) {
 	var ip net.IP
 	var port int
 	var l3Flag uint8

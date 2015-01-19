@@ -17,7 +17,10 @@ var (
 	hexAlphabet = []byte("0123456789abcdef")
 )
 
-func NewSillyHexCodec() Dust.ShapingCodec {
+type sillyHexModel struct {
+}
+
+func newSillyHexCodec() Dust.ShapingCodec {
 	return &sillyHexCodec{
 		topNybble: -1,
 		lenNext: 200,
@@ -29,6 +32,26 @@ func NewSillyHexCodec() Dust.ShapingCodec {
 		sleepStep: 5 * time.Millisecond,
 		sleepMax: 50 * time.Millisecond,
 	}
+}
+
+func (model *sillyHexModel) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+	return newSillyHexCodec(), newSillyHexCodec(), nil
+}
+
+func (model *sillyHexModel) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+	return newSillyHexCodec(), newSillyHexCodec(), nil
+}
+
+func makeSillyHexModel(params map[string]string) (Dust.ShapingModel, error) {
+	for key, _ := range params {
+		return nil, &Dust.ParameterError{Dust.ParameterUnexpected, "parameter", key}
+	}
+	
+	return &sillyHexModel{}, nil
+}
+
+func init() {
+	Dust.RegisterModel("sillyHex", makeSillyHexModel)
 }
 
 func (hex *sillyHexCodec) WholeStreamDuration() time.Duration {

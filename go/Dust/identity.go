@@ -1,12 +1,3 @@
-/*
-Package Dust implements the main Dust protocol codec for TCP/IP.
-
-To use this library, use LoadServerPublicBridgeLine or LoadServerPrivateFile to acquire the
-public or private side of a server identifier, respectively.  For each connection desired, construct a decoder
-and encoder for the prearranged shaping model, then use BeginDustClient or BeginDustServer to establish a new
-session, which you may use to exchange streams of octets.  Dust sessions will normally continue running in the
-background for the duration provided by the model encoder.
-*/
 package Dust
 
 import (
@@ -16,34 +7,29 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	
-	. "github.com/blanu/Dust/go/DustCrypto"
+
+	"github.com/blanu/Dust/go/Dust/crypting"
+	"github.com/blanu/Dust/go/Dust/cryptions"
 )
 
 const (
 	bridgeParamPublicKey string = "p"
-	bridgeParamC2SModel string = "cm"
-	bridgeParamS2CModel string = "sm"
+	bridgeParamModel string = "m"
 	bridgeParamOptionalPrefix string = "?"
 
 	magicLine = "!!Dust-Server-Private!!"
 )
 
 var (
-	ErrNoMagic = errors.New("magic line missing")
-	ErrNoAddress = errors.New("no network address")
-	ErrNoPrivateKey = errors.New("no private key")
-	ErrNoPublicKey = errors.New("no public key")
-	ErrNoModelName = errors.New("no model name")
-	ErrInvalidAddress = errors.New("invalid network address")
-	ErrInvalidParamLine = errors.New("invalid parameter line")
+	ErrNoMagic = &ParameterError{ParameterMissing, "magic line", ""}
+	ErrNoAddress = &ParameterError{ParameterMissing, "network address", ""}
+	ErrNoPrivateKey = &ParameterError{ParameterMissing, "private key", ""}
+	ErrNoPublicKey = &ParameterError{ParameterMissing, "public key", ""}
+	ErrNoModelName = &ParameterError{ParameterMissing, "model name", ""}
+	ErrInvalidAddress = &ParameterError{ParameterInvalid, "network address", ""}
+	ErrInvalidModelName = &ParameterError{ParameterInvalid, "model name", ""}
+	ErrSyntax = errors.New("bad identity record syntax")
 )
-
-var registeredModels = make(map[string]ShapingModelConstructor)
-
-func RegisterModel(name string, constructor ShapingModelConstructor) {
-	registeredModels[name] = constructor
-}
 
 type endpointAddress struct {
 	tcpAddr *net.TCPAddr
@@ -55,10 +41,18 @@ type modelSpec struct {
 	params map[string]string
 }
 
+func (ms modelSpec) ReifyModel() (ShapingModel, error) {
+	constructor, ok := registeredModels[ms.name]
+	if !ok {
+		return nil, ErrInvalidModelName
+	}
+
+	return constructor(ms.params)
+}
+
 type endpointConfig struct {
 	endpointAddress
-	c2sModel modelSpec
-	s2cModel modelSpec
+	modelSpec
 }
 
 type BridgeLine struct {
@@ -68,12 +62,12 @@ type BridgeLine struct {
 
 type ServerPublic struct {
 	endpointConfig
-	longtermPublic PublicKey
+	longtermPublic cryptions.PublicKey
 }
 
 type ServerPrivate struct {
 	endpointConfig
-	longtermPair KeyPair
+	longtermPair cryptions.KeyPair
 }
 
 func parseEndpointAddress(addrString string) (*endpointAddress, error) {
@@ -104,7 +98,7 @@ func parseEndpointAddress(addrString string) (*endpointAddress, error) {
 	}
 
 	tcpAddr := &net.TCPAddr{ip, int(port), ""}
-	idBytes, err := cryptoIdBytes(tcpAddr)
+	idBytes, err := crypting.IdentityBytesOfNetworkAddress(tcpAddr)
 	if err != nil {
 		return nil, ErrInvalidAddress
 	}
@@ -135,23 +129,6 @@ func extractModelSpec(
 	return &modelSpec{modelName, modelParams}, nil
 }
 
-func extractBothModelSpecs(
-	params map[string]string,
-	ackedParams map[string]bool,
-) (c2sModel *modelSpec, s2cModel *modelSpec, err error) {
-	c2sModel, err = extractModelSpec(params, ackedParams, bridgeParamC2SModel)
-	if err != nil {
-		return
-	}
-
-	s2cModel, err = extractModelSpec(params, ackedParams, bridgeParamS2CModel)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
 func insertModelSpec(ms *modelSpec, params map[string]string, topKey string) {
 	params[topKey] = ms.name
 	for subkey, val := range ms.params {
@@ -159,16 +136,10 @@ func insertModelSpec(ms *modelSpec, params map[string]string, topKey string) {
 	}
 }
 
-func insertBothModelSpecs(c2sModel *modelSpec, s2cModel *modelSpec, params map[string]string) {
-	insertModelSpec(c2sModel, params, bridgeParamC2SModel)
-	insertModelSpec(s2cModel, params, bridgeParamS2CModel)
-}
-
 func checkUnackedParams(params map[string]string, ackedParams map[string]bool) error {
 	for key, _ := range params {
 		if !ackedParams[key] && !strings.HasPrefix(key, bridgeParamOptionalPrefix) {
-			// TODO: error type
-			return errors.New("unrecognized parameter " + key)
+			return &ParameterError{ParameterUnexpected, "parameter", key}
 		}
 	}
 
@@ -184,15 +155,14 @@ func loadEndpointConfigBridgeLine(
 		return
 	}
 
-	c2sModel, s2cModel, err := extractBothModelSpecs(bline.Params, ackedParams)
+	modelSpec, err := extractModelSpec(bline.Params, ackedParams, bridgeParamModel)
 	if err != nil {
 		return
 	}
 
 	result = &endpointConfig{
 		endpointAddress: *endpointAddress,
-		c2sModel: *c2sModel,
-		s2cModel: *s2cModel,
+		modelSpec: *modelSpec,
 	}
 	return
 }
@@ -208,7 +178,7 @@ func LoadServerPublicBridgeLine(bline BridgeLine) (result *ServerPublic, err err
 	if !ok {
 		return nil, ErrNoPublicKey
 	}
-	longtermPublic, err := LoadPublicKeyBase32(publicString)
+	longtermPublic, err := cryptions.LoadPublicKeyBase32(publicString)
 	if err != nil {
 		return
 	}
@@ -231,14 +201,28 @@ func (spub ServerPublic) BridgeLine() BridgeLine {
 	params := map[string]string{
 		bridgeParamPublicKey: spub.longtermPublic.Base32(),
 	}
-	insertBothModelSpecs(&spub.c2sModel, &spub.s2cModel, params)
+	insertModelSpec(&spub.modelSpec, params, "m")
 	return BridgeLine{addrString, params}
+}
+
+func (spub ServerPublic) cryptoPublic() *crypting.Public {
+	return &crypting.Public{
+		IdBytes: spub.endpointAddress.idBytes,
+		LongtermPublic: spub.longtermPublic,
+	}
 }
 
 func (spriv ServerPrivate) Public() ServerPublic {
 	return ServerPublic{
 		endpointConfig: spriv.endpointConfig,
 		longtermPublic: spriv.longtermPair.Public(),
+	}
+}
+
+func (spriv ServerPrivate) cryptoPrivate() *crypting.Private {
+	return &crypting.Private{
+		IdBytes: spriv.endpointAddress.idBytes,
+		LongtermPair: spriv.longtermPair,
 	}
 }
 
@@ -267,7 +251,7 @@ func LoadServerPrivateFile(
 	}
 
 	if !lines.Scan() {
-		return nil, scanErrorOr(ErrNoMagic)
+		return nil, scanErrorOr(ErrSyntax)
 	}
 	if lines.Text() != magicLine {
 		return nil, ErrNoMagic
@@ -287,13 +271,13 @@ func LoadServerPrivateFile(
 	}
 	privateLine := lines.Text()
 	
-	var keyPair KeyPair
+	var keyPair cryptions.KeyPair
 	defer func() {
 		if result == nil && keyPair != nil {
 			keyPair.DestroyPrivate()
 		}
 	}()
-	keyPair, err = LoadPrivateKeyBase32(privateLine)
+	keyPair, err = cryptions.LoadPrivateKeyBase32(privateLine)
 	if err != nil {
 		return
 	}
@@ -303,7 +287,7 @@ func LoadServerPrivateFile(
 		paramLine := lines.Text()
 		equals := strings.IndexRune(paramLine, '=')
 		if equals == -1 {
-			return nil, ErrInvalidParamLine
+			return nil, ErrSyntax
 		}
 
 		key, val := paramLine[:equals], paramLine[equals+1:]
@@ -316,7 +300,7 @@ func LoadServerPrivateFile(
 	}
 
 	ackedParams := make(map[string]bool)
-	c2sModel, s2cModel, err := extractBothModelSpecs(params, ackedParams)
+	modelSpec, err := extractModelSpec(params, ackedParams, bridgeParamModel)
 	if err != nil {
 		return
 	}
@@ -329,8 +313,7 @@ func LoadServerPrivateFile(
 	result = &ServerPrivate{
 		endpointConfig: endpointConfig{
 			endpointAddress: *endpointAddress,
-			c2sModel: *c2sModel,
-			s2cModel: *s2cModel,
+			modelSpec: *modelSpec,
 		},
 		longtermPair: keyPair,
 	}
@@ -347,8 +330,7 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 	paramLines := []string{}
 	for key, val := range spriv.Public().BridgeLine().Params {
 		if strings.ContainsAny(key, "\r\n") || strings.ContainsAny(val, "\r\n") {
-			// TODO: error type
-			return errors.New("shouldn't have parameters with newlines")
+			return ErrSyntax
 		}
 
 		switch key {
@@ -359,8 +341,7 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 		}
 	}
 
-	allLines := []string{}
-	allLines = append(allLines, headerLines...)
+	allLines := append([]string{}, headerLines...)
 	allLines = append(allLines, paramLines...)
 	allLines = append(allLines, "")
 	contentString := strings.Join(allLines, "\n")
@@ -407,7 +388,7 @@ func NewServerPrivateBridgeLine(bline BridgeLine) (result *ServerPrivate, err er
 		return
 	}
 
-	keyPair, err := NewKeyPair()
+	keyPair, err := cryptions.NewKeyPair()
 	if err != nil {
 		return
 	}

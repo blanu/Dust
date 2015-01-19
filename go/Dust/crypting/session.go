@@ -1,4 +1,4 @@
-package Dust
+package crypting
 
 import (
 	"bytes"
@@ -6,7 +6,8 @@ import (
 	"errors"
 	"io"
 
-	. "github.com/blanu/Dust/go/DustCrypto"
+	"github.com/blanu/Dust/go/Dust/bufman"
+	"github.com/blanu/Dust/go/Dust/cryptions"
 )
 
 var (
@@ -21,16 +22,16 @@ const (
 	maxOutFrameDataSize = 127
 )
 
-type cryptoState int
+type state int
 
 const (
-	cryptoStateFailed cryptoState = iota
-	cryptoStateStreaming 
-	cryptoStateHandshakeClient
-	cryptoStateHandshakeServer
+	stateFailed state = iota
+	stateStreaming 
+	stateHandshakeClient
+	stateHandshakeServer
 )
 
-type CryptoSession struct {
+type Session struct {
 	// This is one of:
 	// 
 	//   - Failed :: we're using a bogus session key to send, and received data is discarded.
@@ -49,25 +50,25 @@ type CryptoSession struct {
 	//
 	//   - HandshakeServer :: the client's handshake request is being reassembled in handshakeReassembly.
 	//     No session key, so we can't send anything yet.
-	state cryptoState
+	state state
 	
 	// Always set.
-	//   - If state is HandshakeClient, this is a *CryptoServerIdentity.
-	//   - If state is HandshakeServer, this is a *CryptoServerPrivate.
+	//   - If state is HandshakeClient, this is a *Public.
+	//   - If state is HandshakeServer, this is a *Private.
 	serverInfo interface{}
 
 	// These both correspond to ephemeral keys.  The server's long-term key or keypair will be
 	// stashed somewhere in serverInfo.  localPair is always set.  remotePublic is set if state is
 	// Streaming.
-	localPair KeyPair
-	remotePublic PublicKey
+	localPair cryptions.KeyPair
+	remotePublic cryptions.PublicKey
 	
 	// Depending on state:
 	// 
 	//   - Streaming :: a valid session key
 	//   - Failed :: a bogus session key to keep the connection open on the outside
 	//   - (otherwise) :: unset
-	sessionKey SecretBytes
+	sessionKey cryptions.SecretBytes
 
 	// Incoming data must be processed against this first, if set, before inCipher.  The reassembly
 	// capacity is the expected length, and the semantic is determined by state:
@@ -75,14 +76,14 @@ type CryptoSession struct {
 	//   - Streaming :: reassembling an IV
 	//   - HandshakeClient :: reassembling a server response
 	//   - HandshakeServer :: reassembling a client request
-	handshakeReassembly reassembly
+	handshakeReassembly bufman.Reassembly
 	
 	// Set if state is Streaming.
 	inCipher cipher.Stream
 
 	// Decrypted data is reassembled into frames here.  The reassembly capacity is the maximum frame
 	// size.
-	dataReassembly reassembly
+	dataReassembly bufman.Reassembly
 
 	// Stream-oriented byte chunks are sent to inPlains from the outward-facing side of the crypto
 	// session.  The receiver owns the chunks.  inPlainHeld is controlled by the receiver methods from
@@ -99,32 +100,32 @@ type CryptoSession struct {
 	// Plaintext frames are sent to outFrames from the inward-facing side of the crypto session.  The
 	// receiver owns the chunks.  Space is allocated for an authenticator, but it is not computed yet, and
 	// nor is the frame encrypted.
-	outFrames chan cryptoFrame
+	outFrames chan frame
 }
 
 // PullWrite tries to pull post-encryption bytes into p, using in-band framing to intersperse any plain data
 // available to write with enough padding frames to completely fill p immediately.  In some handshake states,
 // err may be set to ErrStuck with n < len(p) to indicate that we actually can't send anything more,
 // which is kind of terrible.  Note that we may still have n > 0 in that case.  This method must be called
-// from the outward-facing side of the CryptoSession.
-func (cs *CryptoSession) PullWrite(p []byte) (n int, err error) {
+// from the outward-facing side of the Session.
+func (cs *Session) PullWrite(p []byte) (n int, err error) {
 	n, err = 0, nil
 	for len(p) > 0 {
 		if len(cs.outCryptPending) > 0 {
-			n += copyAdvance(&p, &cs.outCryptPending)
+			n += bufman.CopyAdvance(&p, &cs.outCryptPending)
 			continue
 		}
 
-		var frame cryptoFrame
+		var frame frame
 		
 		switch cs.state {
-		case cryptoStateStreaming:
+		case stateStreaming:
 			select {
 			default:
 				frame = newPaddingFrame(len(p))
 			case frame = <-cs.outFrames:
 			}
-		case cryptoStateFailed:
+		case stateFailed:
 			// TODO: do we have to drain cs.outFrames here?
 			frame = newPaddingFrame(len(p))
 		default:
@@ -144,7 +145,7 @@ func (cs *CryptoSession) PullWrite(p []byte) (n int, err error) {
 		frame.authenticateWith(cs.sessionKey)
 		frame.encryptWith(cs.outCipher)
 		remaining := frame.slice()
-		n += copyAdvance(&p, &remaining)
+		n += bufman.CopyAdvance(&p, &remaining)
 		if len(remaining) > 0 {
 			cs.outCryptPending = append(cs.outCryptPending, remaining...)
 		}
@@ -154,67 +155,65 @@ func (cs *CryptoSession) PullWrite(p []byte) (n int, err error) {
 }
 
 // Move from any state to the Failed state, setting a bogus session key and destroying any in-progress data.
-func (cs *CryptoSession) fail() {
-	cs.state = cryptoStateFailed
+func (cs *Session) fail() {
+	cs.state = stateFailed
 	cs.handshakeReassembly = nil
 	cs.dataReassembly = nil
 	
-	bogusKey := NewSecretBytes()
-	if err := RandomizeSecretBytes(bogusKey); err != nil {
+	bogusKey := cryptions.NewSecretBytes()
+	if err := cryptions.RandomizeSecretBytes(bogusKey); err != nil {
 		// TODO: steal some extra entropy earlier to prevent this case.  (We do actually have to
 		// panic in the absence of that because otherwise we start emitting predictable-ish bytes.)
 		panic("Nooooo what happened to my entropy source, oh god")
 	}
 	
 	cs.sessionKey = bogusKey
-	cs.outCipher = NewStreamCipher(bogusKey, [32]byte{})
+	cs.outCipher = cryptions.NewStreamCipher(bogusKey, [32]byte{})
 	cs.outCryptPending = nil
 }
 
 // Called whenever an invalid handshake record is received.
-func (cs *CryptoSession) failHandshake() {
-	debugf("CS: fail handshake")
+func (cs *Session) failHandshake() {
 	cs.fail()
 }
 
 // Called whenever an undecodable frame is received.
-func (cs *CryptoSession) failDecode() {
-	debugf("CS: fail decode")
+func (cs *Session) failDecode() {
 	cs.fail()
 }
 
 // Change to the Streaming state with the given sessionKey, setting up to encrypt outgoing data and receive a
 // stream of IV + data.
-func (cs *CryptoSession) beginStreaming(sessionKey SecretBytes) {
+func (cs *Session) beginStreaming(sessionKey cryptions.SecretBytes) {
 	cs.sessionKey = sessionKey
-	cs.state = cryptoStateStreaming
-	cs.handshakeReassembly = beginReassembly(32)
+	cs.state = stateStreaming
+	cs.handshakeReassembly = bufman.BeginReassembly(32)
 	
 	// This part isn't actually that secret, just the randomize function has that type.
-	outIV := NewSecretBytes()
-	if err := RandomizeSecretBytes(outIV); err != nil {
+	outIV := cryptions.NewSecretBytes()
+	if err := cryptions.RandomizeSecretBytes(outIV); err != nil {
 		// TODO: get this entropy earlier
 		cs.failHandshake()
 		return
 	}
 
 	// Eeeek, raw shared secret as stream cipher key!
-	cs.outCipher = NewStreamCipher(cs.sessionKey, *outIV.Pointer())
+	cs.outCipher = cryptions.NewStreamCipher(cs.sessionKey, *outIV.Pointer())
 	cs.outCryptPending = append(cs.outCryptPending, outIV.Slice()...)
 }
 
 // The incoming IV has been assembled in the handshakeReassembly buffer.  The session key has already been
 // set.  Set up to decrypt incoming data.
-func (cs *CryptoSession) beginInCipher() {
+func (cs *Session) beginInCipher() {
 	inIV := [32]byte{}
-	copied := copy(inIV[:], cs.handshakeReassembly.data())
+	copied := copy(inIV[:], cs.handshakeReassembly.Data())
 	if copied != 32 {
 		panic("should not have gotten here without incoming IV")
 	}
 
 	// Eeeek, raw shared secret as stream cipher key!
-	cs.inCipher = NewStreamCipher(cs.sessionKey, inIV)
-	cs.dataReassembly = beginReassembly(maxInFrameDataSize + 35)
+	cs.inCipher = cryptions.NewStreamCipher(cs.sessionKey, inIV)
+	cs.dataReassembly = bufman.BeginReassembly(maxInFrameDataSize + 35)
 	cs.handshakeReassembly = nil
 }
 
@@ -222,8 +221,8 @@ func (cs *CryptoSession) beginInCipher() {
 
 // A server handshake response has been assembled in the handshakeReassembly buffer; process it and attempt to
 // move to the Streaming state.
-func (cs *CryptoSession) completeHandshakeClient() {
-	response := cs.handshakeReassembly.data()
+func (cs *Session) completeHandshakeClient() {
+	response := cs.handshakeReassembly.Data()
 	cs.handshakeReassembly = nil
 	
 	if len(response) != 64 {
@@ -231,46 +230,46 @@ func (cs *CryptoSession) completeHandshakeClient() {
 	}
 
 	var err error
-	cs.remotePublic, err = LoadPublicKeyUniform(response[0:32])
+	cs.remotePublic, err = cryptions.LoadPublicKeyUniform(response[0:32])
 	if err != nil {
 		panic("should always be able to load public key here")
 	}
-	sid := cs.serverInfo.(*CryptoServerIdentity)
+	pub := cs.serverInfo.(*Public)
 
-	rawDH := NewSecretBytes()
+	rawDH := cryptions.NewSecretBytes()
 	defer rawDH.Destroy()
-	sk := NewDigest()
+	sk := cryptions.NewDigest()
 	defer sk.Destroy()
 	cs.localPair.ECDH(cs.remotePublic, rawDH)
 	sk.WriteSecret(rawDH)
-	cs.localPair.ECDH(sid.longtermPublic, rawDH)
+	cs.localPair.ECDH(pub.LongtermPublic, rawDH)
 	sk.WriteSecret(rawDH)
 	rawDH.Destroy()
 	sk.Write(bytes.Join([][]byte{
-		sid.idBytes,
+		pub.IdBytes,
 		cs.localPair.Public().Bytes(),
 		cs.remotePublic.Bytes(),
 		[]byte(`ntor`),
 	}, []byte{}))
 
-	var sessionKey SecretBytes
+	var sessionKey cryptions.SecretBytes
 	defer func() {
-		if cs.state != cryptoStateStreaming && sessionKey != nil {
+		if cs.state != stateStreaming && sessionKey != nil {
 			sessionKey.Destroy()
 		}
 	}()
-	sessionKey = NewSecretBytes()
+	sessionKey = cryptions.NewSecretBytes()
 	sk.SumSecret(sessionKey)
 
 	confirmationInput := bytes.Join([][]byte{
-		sid.idBytes,
+		pub.IdBytes,
 		cs.remotePublic.Bytes(),
 		cs.localPair.Public().Bytes(),
 		[]byte(`ntorserver`),
 	}, []byte{})
 
 	// Eeeek, raw shared secret as HMAC key!
-	confirmationOk := VerifyAuthenticator(confirmationInput, sessionKey, response[32:64])
+	confirmationOk := cryptions.VerifyAuthenticator(confirmationInput, sessionKey, response[32:64])
 	if !confirmationOk {
 		cs.failHandshake()
 		return
@@ -281,8 +280,8 @@ func (cs *CryptoSession) completeHandshakeClient() {
 
 // A client handshake request has been assembled in the handshakeReassembly buffer; process it and attempt to
 // move to the Streaming state.
-func (cs *CryptoSession) completeHandshakeServer() {
-	request := cs.handshakeReassembly.data()
+func (cs *Session) completeHandshakeServer() {
+	request := cs.handshakeReassembly.Data()
 	cs.handshakeReassembly = nil
 	
 	if len(request) != 32 {
@@ -290,46 +289,46 @@ func (cs *CryptoSession) completeHandshakeServer() {
 	}
 
 	var err error
-	cs.remotePublic, err = LoadPublicKeyUniform(request[0:32])
+	cs.remotePublic, err = cryptions.LoadPublicKeyUniform(request[0:32])
 	if err != nil {
 		panic("should always be able to load public key here")
 	}
-	spriv := cs.serverInfo.(*CryptoServerPrivate)
+	priv := cs.serverInfo.(*Private)
 
-	rawDH := NewSecretBytes()
+	rawDH := cryptions.NewSecretBytes()
 	defer rawDH.Destroy()
-	sk := NewDigest()
+	sk := cryptions.NewDigest()
 	defer sk.Destroy()
 	cs.localPair.ECDH(cs.remotePublic, rawDH)
 	sk.WriteSecret(rawDH)
-	spriv.longtermPair.ECDH(cs.remotePublic, rawDH)
+	priv.LongtermPair.ECDH(cs.remotePublic, rawDH)
 	sk.WriteSecret(rawDH)
 	rawDH.Destroy()
 	sk.Write(bytes.Join([][]byte{
-		spriv.idBytes,
+		priv.IdBytes,
 		cs.remotePublic.Bytes(),
 		cs.localPair.Public().Bytes(),
 		[]byte(`ntor`),
 	}, []byte{}))
 
-	var sessionKey SecretBytes
+	var sessionKey cryptions.SecretBytes
 	defer func() {
-		if cs.state != cryptoStateStreaming && sessionKey != nil {
+		if cs.state != stateStreaming && sessionKey != nil {
 			sessionKey.Destroy()
 		}
 	}()
-	sessionKey = NewSecretBytes()
+	sessionKey = cryptions.NewSecretBytes()
 	sk.SumSecret(sessionKey)
 
 	confirmationInput := bytes.Join([][]byte{
-		spriv.idBytes,
+		priv.IdBytes,
 		cs.localPair.Public().Bytes(),
 		cs.remotePublic.Bytes(),
 		[]byte(`ntorserver`),
 	}, []byte{})
 
 	// Eeeek, raw shared secret as HMAC key!
-	confirmation := ComputeAuthenticator(confirmationInput, sessionKey)
+	confirmation := cryptions.ComputeAuthenticator(confirmationInput, sessionKey)
 	response := append(cs.localPair.Public().UniformBytes(), confirmation...)
 	if len(response) != 64 {
 		panic("something grotesquely wrong with handshake response computation")
@@ -340,7 +339,7 @@ func (cs *CryptoSession) completeHandshakeServer() {
 }
 
 // Attempt to decode exactly one plaintext frame and ship it out to the inward-facing side.
-func (cs *CryptoSession) decodeAndShipoutPlainFrame(p []byte) (consumed int, err error) {
+func (cs *Session) decodeAndShipoutPlainFrame(p []byte) (consumed int, err error) {
 	// TODO: handle incoming MTU things
 	frame := incomingCryptoFrame(p)
 	switch {
@@ -360,35 +359,35 @@ func (cs *CryptoSession) decodeAndShipoutPlainFrame(p []byte) (consumed int, err
 	authenticated := frame.verifyAuthenticator(cs.sessionKey)
 	dataCarrying := frame.hasData()
 	if dataCarrying && authenticated {
-		cs.inPlains <- copyNew(frame.data())
+		cs.inPlains <- bufman.CopyNew(frame.data())
 	}
 
 	return frame.wireSize(), nil
 }
 
 // PushRead processes new pre-decryption bytes in p, handling handshake completions and sending any usable
-// plaintext that results to the inward-facing side of the CryptoSession.  This method must be called from the
-// outward-facing side of the CryptoSession.  The signature is similar to io.Writer.Write.
-func (cs *CryptoSession) PushRead(p []byte) (n int, err error) {
+// plaintext that results to the inward-facing side of the Session.  This method must be called from the
+// outward-facing side of the Session.  The signature is similar to io.Writer.Write.
+func (cs *Session) PushRead(p []byte) (n int, err error) {
 	n, err = 0, nil
 
 	for len(p) > 0 {
 		// TIMING: arguably this leads to a timing attack against whether a handshake succeeded if the
 		// attacker can measure our CPU usage, but that's probably not preventable anyway?  Come back to this
 		// later.
-		if cs.state == cryptoStateFailed {
+		if cs.state == stateFailed {
 			return n+len(p), err
 		}
 		
 		if cs.handshakeReassembly != nil {
-			n += copyReassemble(&cs.handshakeReassembly, &p)
-			if cs.handshakeReassembly.fixedSizeComplete() {
+			n += bufman.CopyReassemble(&cs.handshakeReassembly, &p)
+			if cs.handshakeReassembly.FixedSizeComplete() {
 				switch cs.state {
-				case cryptoStateHandshakeClient:
+				case stateHandshakeClient:
 					cs.completeHandshakeClient()
-				case cryptoStateHandshakeServer:
+				case stateHandshakeServer:
 					cs.completeHandshakeServer()
-				case cryptoStateStreaming:
+				case stateStreaming:
 					cs.beginInCipher()
 				}
 			}
@@ -398,9 +397,9 @@ func (cs *CryptoSession) PushRead(p []byte) (n int, err error) {
 			// returned.  So this isn't a valid state.
 			panic("should not have gotten here without incoming cipher")
 		} else {
-			n += transformReassemble(&cs.dataReassembly, &p, cs.inCipher.XORKeyStream)
+			n += bufman.TransformReassemble(&cs.dataReassembly, &p, cs.inCipher.XORKeyStream)
 
-			possibleFrames := cs.dataReassembly.data()
+			possibleFrames := cs.dataReassembly.Data()
 		Frames:
 			for {
 				consumed, err := cs.decodeAndShipoutPlainFrame(possibleFrames)
@@ -415,7 +414,7 @@ func (cs *CryptoSession) PushRead(p []byte) (n int, err error) {
 				}
 			}
 			
-			cs.dataReassembly.consume(cs.dataReassembly.validLen() - len(possibleFrames))
+			cs.dataReassembly.Consume(cs.dataReassembly.ValidLen() - len(possibleFrames))
 			if err != nil {
 				cs.failDecode()
 				return n, err
@@ -432,7 +431,7 @@ func (cs *CryptoSession) PushRead(p []byte) (n int, err error) {
 
 // Read reads as much new plaintext data as is available from cs, blocking if and only if none would otherwise
 // be available.  The signature is that of io.Reader.Read.
-func (cs *CryptoSession) Read(p []byte) (n int, err error) {
+func (cs *Session) Read(p []byte) (n int, err error) {
 	n, err = 0, nil
 	for len(p) > 0 {
 		var data []byte
@@ -460,7 +459,7 @@ func (cs *CryptoSession) Read(p []byte) (n int, err error) {
 			return n, err
 		}
 
-		n += copyAdvance(&p, &data)
+		n += bufman.CopyAdvance(&p, &data)
 		if len(data) > 0 {
 			cs.inPlainHeld = data
 		}
@@ -471,7 +470,7 @@ func (cs *CryptoSession) Read(p []byte) (n int, err error) {
 
 // Write queues the plaintext data p for transmission via cs, blocking if intermediary buffers are full.  The
 // signature is that of io.Writer.Write.
-func (cs *CryptoSession) Write(p []byte) (n int, err error) {
+func (cs *Session) Write(p []byte) (n int, err error) {
 	// TODO: should we really do the framing here?  Right now, maxOutFrameDataSize is a kludge to make sure
 	// very low-performance models don't get _too_ much delay from long frames.
 	
@@ -496,50 +495,38 @@ func (cs *CryptoSession) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
-func (cs *CryptoSession) Init(state cryptoState, serverInfo interface{}) error {
+func (cs *Session) Init(state state, serverInfo interface{}) error {
 	var err error
-	if cs.localPair, err = NewKeyPair(); err != nil {
+	if cs.localPair, err = cryptions.NewKeyPair(); err != nil {
 		return err
 	}
 
 	cs.state = state
 	cs.serverInfo = serverInfo
 	cs.inPlains = make(chan []byte, 4)
-	cs.outFrames = make(chan cryptoFrame, 4)
+	cs.outFrames = make(chan frame, 4)
 	return nil
 }
 
-func BeginCryptoClient(spub *ServerPublic) (*CryptoSession, error) {
-	csid := &CryptoServerIdentity{
-		tcpAddr: spub.tcpAddr,
-		idBytes: spub.idBytes,
-		longtermPublic: spub.longtermPublic,
-	}
-	
+func BeginClient(pub *Public) (*Session, error) {
 	var err error
-	cs := &CryptoSession{}
-	if err = cs.Init(cryptoStateHandshakeClient, csid); err != nil {
+	cs := &Session{}
+	if err = cs.Init(stateHandshakeClient, pub); err != nil {
 		return nil, err
 	}
 
 	cs.outCryptPending = cs.localPair.Public().UniformBytes()
-	cs.handshakeReassembly = beginReassembly(64)
+	cs.handshakeReassembly = bufman.BeginReassembly(64)
 	return cs, nil
 }
 
-func BeginCryptoServer(spriv *ServerPrivate) (*CryptoSession, error) {
-	cspriv := &CryptoServerPrivate{
-		tcpAddr: spriv.tcpAddr,
-		idBytes: spriv.idBytes,
-		longtermPair: spriv.longtermPair,
-	}
-	
+func BeginServer(priv *Private) (*Session, error) {
 	var err error
-	cs := &CryptoSession{}
-	if err = cs.Init(cryptoStateHandshakeServer, cspriv); err != nil {
+	cs := &Session{}
+	if err = cs.Init(stateHandshakeServer, priv); err != nil {
 		return nil, err
 	}
 
-	cs.handshakeReassembly = beginReassembly(32)
+	cs.handshakeReassembly = bufman.BeginReassembly(32)
 	return cs, nil
 }

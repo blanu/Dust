@@ -1,14 +1,13 @@
-package Dust
+package shaping
 
 import (
 	"time"
 )
 
-// TODO: rename these to ShapingEncoder/ShapingDecoder, probably
 // TODO: higher-performance buffer discipline for encode/decode?
 // TODO: RecordPacketSent?
 
-type ShapingEncoder interface {
+type Encoder interface {
 	// WholeStreamDuration returns the length of time the connection should be kept open.
 	WholeStreamDuration() time.Duration
 
@@ -30,21 +29,9 @@ type ShapingEncoder interface {
 	ShapeBytes(p []byte) []byte
 }
 
-type ShapingDecoder interface {
+type Decoder interface {
 	// UnshapeBytes takes the next chunk of shaped bytes and returns a decoded chunk of (expected-to-be)
 	// uniform bytes, streaming-style.  The decoder may not retain p, but is presumed to keep other state
 	// as necessary.
 	UnshapeBytes(p []byte) []byte
 }
-
-type ShapingCodec interface {
-	ShapingEncoder
-	ShapingDecoder
-}
-
-type ShapingModel interface {
-	MakeClientCodec() (ShapingEncoder, ShapingDecoder, error)
-	MakeServerCodec() (ShapingEncoder, ShapingDecoder, error)
-}
-
-type ShapingModelConstructor func(params map[string]string) (ShapingModel, error)

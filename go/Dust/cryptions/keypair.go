@@ -1,4 +1,4 @@
-package DustCrypto
+package cryptions
 
 import (
 	"encoding/base32"

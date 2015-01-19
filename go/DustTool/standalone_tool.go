@@ -51,7 +51,7 @@ func writeNewIdentity(path string, addrString string) error {
 	}()
 
 	// TODO: un-hardcode
-	bline := Dust.BridgeLine{addrString, map[string]string{"cm": "sillyHex", "sm": "sillyHex"}}
+	bline := Dust.BridgeLine{addrString, map[string]string{"m": "sillyHex"}}
 
 	spriv, err = Dust.NewServerPrivateBridgeLine(bline)
 	if err != nil {
