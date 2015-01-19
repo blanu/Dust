@@ -7,7 +7,7 @@ import (
 	"github.com/blanu/Dust/go/Dust"
 )
 
-type sillyHexModel struct {
+type sillyHexCodec struct {
 	topNybble int8
 	lenNext, lenMin, lenStep, lenMax uint16
 	sleepNext, sleepMin, sleepStep, sleepMax time.Duration
@@ -17,8 +17,8 @@ var (
 	hexAlphabet = []byte("0123456789abcdef")
 )
 
-func NewSillyHexModel() Dust.Model {
-	return &sillyHexModel{
+func NewSillyHexCodec() Dust.ShapingCodec {
+	return &sillyHexCodec{
 		topNybble: -1,
 		lenNext: 200,
 		lenMin: 200,
@@ -31,15 +31,15 @@ func NewSillyHexModel() Dust.Model {
 	}
 }
 
-func (hex *sillyHexModel) WholeStreamDuration() time.Duration {
+func (hex *sillyHexCodec) WholeStreamDuration() time.Duration {
 	return 1000 * time.Hour
 }
 
-func (hex *sillyHexModel) MaxPacketLength() uint16 {
+func (hex *sillyHexCodec) MaxPacketLength() uint16 {
 	return hex.lenMax
 }
 
-func (hex *sillyHexModel) NextPacketLength() uint16 {
+func (hex *sillyHexCodec) NextPacketLength() uint16 {
 	hex.lenNext += hex.lenStep
 	if hex.lenNext > hex.lenMax {
 		hex.lenNext = hex.lenMin
@@ -48,7 +48,7 @@ func (hex *sillyHexModel) NextPacketLength() uint16 {
 	return hex.lenNext
 }
 
-func (hex *sillyHexModel) NextPacketSleep() time.Duration {
+func (hex *sillyHexCodec) NextPacketSleep() time.Duration {
 	hex.sleepNext += hex.sleepStep
 	if hex.sleepNext > hex.sleepMax {
 		hex.sleepNext = hex.sleepMin
@@ -57,7 +57,7 @@ func (hex *sillyHexModel) NextPacketSleep() time.Duration {
 	return hex.sleepNext
 }
 
-func (hex *sillyHexModel) EncodeBytes(p []byte) []byte {
+func (hex *sillyHexCodec) ShapeBytes(p []byte) []byte {
 	out := make([]byte, len(p) * 4)
 	j := 0
 	pattern := uint64(rand.Int63())
@@ -82,7 +82,7 @@ func (hex *sillyHexModel) EncodeBytes(p []byte) []byte {
 	return out[:j]
 }
 
-func (hex *sillyHexModel) DecodeBytes(p []byte) []byte {
+func (hex *sillyHexCodec) UnshapeBytes(p []byte) []byte {
 	out := make([]byte, 1 + (len(p) / 2))
 	j := 0
 

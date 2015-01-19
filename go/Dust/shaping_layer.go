@@ -121,11 +121,11 @@ type Shaper struct {
 	heldError error
 
 	reader *shaperReader
-	decodeModel DecodeModel
+	decoder ShapingDecoder
 	inBuf []byte
 	
 	timer *shaperTimer
-	encodeModel EncodeModel
+	encoder ShapingEncoder
 	outBuf []byte
 	outPending []byte
 	pullBuf []byte
@@ -136,7 +136,7 @@ type Shaper struct {
 
 func (sh *Shaper) handleRead(subn int) error {
 	// We own inBuf until we cycle the reader again.
-	decoded := sh.decodeModel.DecodeBytes(sh.inBuf[:subn])
+	decoded := sh.decoder.UnshapeBytes(sh.inBuf[:subn])
 	_, err := sh.crypto.PushRead(decoded)
 	if err != nil {
 		return err
@@ -147,8 +147,8 @@ func (sh *Shaper) handleRead(subn int) error {
 }
 
 func (sh *Shaper) handleTimer() error {
-	outLen := sh.encodeModel.NextPacketLength()
-	sh.timer.cycle(sh.encodeModel.NextPacketSleep())
+	outLen := sh.encoder.NextPacketLength()
+	sh.timer.cycle(sh.encoder.NextPacketSleep())
 
 	outValid := 0
 	outTail := sh.outBuf[:outLen]
@@ -162,7 +162,7 @@ func (sh *Shaper) handleTimer() error {
 		if err != nil && err != ErrStuck {
 			return err
 		}
-		encodedTail := sh.encodeModel.EncodeBytes(sh.pullBuf[:pullN])
+		encodedTail := sh.encoder.ShapeBytes(sh.pullBuf[:pullN])
 		outValid += copyAdvance(&outTail, &encodedTail)
 		if len(encodedTail) > 0 {
 			sh.outPending = append(sh.outPending, encodedTail...)
@@ -242,9 +242,9 @@ func (sh *Shaper) run(afterThunk func()) {
 func NewShaper(
 	crypto *CryptoSession,
 	in io.Reader,
-	decodeModel DecodeModel,
+	decoder ShapingDecoder,
 	out io.Writer,
-	encodeModel EncodeModel,
+	encoder ShapingEncoder,
 ) (*Shaper, error) {
 	// INCOMPLETE: does not handle connection duration.
 	
@@ -254,12 +254,12 @@ func NewShaper(
 		shapedOut: out,
 
 		reader: nil, // initialized below
-		decodeModel: decodeModel,
+		decoder: decoder,
 		inBuf: make([]byte, shaperBufSize),
 
 		timer: nil, // initialized below
-		encodeModel: encodeModel,
-		outBuf: make([]byte, encodeModel.MaxPacketLength()),
+		encoder: encoder,
+		outBuf: make([]byte, encoder.MaxPacketLength()),
 		outPending: nil,
 		pullBuf: make([]byte, shaperBufSize),
 

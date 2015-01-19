@@ -167,9 +167,9 @@ func copyThen(dst io.Writer, src io.Reader, errorOut *error, afterThunk func()) 
 }
 
 func doProxy(cs *Dust.CryptoSession, dustSide ioPair, plainSide ioPair) error {
-	model := sillyHex.NewSillyHexModel()
+	codec := sillyHex.NewSillyHexCodec()
 	
-	shaper, err := Dust.NewShaper(cs, dustSide.rd, model, dustSide.wr, model)
+	shaper, err := Dust.NewShaper(cs, dustSide.rd, codec, dustSide.wr, codec)
 	if err != nil {
 		return err
 	}

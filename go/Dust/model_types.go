@@ -8,7 +8,7 @@ import (
 // TODO: higher-performance buffer discipline for encode/decode?
 // TODO: RecordPacketSent?
 
-type EncodeModel interface {
+type ShapingEncoder interface {
 	// WholeStreamDuration returns the length of time the connection should be kept open.
 	WholeStreamDuration() time.Duration
 
@@ -24,20 +24,22 @@ type EncodeModel interface {
 	// may be called in either order.
 	NextPacketSleep() time.Duration
 
-	// EncodeBytes takes the next chunk of uniform bytes and returns as many shaped bytes as it can at a
+	// ShapeBytes takes the next chunk of uniform bytes and returns as many shaped bytes as it can at a
 	// time, streaming-style.  The encoder may not retain p, but is presumed to keep other state as
 	// necessary.
-	EncodeBytes(p []byte) []byte
+	ShapeBytes(p []byte) []byte
 }
 
-type DecodeModel interface {
-	// DecodeBytes takes the next chunk of shaped bytes and returns a decoded chunk of (expected-to-be)
+type ShapingDecoder interface {
+	// UnshapeBytes takes the next chunk of shaped bytes and returns a decoded chunk of (expected-to-be)
 	// uniform bytes, streaming-style.  The decoder may not retain p, but is presumed to keep other state
 	// as necessary.
-	DecodeBytes(p []byte) []byte
+	UnshapeBytes(p []byte) []byte
 }
 
-type Model interface {
-	EncodeModel
-	DecodeModel
+type ShapingCodec interface {
+	ShapingEncoder
+	ShapingDecoder
 }
+
+type ModelConstructor func(map[string]string params) (ShapingEncoder, ShapingDecoder, error)
