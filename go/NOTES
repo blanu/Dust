@@ -1,0 +1,68 @@
+#+TITLE: Notes on Dust Go implementation
+
+* State
+** Packaging
+Copyright/licensing information:
+
+  - Most of the code currently in go/ is by (and copyrighted by) Drake Wilson and is expected to
+    wind up MIT-licensed as this section resolves.
+
+  - DustModel/dist was moved from a fork of another Go package by blanu earlier, and it refers to
+    its own LICENSE file which may not have been copied; it claims to be BSD-style.
+
+Need better external documentation in general as things become more stable.
+
+** Crypto primitives
+No viable Skein-256-256 has been verified present yet, so that [[id:ed97541b-2413-4568-8b83-53709baa6715][still needs to be pulled in]] or else written
+locally.  Curve25519 is in, along with its Elligator form (using [[https://github.com/agl/ed25519/tree/master/extra25519][agl's extra25519]]) but could use test vectors.
+HMAC is using Go's native HMAC mechanism.
+
+The SecretBytes API is a little wonky given Go's memory and execution model, and is mostly voodoo.  Possibly
+it should be taken out entirely.
+
+** Crypto/framing layer
+Most of this should probably work now, modulo the stubbed-out crypto primitives, but it hasn't been tested
+against anything else yet and needs another verification pass.
+
+** Shaping layer
+There's an API for models, but the only model right now is a silly pseudo-model.  Loopback communication has
+been verified working with this model, modulo some protocol-design difficulties (via the Dust spec) regarding
+handshake latency versus shaping padding.
+
+** Test proxy
+This mostly seems to work, protocol-wise, modulo all the broken parts above.
+
+There's some wonkiness surrounding the composition of goroutines somewhere in here; it's not clear whether
+it's here or in the shaping layer, but the symptom is ungraceful exits or maybe deadlock when the connection
+goes away.
+
+** Key tool
+This mostly works but should have a cleaner CLI.
+
+* Tasks
+** TODO Pull in actual Skein
+   :PROPERTIES:
+   :ID:       ed97541b-2413-4568-8b83-53709baa6715
+   :END:
+"Where's the Skein"?
+
+  - https://github.com/dchest/skein only does Skein-512, but the Dust protocol specifies Skein-256-256.
+  - https://github.com/wernerd/Skein3Fish is GPLv3 which is probably unusable here.
+  - https://github.com/tildeleb/hashland is MIT and supposedly has a Skein-256, but there's some ambiguity
+    surrounding the "Make sure licensing and author information is accurate" in the README (ironically,
+    this NOTES file has something quite similar above!).
+
+** TODO Pull in actual models
+API discussions have been had to some extent, but go-modelgen hasn't been properly updated, so it's currently
+broken.
+
+** TODO Better CLI for key tool
+** TODO Better CLI for test proxy
+
+* (metadata)
+
+Local variables:
+mode: org
+mode: auto-fill
+fill-column: 110
+End:

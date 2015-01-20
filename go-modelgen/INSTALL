@@ -1,3 +1,6 @@
+(This is kind of broken right now.  Sorry!  I think it was broken already
+anyway though...  --DasyatidPrime)
+
 Requirements: Go 1.4, Python 3.x, PyYAML
 
 Put your model files in src/dust/models/.
