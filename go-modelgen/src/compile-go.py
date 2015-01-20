@@ -35,6 +35,7 @@ def convertModel(name, data):
   model['duration']=genDuration(data['duration']['dist'], data['duration']['params'])
   model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'])
   model['packet_count']=genFlow(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'])
+  model['packet_sleep']=genITA(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'])
   model['huffman']=genHuffman(data['incomingModel']['huffman'])
   model['encode']=genEncoder(data['incomingModel']['huffman'])
   model['decode']=genDecoder()
@@ -78,6 +79,13 @@ def genFlow(dist, params):
     print('Unknown flow dist %s' % dist)
     return None
 
+def genITA(dist, params):
+  if dist=='poisson':
+    return genExponential("sleepDist", params[0])
+  else:
+    print('Unknown flow dist %s' % dist)
+    return None
+
 # FIXME - Find code for generating a proper Poisson distribution
 def genPoisson(varname, param):
   return {
@@ -115,44 +123,56 @@ def convertToProbs(arr):
   return map(lambda item: float(item)/total, arr)
 
 def genHuffman(params):
-  return "var huffmanCodes = [][]bool %s" % (genBoolArrays(params))
+  return "var huffmanCodes, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params))
 
 def genEncoder(params):
   varname="contentDist"
   return {
-    'decl': "encoder *huffman.HuffmanEncoder",
-    'data': "encoder: huffman.GenerateHuffmanEncoder(huffmanCodes)",
+    'decl': "encoder *huffman.Encoder",
+    'data': "encoder: huffman.NewEncoder(huffmanCodes),",
     'body': """
-      print(self.encoder.String())
-
-      return self.encoder.Encode(bytes)
+      dst := make([]byte, 0, len(bytes))
+      self.encoder.Encode(dst, bytes)
+      return dst
       """
   }
 
 def genDecoder():
   varname="contentDist"
   return {
+    'decl': "decoder *huffman.Decoder",
+    'data': "decoder: huffman.NewDecoder(huffmanCodes)",
     'body': """
-      print(self.encoder.String())
-
-      return self.encoder.Decode(bytes)
+      dst := make([]byte, 0, len(bytes))
+      self.decoder.Decode(dst, bytes)
+      return dst
       """
   }
 
 def genArray(arr):
   return '{'+', '.join(map(str, arr))+'}'
 
-def genBoolArrays(arr):
-  return '{'+', '.join(map(genBoolArray, arr))+'}'
+def genBitstringArrays(arr):
+  return '{'+', '.join(map(genBitstring, arr))+'}'
 
-def genBoolArray(arr):
-  return '{'+', '.join(map(boolstr, arr))+'}'
+def genBitstring(arr):
+  return "huffman.BitString{Packed: %s, BitLength: %d}" % (genByteArray(packBytes(arr)), len(arr))
 
-def boolstr(b):
-  if b:
-    return 'true'
-  else:
-    return 'false'
+def genByteArray(arr):
+  return "[]uint8 {" + ', '.join(map(str, arr)) + '}'
+
+def packBytes(arr):
+  bs=[]
+  b=0
+  for x in range(len(arr)):
+    offset=x%8
+    b=b | (arr[x]<<offset)
+    if offset==7:
+      bs.append(b)
+      b=0
+  if offset!=7:
+    bs.append(b)
+  return bs
 
 templateName='model.go.airspeed'
 testTemplateName='test.go.airspeed'
@@ -208,7 +228,7 @@ template = loader.load_template("models.go.airspeed")
 body=template.merge(context, loader=loader)
 save(body, packageDir+'/'+packageName+'/'+"models.go")
 print("Formatting models.go")
-subprocess.call(['gofmt', '-s=true', '-w=true', "models.go"])
+subprocess.call(['gofmt', '-s=true', '-w=true', packageDir+'/'+packageName+'/'+"models.go"])
 
 context={'models': modelBases, 'packageName': packageName}
 print("Generating models_test.go")
@@ -216,4 +236,4 @@ template = loader.load_template("models_test.go.airspeed")
 body=template.merge(context, loader=loader)
 save(body, packageDir+'/'+packageName+'/'+"models_test.go")
 print("Formatting models_test.go")
-subprocess.call(['gofmt', '-s=true', '-w=true', "models_test.go"])
+subprocess.call(['gofmt', '-s=true', '-w=true', packageDir+'/'+packageName+'/'+"models_test.go"])

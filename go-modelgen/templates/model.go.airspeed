@@ -2,7 +2,6 @@ package $packagename
 
 import (
   "time"
-  "github.com/blanu/Dust/go/Dust"
   "github.com/blanu/Dust/go/DustModel/dist"
   "github.com/blanu/Dust/go/DustModel/huffman"
 )
@@ -10,9 +9,11 @@ import (
 type $name struct {
   $duration.decl
   $packet_count.decl
+  $packet_sleep.decl
   $packet_length.decl
   $random_bytes.decl
   $encode.decl
+  $decode.decl
 }
 
 func New() $name {
@@ -21,9 +22,11 @@ func New() $name {
   return $name{
     $duration.data
     $packet_count.data
+    $packet_sleep.data
     $packet_length.data
     $random_bytes.data
-    $encode.data}
+    $encode.data
+    $decode.data}
 }
 
 func (self $name) wholeStreamDurationMillis() uint16 {
@@ -31,15 +34,27 @@ func (self $name) wholeStreamDurationMillis() uint16 {
 }
 
 func (self $name) WholeStreamDuration() time.Duration {
-  return self.wholeStreamDurationMillis() * time.Millisecond
+  return time.Duration(self.wholeStreamDurationMillis()) * time.Millisecond
 }
 
 func (self $name) PacketCount(milliseconds uint16) uint16 {
   $packet_count.body
 }
 
+func (self $name) MaxPacketLength() uint16 {
+  return 65535
+}
+
 func (self $name) NextPacketLength() uint16 {
   $packet_length.body
+}
+
+func (self $name) nextPacketSleep() uint16 {
+  $packet_sleep.body
+}
+
+func (self $name) NextPacketSleep() time.Duration {
+  return time.Duration(self.nextPacketSleep()) * time.Millisecond
 }
 
 func (self $name) EncodeBytes(bytes []byte) []byte {

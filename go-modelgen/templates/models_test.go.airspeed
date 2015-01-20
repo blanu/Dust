@@ -10,7 +10,7 @@ import (
 func TestModelsDuration(t *testing.T) {
   #foreach($model in $models)
   var ${model}Instance=${model}.New()
-  var ${model}Result=${model}Instance.Duration()
+  var ${model}Result=${model}Instance.WholeStreamDuration()
   if ${model}Result<0 {
     t.Errorf("Negative duration %d", ${model}Result)
   }
