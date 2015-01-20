@@ -1,9 +1,9 @@
-package models_test
+package $packageName
 
 import (
   "testing"
   #foreach($model in $models)
-  "Dust/models/$model"
+  "$packageName/$model"
   #end
 )
 

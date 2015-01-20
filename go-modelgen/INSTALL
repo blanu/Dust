@@ -1,22 +1,10 @@
-(This is kind of broken right now.  Sorry!  I think it was broken already
-anyway though...  --DasyatidPrime)
+Requirements: Go 1.4, Python 2.7.6, PyYAML
 
-Requirements: Go 1.4, Python 3.x, PyYAML
-
-Put your model files in src/dust/models/.
+Put your model files in models/.
 You cannot build without model files.
 You must provide your own model files!
 
-Run ./build.sh, which does the following:
+Run ./build.sh [packagename] [destination]
 
-# Install dist library (included in repo)
-go build dist
-go install dist
+Example: ./build.sh DustTestModels ~/go/src
 
-# Generate a custom Dust library for your models
-go generate Dust
-
-# Install your custom Dust library
-go build Dust
-go install Dust
-go test Dust

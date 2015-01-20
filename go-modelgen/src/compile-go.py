@@ -1,4 +1,5 @@
 import os
+import sys
 import yaml
 import json
 import subprocess
@@ -22,6 +23,7 @@ def parse(filename):
   return obj
 
 def save(data, filename):
+  print("Saving %s" % (filename))
   f=open(filename, 'w')
   f.write(data)
   f.close()
@@ -159,7 +161,17 @@ loader = CachingFileLoader('templates')
 def looksLikeModelFile(name):
   return re.search(r'\.(?:yaml|json)\Z', name)
 
-modelDir='./data'
+packageName=sys.argv[1]
+packageDir=sys.argv[2]
+
+if not os.path.exists(packageDir):
+  print('Could not find destination directory '+packageDir)
+  sys.exit(1)
+
+if not os.path.exists(packageDir+'/'+packageName):
+  os.mkdir(packageDir+'/'+packageName)
+
+modelDir='./models'
 models=filter(looksLikeModelFile, os.listdir(modelDir))
 modelBases=[]
 for modelName in models:
@@ -167,7 +179,7 @@ for modelName in models:
   modelBasename=modelName.split('.')[0]
   modelBases.append(modelBasename)
   modelFilename=modelDir+'/'+modelName
-  outputDir='generated/'+modelBasename
+  outputDir=packageDir+'/'+packageName+'/'+modelBasename
   if not os.path.exists(outputDir):
     os.mkdir(outputDir)
   outputName=outputDir+'/'+modelBasename+'.go'
@@ -190,18 +202,18 @@ for modelName in models:
   print("Formatting %s" % (modelBasename+'_test.go'))
   subprocess.call(['gofmt', '-s=true', '-w=true', testOutputName])
 
-context={'models': modelBases}
+context={'models': modelBases, 'packageName': packageName}
 print("Generating models.go")
 template = loader.load_template("models.go.airspeed")
 body=template.merge(context, loader=loader)
-save(body, "models.go")
+save(body, packageDir+'/'+packageName+'/'+"models.go")
 print("Formatting models.go")
 subprocess.call(['gofmt', '-s=true', '-w=true', "models.go"])
 
-context={'models': modelBases}
+context={'models': modelBases, 'packageName': packageName}
 print("Generating models_test.go")
 template = loader.load_template("models_test.go.airspeed")
 body=template.merge(context, loader=loader)
-save(body, "models_test.go")
+save(body, packageDir+'/'+packageName+'/'+"models_test.go")
 print("Formatting models_test.go")
 subprocess.call(['gofmt', '-s=true', '-w=true', "models_test.go"])

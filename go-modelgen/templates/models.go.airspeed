@@ -1,8 +1,8 @@
-package models
+package $packageName
 
 import (
   #foreach($model in $models)
-  "Dust/models/$model"
+  "$packageName/$model"
   #end
 )
 
