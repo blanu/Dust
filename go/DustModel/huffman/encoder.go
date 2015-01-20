@@ -1,8 +1,8 @@
 package huffman
 
 type bitWriter struct {
-	dst []byte
-	di int
+	dst      []byte
+	di       int
 	lowAvail int
 }
 
@@ -22,10 +22,10 @@ func (bwr *bitWriter) writeBits(src BitString, srcBitOffset int) (wroteBits int)
 		if n == 0 {
 			break
 		}
-		
+
 		// Conversion safety: 0 < bwr.lowAvail <= 8
 		// Shift position 8 down to position bwr.lowAvail.
-		bwr.dst[bwr.di] |= packed >> uint(8 - bwr.lowAvail)
+		bwr.dst[bwr.di] |= packed >> uint(8-bwr.lowAvail)
 		bwr.lowAvail -= n
 
 		if bwr.lowAvail > 0 {
@@ -36,14 +36,14 @@ func (bwr *bitWriter) writeBits(src BitString, srcBitOffset int) (wroteBits int)
 			bwr.lowAvail += 8
 			// Conversion safety: bwr.lowAvail = (orig + (8 - n)); 0 < orig <= 8.
 			// Shift position 8 - n up to position bwr.lowAvail.
-			bwr.dst[bwr.di+1] = packed << uint(bwr.lowAvail - (8 - n))
+			bwr.dst[bwr.di+1] = packed << uint(bwr.lowAvail-(8-n))
 			wroteBits += n
 		} else {
 			// Don't count the unwritable -bwr.lowAvail bits.
 			wroteBits += n + bwr.lowAvail
 			bwr.lowAvail = 8
 		}
-			
+
 		bwr.di++
 		srcBitOffset += 8
 	}
@@ -81,9 +81,9 @@ func (bwr bitWriter) wroteOctets() int {
 }
 
 type Encoder struct {
-	coding *Coding
+	coding        *Coding
 	anyHeldSymbol bool
-	heldSymbol symbol
+	heldSymbol    symbol
 	heldBitOffset int
 }
 
@@ -95,7 +95,7 @@ func NewEncoder(coding *Coding) *Encoder {
 
 func (enc *Encoder) writeHeld(bwr *bitWriter) {
 	codeTable := enc.coding.codeTable
-	
+
 	if enc.anyHeldSymbol {
 		code := codeTable[uint8(enc.heldSymbol)]
 		wroteBits := bwr.writeBits(code, enc.heldBitOffset)
@@ -106,7 +106,7 @@ func (enc *Encoder) writeHeld(bwr *bitWriter) {
 	}
 }
 
-func (enc *Encoder) Encode(dst, src []byte) (dn, sn int) {
+func (enc *Encoder) Encode(dst []byte, src []byte) (dn int, sn int) {
 	codeTable := enc.coding.codeTable
 	bwr := newBitWriter(dst)
 	enc.writeHeld(&bwr)
@@ -141,7 +141,7 @@ func (enc *Encoder) Encode(dst, src []byte) (dn, sn int) {
 	if !bwr.aligned() {
 		panic("huffman: weirdly misaligned bit writer")
 	}
-	
+
 	return bwr.wroteOctets(), si
 }
 
