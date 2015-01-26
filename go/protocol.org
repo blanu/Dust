@@ -1,0 +1,10 @@
+#+TITLE: 
+
+* Crypto sessions
+** Framing
+
+	+ 0	2	u16: wire size - 2
+	+ 2	1	u8: flags
+		Bit 0: 0 = ignored data, 1 = application data
+	+ 3	N	data
+	-32	32	authenticator
