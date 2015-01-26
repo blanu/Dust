@@ -18,7 +18,7 @@ func (pe *PanicError) Error() string {
 }
 
 func Debug(control string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, control + "\n", args...)
+	fmt.Fprintf(os.Stderr, control+"\n", args...)
 }
 
 var (
@@ -26,13 +26,13 @@ var (
 )
 
 type Link struct {
-	heldError error
+	heldError  error
 	panicAlloc *PanicError
-	thunk func() error
-	Req chan interface{}
-	Rep chan interface{}
-	Kill chan interface{}
-	Exit chan interface{}
+	thunk      func() error
+	Req        chan interface{}
+	Rep        chan interface{}
+	Kill       chan interface{}
+	Exit       chan interface{}
 }
 
 func drain(ch <-chan interface{}) {
@@ -43,12 +43,12 @@ func drain(ch <-chan interface{}) {
 
 func (link *Link) InitLink(thunk func() error) *Link {
 	*link = Link{
-		thunk: thunk,
+		thunk:      thunk,
 		panicAlloc: &PanicError{nil},
-		Req: make(chan interface{}, 0),
-		Rep: make(chan interface{}, 0),
-		Kill: make(chan interface{}, 0),
-		Exit: make(chan interface{}, 0),
+		Req:        make(chan interface{}, 0),
+		Rep:        make(chan interface{}, 0),
+		Kill:       make(chan interface{}, 0),
+		Exit:       make(chan interface{}, 0),
 	}
 
 	return link
@@ -58,7 +58,7 @@ func (link *Link) CloseDetach() {
 	if link.Kill == nil {
 		return
 	}
-	
+
 	close(link.Req)
 	close(link.Kill)
 	link.Req = nil
@@ -69,7 +69,7 @@ func (link *Link) CloseWait() error {
 	if link.Kill == nil {
 		return link.heldError
 	}
-	
+
 	close(link.Req)
 	close(link.Kill)
 	link.Req = nil

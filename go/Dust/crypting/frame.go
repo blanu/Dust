@@ -17,9 +17,9 @@ func newPlainDataFrame(data []byte) frame {
 	if len(data) > 65535 {
 		panic("data too long for frame representation")
 	}
-	
+
 	payloadSize := len(data) + 33
-	wire := make([]byte, 2 + payloadSize)
+	wire := make([]byte, 2+payloadSize)
 	wire[0] = uint8(payloadSize >> 8)
 	wire[1] = uint8(payloadSize & 0xff)
 	wire[2] = 0x01
@@ -54,7 +54,7 @@ func newPaddingFrame(requestedSize int) frame {
 func incomingCryptoFrame(p []byte) frame {
 	var wireSize int
 	if len(p) >= 2 {
-		wireSize = 2 + int(uint16(p[0]) << 8 | uint16(p[1]))
+		wireSize = 2 + int(uint16(p[0])<<8|uint16(p[1]))
 	} else {
 		wireSize = 0
 	}
@@ -70,7 +70,7 @@ func (frame frame) wellFormed() bool {
 	switch {
 	case len(frame) < 35:
 		return false
-	case len(frame) != 2 + int(uint16(frame[0]) << 8 | uint16(frame[1])):
+	case len(frame) != 2+int(uint16(frame[0])<<8|uint16(frame[1])):
 		return false
 	default:
 		return true
@@ -90,13 +90,13 @@ func (frame frame) verifyAuthenticator(authenticatorKey cryptions.SecretBytes) b
 
 // hasData returns true iff the frame contains data that should be passed through to the next layer.
 func (frame frame) hasData() bool {
-	return frame[2] & 1 != 0
+	return frame[2]&1 != 0
 }
 
 // data returns a slice with the application data to pass through, which may only be valid if hasData
 // returned true.
 func (frame frame) data() []byte {
-	return frame[3:len(frame)-32]
+	return frame[3 : len(frame)-32]
 }
 
 // encryptWith applies streamCipher to the frame in-place.
@@ -114,4 +114,3 @@ func (frame frame) slice() []byte {
 func (frame frame) wireSize() int {
 	return len(frame)
 }
-

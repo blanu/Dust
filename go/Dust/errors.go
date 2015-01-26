@@ -10,8 +10,8 @@ const (
 )
 
 type ParameterError struct {
-	How ParameterErrorHow
-	Kind string
+	How      ParameterErrorHow
+	Kind     string
 	Specific string
 }
 
@@ -27,10 +27,10 @@ func (pe *ParameterError) Error() string {
 	case ParameterInvalid:
 		str = "invalid "
 	}
-	
+
 	str += pe.Kind
 	if pe.Specific != "" {
-		str += " '"+pe.Specific+"'"
+		str += " '" + pe.Specific + "'"
 	}
 	return str
 }

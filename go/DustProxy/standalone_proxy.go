@@ -161,7 +161,7 @@ func spawnPair(prog string, progArgs []string) (result ioPair, err error) {
 			}
 		}
 	}()
-		
+
 	cmd := exec.Command(prog, progArgs...)
 	rd, err = cmd.StdoutPipe()
 	if err != nil {
@@ -192,7 +192,7 @@ func doProxy(dconn Dust.Connection, plainSide ioPair) error {
 			return err
 		}
 	}
-	
+
 	var inCopy, outCopy procman.Link
 	inCopy.InitLink(copyThunk(plainSide.wr, dconn))
 	outCopy.InitLink(copyThunk(dconn, plainSide.rd))
@@ -204,7 +204,7 @@ func doProxy(dconn Dust.Connection, plainSide ioPair) error {
 	select {
 	case _, _ = <-inCopy.Exit:
 	case _, _ = <-outCopy.Exit:
-	//case _, _ = <-dconn.Exit:
+		//case _, _ = <-dconn.Exit:
 	}
 
 	// TODO: error propagation
@@ -228,7 +228,7 @@ func incomingSpawn(conn *net.TCPConn, spriv *Dust.ServerPrivate, prog string, pr
 			dconn.Close()
 		}
 	}()
-	
+
 	// TODO: clean up spawned processes properly
 	plainSide, err := spawnPair(prog, progArgs)
 	if err != nil {
@@ -247,7 +247,7 @@ func listenAndSpawn(spriv *Dust.ServerPrivate, prog string, progArgs []string) e
 	}
 	fmt.Fprintf(os.Stderr, "Listening on %s\n", listener.Addr().String())
 	defer listener.Close()
-	
+
 	for {
 		conn, err := listener.AcceptTCP()
 		if err != nil {
@@ -282,7 +282,7 @@ func dialAndStdio(spub *Dust.ServerPublic) error {
 
 	// TODO: the Dust side should probably have most of its initialization happen before the dial so that
 	// there's less risk of dialing visibly and then getting hosed on some other part of initialization.
-	
+
 	dconn, err := Dust.BeginClient(conn, spub)
 	if err != nil {
 		return err
@@ -300,7 +300,7 @@ func dialFromArgs() (func() error, error) {
 		if len(pair) != 2 {
 			return nil, errors.New("malformed bridge-like parameter (expected equals sign)")
 		}
-		
+
 		params[pair[0]] = pair[1]
 	}
 
@@ -328,7 +328,7 @@ func main() {
 	} else if argErr != nil {
 		usageErrorf("%s", argErr.Error())
 	}
-	
+
 	var requestedCommand func() error
 	dirArg := nextArg("DIRECTION")
 	switch dirArg {

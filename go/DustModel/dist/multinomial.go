@@ -11,7 +11,7 @@ import (
 // Poisson represents the Poisson distribution (https://en.wikipedia.org/wiki/Poisson_distribution).
 type Multinomial struct {
 	Weights []float64
-	Source *rand.Rand
+	Source  *rand.Rand
 }
 
 // Rand returns a random sample drawn from the distribution.
@@ -26,12 +26,12 @@ func (e Multinomial) Rand() uint64 {
 	var last float64 = 0
 	var next float64 = 0
 
-  for index, weight := range e.Weights {
-		next=next+weight
-		if rnd>last && rnd<next {
+	for index, weight := range e.Weights {
+		next = next + weight
+		if rnd > last && rnd < next {
 			return uint64(index)
 		}
-		last=next
+		last = next
 	}
 
 	return uint64(len(e.Weights))

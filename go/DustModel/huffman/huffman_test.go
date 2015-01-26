@@ -14,12 +14,12 @@ var _ = huffman.NewCoding
 var _ = fmt.Printf
 
 type treeNode struct {
-	symbol int
+	symbol      int
 	left, right *treeNode
 }
 
 const (
-	randSeed = 0x5a025ca11825a5e7
+	randSeed   = 0x5a025ca11825a5e7
 	iterations = 10
 )
 
@@ -45,10 +45,10 @@ func randomHuffmanTree() *treeNode {
 }
 
 func plusOneBit(bs huffman.BitString, tail uint8) huffman.BitString {
-	packed := make([]byte, (bs.BitLength + 8) / 8)
+	packed := make([]byte, (bs.BitLength+8)/8)
 	copy(packed, bs.Packed)
-	packed[bs.BitLength/8] |= tail << uint(7 - bs.BitLength%8)
-	return huffman.BitString{packed, bs.BitLength+1}
+	packed[bs.BitLength/8] |= tail << uint(7-bs.BitLength%8)
+	return huffman.BitString{packed, bs.BitLength + 1}
 }
 
 func (node treeNode) writeToCodeTable(table []huffman.BitString, prefix huffman.BitString) {
@@ -90,12 +90,12 @@ func transcodeLoop(
 	dn, sn := 0, 0
 	maybeExpand := func(delta int) {
 		if dn == len(*dst) {
-			reallocated := make([]byte, len(*dst) + delta)
+			reallocated := make([]byte, len(*dst)+delta)
 			copy(reallocated, *dst)
 			*dst = reallocated
 		}
 	}
-	
+
 	for sn < len(src) {
 		maybeExpand(1 + len(*dst))
 		dsubn, ssubn := xfer((*dst)[dn:], src[sn:])

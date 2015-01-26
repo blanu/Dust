@@ -1,15 +1,15 @@
 package huffman
 
 type Decoder struct {
-	coding *Coding
+	coding    *Coding
 	treeIndex int
-	heldBits uint32
+	heldBits  uint32
 	heldCount uint8
 }
 
 func NewDecoder(coding *Coding) *Decoder {
 	return &Decoder{
-		coding: coding,
+		coding:    coding,
 		treeIndex: treeIndexStart,
 	}
 }
@@ -24,7 +24,7 @@ func (dec *Decoder) writeSymbolsTo(dst []byte) (dn int) {
 		} else {
 			selector = (dec.heldBits << (treeShift - dec.heldCount)) & treeSelectorMask
 		}
-		
+
 		pointer := treeNodes[dec.treeIndex].children[selector]
 		consume := pointer.consume &^ treePointerTypeMask
 		if dec.heldCount < consume {
@@ -55,10 +55,10 @@ func (dec *Decoder) Decode(dst, src []byte) (dn, sn int) {
 		dn += dec.writeSymbolsTo(dst[dn:])
 
 		if sn == len(src) {
-			return 
+			return
 		}
-		for sn < len(src) && (32 - dec.heldCount) >= 8 {
-			dec.heldBits = dec.heldBits << 8 | uint32(src[sn])
+		for sn < len(src) && (32-dec.heldCount) >= 8 {
+			dec.heldBits = dec.heldBits<<8 | uint32(src[sn])
 			dec.heldCount += 8
 			sn++
 		}

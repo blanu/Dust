@@ -8,7 +8,7 @@ import (
 	"encoding/base32"
 	"errors"
 	"strings"
-	
+
 	"code.google.com/p/go.crypto/curve25519"
 	"github.com/agl/ed25519/extra25519"
 )
@@ -21,7 +21,7 @@ type PublicKey interface {
 }
 
 type publicKey struct {
-	actual [32]byte
+	actual  [32]byte
 	uniform [32]byte
 }
 
@@ -47,8 +47,8 @@ func (public *publicKey) Base32() string {
 }
 
 var (
-	ErrBadPublicKey = errors.New("bad public key")
-	ErrBadPrivateKey = errors.New("bad private key")
+	ErrBadPublicKey            = errors.New("bad public key")
+	ErrBadPrivateKey           = errors.New("bad private key")
 	ErrImprobableNonuniformity = errors.New("unreasonably long sequence of un-Elligatorable private keys")
 )
 
@@ -92,7 +92,7 @@ type KeyPair interface {
 }
 
 type keyPair struct {
-	public PublicKey
+	public  PublicKey
 	private privateKey
 }
 
@@ -117,7 +117,7 @@ func NewKeyPair() (KeyPair, error) {
 
 	public := &publicKey{}
 	acceptable := false
-	
+
 	for tries := 0; !acceptable && tries < 256; {
 		err := RandomizeSecretBytes(privateRepr)
 		if err != nil {
@@ -131,11 +131,11 @@ func NewKeyPair() (KeyPair, error) {
 
 		acceptable = extra25519.ScalarBaseMult(&public.actual, &public.uniform, privatePtr)
 	}
-	
+
 	if !acceptable {
 		return nil, ErrImprobableNonuniformity
 	}
-	
+
 	private := privateKey(privateRepr)
 	keypair := &keyPair{public, private}
 	ok = true

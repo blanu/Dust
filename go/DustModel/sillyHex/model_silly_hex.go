@@ -12,8 +12,8 @@ import (
 )
 
 type sillyHexCodec struct {
-	topNybble int8
-	lenNext, lenMin, lenStep, lenMax uint16
+	topNybble                                int8
+	lenNext, lenMin, lenStep, lenMax         uint16
 	sleepNext, sleepMin, sleepStep, sleepMax time.Duration
 }
 
@@ -27,14 +27,14 @@ type sillyHexModel struct {
 func newSillyHexCodec() Dust.ShapingCodec {
 	return &sillyHexCodec{
 		topNybble: -1,
-		lenNext: 200,
-		lenMin: 200,
-		lenStep: 200,
-		lenMax: 1000,
+		lenNext:   200,
+		lenMin:    200,
+		lenStep:   200,
+		lenMax:    1000,
 		sleepNext: 20 * time.Millisecond,
-		sleepMin: 20 * time.Millisecond,
+		sleepMin:  20 * time.Millisecond,
 		sleepStep: 5 * time.Millisecond,
-		sleepMax: 50 * time.Millisecond,
+		sleepMax:  50 * time.Millisecond,
 	}
 }
 
@@ -50,7 +50,7 @@ func makeSillyHexModel(params map[string]string) (Dust.ShapingModel, error) {
 	for key, _ := range params {
 		return nil, &Dust.ParameterError{Dust.ParameterUnexpected, "parameter", key}
 	}
-	
+
 	return &sillyHexModel{}, nil
 }
 
@@ -85,23 +85,23 @@ func (hex *sillyHexCodec) NextPacketSleep() time.Duration {
 }
 
 func (hex *sillyHexCodec) ShapeBytes(p []byte) []byte {
-	out := make([]byte, len(p) * 4)
+	out := make([]byte, len(p)*4)
 	j := 0
 	pattern := uint64(rand.Int63())
 
 	maybeIntersperse := func() {
-		if pattern & 1 != 0 {
+		if pattern&1 != 0 {
 			out[j] = '.'
 			j++
 		}
-		pattern = pattern >> 1 | pattern << 63
+		pattern = pattern>>1 | pattern<<63
 	}
 
 	for _, byte := range p {
-		out[j] = hexAlphabet[byte >> 4]
+		out[j] = hexAlphabet[byte>>4]
 		j++
 		maybeIntersperse()
-		out[j] = hexAlphabet[byte & 0xf]
+		out[j] = hexAlphabet[byte&0xf]
 		j++
 		maybeIntersperse()
 	}
@@ -110,12 +110,12 @@ func (hex *sillyHexCodec) ShapeBytes(p []byte) []byte {
 }
 
 func (hex *sillyHexCodec) UnshapeBytes(p []byte) []byte {
-	out := make([]byte, 1 + (len(p) / 2))
+	out := make([]byte, 1+(len(p)/2))
 	j := 0
 
 	for _, byte := range p {
 		var nybble int8 = -1
-		
+
 		if '0' <= byte && byte <= '9' {
 			nybble = int8(byte - '0')
 		} else if 'a' <= byte && byte <= 'f' {
@@ -127,11 +127,11 @@ func (hex *sillyHexCodec) UnshapeBytes(p []byte) []byte {
 		if nybble < 0 {
 			continue
 		}
-		
+
 		if hex.topNybble < 0 {
 			hex.topNybble = nybble
 		} else {
-			out[j] = uint8(hex.topNybble) << 4 | uint8(nybble)
+			out[j] = uint8(hex.topNybble)<<4 | uint8(nybble)
 			hex.topNybble = -1
 			j++
 		}

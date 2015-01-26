@@ -13,13 +13,13 @@ import (
 
 // A Public holds the longterm public key and shared identifier for a server.
 type Public struct {
-	IdBytes []byte
+	IdBytes        []byte
 	LongtermPublic cryptions.PublicKey
 }
 
 // A Private holds the longterm private key and shared identifier for a server.
 type Private struct {
-	IdBytes []byte
+	IdBytes      []byte
 	LongtermPair cryptions.KeyPair
 }
 
@@ -29,7 +29,7 @@ func (priv *Private) Destroy() {
 
 var (
 	ErrUnrecognizedAddressType = errors.New("unrecognized address type")
-	ipv4MappedPrefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
+	ipv4MappedPrefix           = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
 )
 
 // IdentityBytesOfNetworkAddress takes a network address and returns a shared identifier for it.  Currently,
@@ -40,7 +40,7 @@ func IdentityBytesOfNetworkAddress(netAddr interface{}) ([]byte, error) {
 	var port int
 	var l3Flag uint8
 	var l4Flag uint8
-	
+
 	switch a := netAddr.(type) {
 	default:
 		return nil, ErrUnrecognizedAddressType

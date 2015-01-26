@@ -1,8 +1,8 @@
 package cryptions
 
 import (
-	cryptoSubtle "crypto/subtle"
 	cryptoRand "crypto/rand"
+	cryptoSubtle "crypto/subtle"
 )
 
 var zeros [32]byte

@@ -11,8 +11,8 @@ import (
 
 // Poisson represents the Poisson distribution (https://en.wikipedia.org/wiki/Poisson_distribution).
 type Poisson struct {
-	Expected   float64
-	Source *rand.Rand
+	Expected float64
+	Source   *rand.Rand
 }
 
 // Rand returns a random sample drawn from the distribution.
@@ -26,11 +26,11 @@ do:
 return k − 1.
 */
 func (self Poisson) Rand() uint16 {
-	var l float64 = math.E-self.Expected
+	var l float64 = math.E - self.Expected
 	var k uint16 = 0
 
-  for p := rand.Float64(); p > l; p = p * rand.Float64() {
-		k=k+1
+	for p := rand.Float64(); p > l; p = p * rand.Float64() {
+		k = k + 1
 	}
 
 	return k

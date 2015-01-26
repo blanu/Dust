@@ -13,22 +13,22 @@ import (
 )
 
 const (
-	bridgeParamPublicKey string = "p"
-	bridgeParamModel string = "m"
+	bridgeParamPublicKey      string = "p"
+	bridgeParamModel          string = "m"
 	bridgeParamOptionalPrefix string = "?"
 
 	magicLine = "!!Dust-Server-Private!!"
 )
 
 var (
-	ErrNoMagic = &ParameterError{ParameterMissing, "magic line", ""}
-	ErrNoAddress = &ParameterError{ParameterMissing, "network address", ""}
-	ErrNoPrivateKey = &ParameterError{ParameterMissing, "private key", ""}
-	ErrNoPublicKey = &ParameterError{ParameterMissing, "public key", ""}
-	ErrNoModelName = &ParameterError{ParameterMissing, "model name", ""}
-	ErrInvalidAddress = &ParameterError{ParameterInvalid, "network address", ""}
+	ErrNoMagic          = &ParameterError{ParameterMissing, "magic line", ""}
+	ErrNoAddress        = &ParameterError{ParameterMissing, "network address", ""}
+	ErrNoPrivateKey     = &ParameterError{ParameterMissing, "private key", ""}
+	ErrNoPublicKey      = &ParameterError{ParameterMissing, "public key", ""}
+	ErrNoModelName      = &ParameterError{ParameterMissing, "model name", ""}
+	ErrInvalidAddress   = &ParameterError{ParameterInvalid, "network address", ""}
 	ErrInvalidModelName = &ParameterError{ParameterInvalid, "model name", ""}
-	ErrSyntax = errors.New("bad identity record syntax")
+	ErrSyntax           = errors.New("bad identity record syntax")
 )
 
 type endpointAddress struct {
@@ -37,7 +37,7 @@ type endpointAddress struct {
 }
 
 type modelSpec struct {
-	name string
+	name   string
 	params map[string]string
 }
 
@@ -57,7 +57,7 @@ type endpointConfig struct {
 
 type BridgeLine struct {
 	Address string
-	Params map[string]string
+	Params  map[string]string
 }
 
 type ServerPublic struct {
@@ -81,7 +81,7 @@ func parseEndpointAddress(addrString string) (*endpointAddress, error) {
 	hostString := addrString[:colonIndex]
 	portString := addrString[colonIndex+1:]
 	if strings.HasPrefix(hostString, "[") && strings.HasSuffix(hostString, "]") {
-		hostString = hostString[1:len(hostString)-1]
+		hostString = hostString[1 : len(hostString)-1]
 	} else if strings.IndexRune(hostString, ':') != -1 {
 		// If the host part has a colon, require it to be bracketed.
 		return nil, ErrInvalidAddress
@@ -132,7 +132,7 @@ func extractModelSpec(
 func insertModelSpec(ms *modelSpec, params map[string]string, topKey string) {
 	params[topKey] = ms.name
 	for subkey, val := range ms.params {
-		params[topKey + "." + subkey] = val
+		params[topKey+"."+subkey] = val
 	}
 }
 
@@ -162,7 +162,7 @@ func loadEndpointConfigBridgeLine(
 
 	result = &endpointConfig{
 		endpointAddress: *endpointAddress,
-		modelSpec: *modelSpec,
+		modelSpec:       *modelSpec,
 	}
 	return
 }
@@ -207,7 +207,7 @@ func (spub ServerPublic) BridgeLine() BridgeLine {
 
 func (spub ServerPublic) cryptoPublic() *crypting.Public {
 	return &crypting.Public{
-		IdBytes: spub.endpointAddress.idBytes,
+		IdBytes:        spub.endpointAddress.idBytes,
 		LongtermPublic: spub.longtermPublic,
 	}
 }
@@ -221,7 +221,7 @@ func (spriv ServerPrivate) Public() ServerPublic {
 
 func (spriv ServerPrivate) cryptoPrivate() *crypting.Private {
 	return &crypting.Private{
-		IdBytes: spriv.endpointAddress.idBytes,
+		IdBytes:      spriv.endpointAddress.idBytes,
 		LongtermPair: spriv.longtermPair,
 	}
 }
@@ -256,7 +256,7 @@ func LoadServerPrivateFile(
 	if lines.Text() != magicLine {
 		return nil, ErrNoMagic
 	}
-	
+
 	if !lines.Scan() {
 		return nil, scanErrorOr(ErrNoAddress)
 	}
@@ -270,7 +270,7 @@ func LoadServerPrivateFile(
 		return nil, scanErrorOr(ErrNoPrivateKey)
 	}
 	privateLine := lines.Text()
-	
+
 	var keyPair cryptions.KeyPair
 	defer func() {
 		if result == nil && keyPair != nil {
@@ -296,7 +296,7 @@ func LoadServerPrivateFile(
 
 	err = lines.Err()
 	if err != nil {
-		return 
+		return
 	}
 
 	ackedParams := make(map[string]bool)
@@ -313,7 +313,7 @@ func LoadServerPrivateFile(
 	result = &ServerPrivate{
 		endpointConfig: endpointConfig{
 			endpointAddress: *endpointAddress,
-			modelSpec: *modelSpec,
+			modelSpec:       *modelSpec,
 		},
 		longtermPair: keyPair,
 	}
@@ -337,7 +337,7 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 		case bridgeParamPublicKey:
 			// Don't save public key; it's inferred from the private key.
 		default:
-			paramLines = append(paramLines, key + "=" + val)
+			paramLines = append(paramLines, key+"="+val)
 		}
 	}
 
@@ -358,10 +358,10 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 		}
 	}()
 
-	if file, err = os.OpenFile(path, os.O_WRONLY | os.O_CREATE | os.O_EXCL, 0600); err != nil {
+	if file, err = os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600); err != nil {
 		return err
 	}
-	
+
 	if _, err = file.Write([]byte(contentString)); err != nil {
 		return err
 	}
@@ -395,7 +395,7 @@ func NewServerPrivateBridgeLine(bline BridgeLine) (result *ServerPrivate, err er
 
 	result = &ServerPrivate{
 		endpointConfig: *endpointConfig,
-		longtermPair: keyPair,
+		longtermPair:   keyPair,
 	}
 	return
 }

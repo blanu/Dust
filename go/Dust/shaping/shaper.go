@@ -11,7 +11,7 @@ import (
 
 type shaperReader struct {
 	procman.Link
-	readFrom io.Reader
+	readFrom  io.Reader
 	sharedBuf []byte
 }
 
@@ -21,7 +21,7 @@ const (
 
 func newShaperReader(readFrom io.Reader, sharedBuf []byte) *shaperReader {
 	sr := &shaperReader{
-		readFrom: readFrom,
+		readFrom:  readFrom,
 		sharedBuf: sharedBuf,
 	}
 	sr.InitLink(sr.run)
@@ -74,20 +74,20 @@ func (st *shaperTimer) cycle(dur time.Duration) {
 
 type Shaper struct {
 	procman.Link
-	
-	crypter *crypting.Session
-	shapedIn io.Reader
+
+	crypter   *crypting.Session
+	shapedIn  io.Reader
 	shapedOut io.Writer
 
-	reader *shaperReader
+	reader  *shaperReader
 	decoder Decoder
-	inBuf []byte
-	
-	timer *shaperTimer
-	encoder Encoder
-	outBuf []byte
+	inBuf   []byte
+
+	timer      *shaperTimer
+	encoder    Encoder
+	outBuf     []byte
 	outPending []byte
-	pullBuf []byte
+	pullBuf    []byte
 }
 
 func (sh *Shaper) handleRead(subn int) error {
@@ -152,12 +152,12 @@ func (sh *Shaper) run() (err error) {
 				// Reader is dead.
 				return sh.reader.CloseWait()
 			}
-			
+
 			err = sh.handleRead(subn.(int))
 			if err != nil {
 				return
 			}
-			
+
 		case _, ok := <-sh.timer.Rep:
 			if !ok {
 				// Timer is dead.
@@ -183,21 +183,21 @@ func NewShaper(
 	encoder Encoder,
 ) (*Shaper, error) {
 	// INCOMPLETE: does not handle connection duration.
-	
+
 	sh := &Shaper{
-		crypter: crypter,
-		shapedIn: in,
+		crypter:   crypter,
+		shapedIn:  in,
 		shapedOut: out,
 
-		reader: nil, // initialized below
+		reader:  nil, // initialized below
 		decoder: decoder,
-		inBuf: make([]byte, shaperBufSize),
+		inBuf:   make([]byte, shaperBufSize),
 
-		timer: nil, // initialized below
-		encoder: encoder,
-		outBuf: make([]byte, encoder.MaxPacketLength()),
+		timer:      nil, // initialized below
+		encoder:    encoder,
+		outBuf:     make([]byte, encoder.MaxPacketLength()),
 		outPending: nil,
-		pullBuf: make([]byte, shaperBufSize),
+		pullBuf:    make([]byte, shaperBufSize),
 	}
 
 	sh.InitLink(sh.run)

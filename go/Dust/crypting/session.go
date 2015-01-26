@@ -12,13 +12,13 @@ import (
 
 var (
 	ErrIncompleteFrame = errors.New("incomplete frame")
-	ErrBadHandshake = errors.New("bad handshake")
-	ErrBadDecode = errors.New("bad decode")
-	ErrStuck = errors.New("cannot get anything to send here")
+	ErrBadHandshake    = errors.New("bad handshake")
+	ErrBadDecode       = errors.New("bad decode")
+	ErrStuck           = errors.New("cannot get anything to send here")
 )
 
 const (
-	maxInFrameDataSize = 65535
+	maxInFrameDataSize  = 65535
 	maxOutFrameDataSize = 127
 )
 
@@ -26,7 +26,7 @@ type state int
 
 const (
 	stateFailed state = iota
-	stateStreaming 
+	stateStreaming
 	stateHandshakeClient
 	stateHandshakeServer
 )
@@ -39,14 +39,14 @@ const (
 // channels, but no more than one goroutine should access a side at a time.
 type Session struct {
 	// This is one of:
-	// 
+	//
 	//   - Failed :: we're using a bogus session key to send, and received data is discarded.
-	// 
+	//
 	//   - Streaming :: we have a valid session key.  Sending and receiving are both enabled.
-	// 
+	//
 	//       - No IV (when handshakeReassembly set, inCipher unset) :: reassembling an IV in the
 	//         handshakeReassembly buffer; no data yet.
-	// 
+	//
 	//       - With IV (when handshakeReassembly unset, inCipher set) :: we are now stream-decrypting
 	//         incoming data and extracting frames from it.
 	//
@@ -57,7 +57,7 @@ type Session struct {
 	//   - HandshakeServer :: the client's handshake request is being reassembled in handshakeReassembly.
 	//     No session key, so we can't send anything yet.
 	state state
-	
+
 	// Always set.
 	//   - If state is HandshakeClient, this is a *Public.
 	//   - If state is HandshakeServer, this is a *Private.
@@ -66,11 +66,11 @@ type Session struct {
 	// These both correspond to ephemeral keys.  The server's long-term key or keypair will be
 	// stashed somewhere in serverInfo.  localPair is always set.  remotePublic is set if state is
 	// Streaming.
-	localPair cryptions.KeyPair
+	localPair    cryptions.KeyPair
 	remotePublic cryptions.PublicKey
-	
+
 	// Depending on state:
-	// 
+	//
 	//   - Streaming :: a valid session key
 	//   - Failed :: a bogus session key to keep the connection open on the outside
 	//   - (otherwise) :: unset
@@ -83,7 +83,7 @@ type Session struct {
 	//   - HandshakeClient :: reassembling a server response
 	//   - HandshakeServer :: reassembling a client request
 	handshakeReassembly bufman.Reassembly
-	
+
 	// Set if state is Streaming.
 	inCipher cipher.Stream
 
@@ -95,11 +95,11 @@ type Session struct {
 	// session.  The receiver owns the chunks.  inPlainHeld is controlled by the receiver methods from
 	// the inward-facing side, and is implicitly prepended to receiving from inPlains.
 	inPlainHeld []byte
-	inPlains chan []byte
+	inPlains    chan []byte
 
 	// Implicitly prepended to any other outgoing data; these bytes are not encrypted before sending.
 	outCryptPending []byte
-	
+
 	// Set if state is Streaming or Failed.
 	outCipher cipher.Stream
 
@@ -123,7 +123,7 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 		}
 
 		var frame frame
-		
+
 		switch cs.state {
 		case stateStreaming:
 			select {
@@ -165,14 +165,14 @@ func (cs *Session) fail() {
 	cs.state = stateFailed
 	cs.handshakeReassembly = nil
 	cs.dataReassembly = nil
-	
+
 	bogusKey := cryptions.NewSecretBytes()
 	if err := cryptions.RandomizeSecretBytes(bogusKey); err != nil {
 		// TODO: steal some extra entropy earlier to prevent this case.  (We do actually have to
 		// panic in the absence of that because otherwise we start emitting predictable-ish bytes.)
 		panic("Nooooo what happened to my entropy source, oh god")
 	}
-	
+
 	cs.sessionKey = bogusKey
 	cs.outCipher = cryptions.NewStreamCipher(bogusKey, [32]byte{})
 	cs.outCryptPending = nil
@@ -194,7 +194,7 @@ func (cs *Session) beginStreaming(sessionKey cryptions.SecretBytes) {
 	cs.sessionKey = sessionKey
 	cs.state = stateStreaming
 	cs.handshakeReassembly = bufman.BeginReassembly(32)
-	
+
 	// This part isn't actually that secret, just the randomize function has that type.
 	outIV := cryptions.NewSecretBytes()
 	if err := cryptions.RandomizeSecretBytes(outIV); err != nil {
@@ -230,7 +230,7 @@ func (cs *Session) beginInCipher() {
 func (cs *Session) completeHandshakeClient() {
 	response := cs.handshakeReassembly.Data()
 	cs.handshakeReassembly = nil
-	
+
 	if len(response) != 64 {
 		panic("should not have gotten here without a complete response")
 	}
@@ -289,7 +289,7 @@ func (cs *Session) completeHandshakeClient() {
 func (cs *Session) completeHandshakeServer() {
 	request := cs.handshakeReassembly.Data()
 	cs.handshakeReassembly = nil
-	
+
 	if len(request) != 32 {
 		panic("should not have gotten here without a complete request")
 	}
@@ -382,9 +382,9 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 		// attacker can measure our CPU usage, but that's probably not preventable anyway?  Come back to this
 		// later.
 		if cs.state == stateFailed {
-			return n+len(p), err
+			return n + len(p), err
 		}
-		
+
 		if cs.handshakeReassembly != nil {
 			n += bufman.CopyReassemble(&cs.handshakeReassembly, &p)
 			if cs.handshakeReassembly.FixedSizeComplete() {
@@ -419,7 +419,7 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 					break Frames
 				}
 			}
-			
+
 			cs.dataReassembly.Consume(cs.dataReassembly.ValidLen() - len(possibleFrames))
 			if err != nil {
 				cs.failDecode()
@@ -441,7 +441,7 @@ func (cs *Session) Read(p []byte) (n int, err error) {
 	n, err = 0, nil
 	for len(p) > 0 {
 		var data []byte
-		
+
 		if cs.inPlainHeld != nil {
 			data = cs.inPlainHeld
 			cs.inPlainHeld = nil
@@ -457,7 +457,7 @@ func (cs *Session) Read(p []byte) (n int, err error) {
 				}
 			}
 		}
-		
+
 		if data == nil {
 			if n == 0 {
 				err = io.EOF
@@ -479,7 +479,7 @@ func (cs *Session) Read(p []byte) (n int, err error) {
 func (cs *Session) Write(p []byte) (n int, err error) {
 	// TODO: should we really do the framing here?  Right now, maxOutFrameDataSize is a kludge to make sure
 	// very low-performance models don't get _too_ much delay from long frames.
-	
+
 	n, err = 0, nil
 	for len(p) > 0 {
 		data := p

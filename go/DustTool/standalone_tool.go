@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	
+
 	"github.com/blanu/Dust/go/Dust"
 )
 
@@ -76,7 +76,7 @@ func main() {
 	if len(os.Args) < 4 {
 		usageErrorf("not enough arguments")
 	}
-	
+
 	subcommand := os.Args[1]
 	if subcommand != "newid" {
 		usageErrorf("unrecognized subcommand \"%s\"", subcommand)

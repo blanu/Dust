@@ -32,17 +32,17 @@ type Connection interface {
 }
 
 type session struct {
-	socket io.ReadWriteCloser
+	socket  io.ReadWriteCloser
 	crypter *crypting.Session
-	shaper *shaping.Shaper
-	closed bool
+	shaper  *shaping.Shaper
+	closed  bool
 }
 
 func (s *session) Read(p []byte) (n int, err error) {
 	if s.closed {
 		return 0, ErrClosed
 	}
-	
+
 	return s.crypter.Read(p)
 }
 
@@ -50,7 +50,7 @@ func (s *session) Write(p []byte) (n int, err error) {
 	if s.closed {
 		return 0, ErrClosed
 	}
-	
+
 	return s.crypter.Write(p)
 }
 
@@ -104,9 +104,9 @@ func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection
 
 	shaper.Spawn()
 	conn = &session{
-		socket: socket,
+		socket:  socket,
 		crypter: crypter,
-		shaper: shaper,
+		shaper:  shaper,
 	}
 	return
 }
@@ -138,9 +138,9 @@ func BeginServer(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connecti
 
 	shaper.Spawn()
 	conn = &session{
-		socket: socket,
+		socket:  socket,
 		crypter: crypter,
-		shaper: shaper,
+		shaper:  shaper,
 	}
 	return
 }

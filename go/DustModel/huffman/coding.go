@@ -9,23 +9,23 @@ import (
 
 var (
 	ErrCodeTableInconsistent = errors.New("huffman: inconsistent code table")
-	ErrCodeTableWrongLength = errors.New("huffman: code table not of expected length")
-	ErrCodeEmpty = errors.New("huffman: empty code specified")
+	ErrCodeTableWrongLength  = errors.New("huffman: code table not of expected length")
+	ErrCodeEmpty             = errors.New("huffman: empty code specified")
 )
 
 const (
-	treeShift = 3
-	treeFanout = 1 << treeShift
+	treeShift        = 3
+	treeFanout       = 1 << treeShift
 	treeSelectorMask = (1 << treeShift) - 1
-	treeIndexStart = 0
+	treeIndexStart   = 0
 
 	treePointerTypeDescend = 0x40
-	treePointerTypeReturn = 0x80
-	treePointerTypeMask = 0xc0
+	treePointerTypeReturn  = 0x80
+	treePointerTypeMask    = 0xc0
 )
 
 type treePointer struct {
-	target uint8
+	target  uint8
 	consume uint8
 }
 
@@ -33,7 +33,7 @@ func treeBranch(relTarget int) treePointer {
 	if !(0 <= relTarget && relTarget < 256) {
 		panic("huffman: bad relative target")
 	}
-	
+
 	return treePointer{uint8(relTarget), treePointerTypeDescend | treeShift}
 }
 
@@ -41,7 +41,7 @@ func treeLeaf(symbol symbol, consume int) treePointer {
 	if !(0 <= consume && consume <= treeShift) {
 		panic("huffman: bad number of bits to consume")
 	}
-	
+
 	return treePointer{uint8(symbol), treePointerTypeReturn | uint8(consume)}
 }
 
@@ -51,7 +51,7 @@ type treeNode struct {
 
 func (node treeNode) String() string {
 	var parts []string
-	
+
 	for i := 0; i < treeFanout; i++ {
 		pointer := node.children[i]
 
@@ -68,12 +68,12 @@ func (node treeNode) String() string {
 
 		consume := pointer.consume &^ treePointerTypeMask
 		if consume < treeShift {
-			part = fmt.Sprintf("%d*%s", 1 << uint(treeShift - consume), part)
+			part = fmt.Sprintf("%d*%s", 1<<uint(treeShift-consume), part)
 		}
 
 		parts = append(parts, part)
 		if consume < treeShift {
-			i += 1 << uint(treeShift - consume) - 1
+			i += 1<<uint(treeShift-consume) - 1
 		}
 	}
 
@@ -86,7 +86,7 @@ type Coding struct {
 }
 
 type codeScanning struct {
-	codes []BitString
+	codes   []BitString
 	symbols []symbol
 }
 
@@ -130,7 +130,7 @@ func (scan codeScanning) makeSubtree(
 	maybeExtend := func(upto int) {
 		switch {
 		case lastIndex < upto:
-			addNodes := scan.makeSubtree(lastIndex, upto, bitOffset + treeShift)
+			addNodes := scan.makeSubtree(lastIndex, upto, bitOffset+treeShift)
 			newNode.children[lastBits] = treeBranch(len(subNodes))
 			subNodes = append(subNodes, addNodes...)
 		case lastIndex > upto:
@@ -139,25 +139,25 @@ func (scan codeScanning) makeSubtree(
 
 		lastIndex, lastBits = upto, lastBits+1
 	}
-	
+
 	for index := low; index < high; index++ {
 		// We try to read one extra bit to detect end-of-string conveniently.
 		bitsp1, count := scan.codes[index].extract(bitOffset, treeShift+1)
 		bits := bitsp1 >> 1
-		
+
 		if count <= treeShift {
 			maybeExtend(index)
 			if bits != lastBits {
 				panic(ErrCodeTableInconsistent)
 			}
-			
-			leafFanout := uint8(1) << uint(treeShift - count)
+
+			leafFanout := uint8(1) << uint(treeShift-count)
 			childPointer := treeLeaf(scan.symbols[index], count)
 			for leafTail := uint8(0); leafTail < leafFanout; leafTail++ {
-				newNode.children[bits + leafTail] = childPointer
+				newNode.children[bits+leafTail] = childPointer
 			}
-			
-			lastIndex, lastBits = index+1, bits + leafFanout - 1
+
+			lastIndex, lastBits = index+1, bits+leafFanout-1
 		} else {
 			if bits == lastBits {
 				continue
@@ -170,10 +170,10 @@ func (scan codeScanning) makeSubtree(
 	}
 
 	maybeExtend(high)
-	if lastBits != 1 << treeShift {
+	if lastBits != 1<<treeShift {
 		panic(ErrCodeTableInconsistent)
 	}
-	
+
 	subNodes[0] = newNode
 	return subNodes
 }
@@ -188,7 +188,7 @@ func makeTree(codeTable []BitString) (result []treeNode, err error) {
 
 	scan := codeScanning{codes, symbols}
 	sort.Sort(scan)
-	
+
 	defer func() {
 		if panicked := recover(); panicked != nil {
 			switch panicked {
@@ -201,7 +201,7 @@ func makeTree(codeTable []BitString) (result []treeNode, err error) {
 			}
 		}
 	}()
-	
+
 	result = scan.makeSubtree(0, totalSymbols, 0)
 	return
 }
@@ -213,7 +213,7 @@ func NewCoding(codeTable []BitString) (*Coding, error) {
 
 	for _, bs := range codeTable {
 		bs.check()
-		
+
 		if bs.BitLength == 0 {
 			return nil, ErrCodeEmpty
 		}
@@ -229,7 +229,7 @@ func NewCoding(codeTable []BitString) (*Coding, error) {
 
 func (coding Coding) TreeString() string {
 	var parts []string
-	
+
 	for i, node := range coding.treeNodes {
 		parts = append(parts, fmt.Sprintf("\t%d: %v\n", i, node))
 	}
