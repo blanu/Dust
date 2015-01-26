@@ -43,6 +43,14 @@ Doing statistical tests would be useful here.
 This mostly works but should have a cleaner CLI.
 
 * Tasks
+** Protocol modifications
+*** Avoid bogus key material reuse
+*** Avoid stuck states during handshaking
+This is now much more serious; it actually breaks things in the presence of codecs that must hold input octets
+back at bit positions where an output octet cannot be emitted yet.  If the last octet before a stuck state
+gets "stuck in the buffer" then nothing can ever proceed; the assumption for codecs is that new data will
+always eventually be pushed in from both sides.
+*** Figure out MTU situation
 ** Integrate model generator properly
 ** Handle connection durations
 ** Determine what to do about the ensemble protocol
@@ -74,10 +82,6 @@ Some things probably aren't aligned properly by gofmt standards.
 *** Lock down CLI for key tool
 *** Lock down file format for private identity files
 **** Consider allowing a PBKDF for this
-** Protocol modifications
-*** Avoid bogus key material reuse
-*** Avoid stuck states during handshaking
-*** Figure out MTU situation
 ** Deferred
 *** Higher-performance buffer discipline for models?
 
