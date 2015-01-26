@@ -12,12 +12,14 @@ import (
 
 	"github.com/blanu/Dust/go/Dust"
 	"github.com/blanu/Dust/go/Dust/procman"
+
 	_ "github.com/blanu/Dust/go/DustModel/sillyHex"
 )
 
 const progName = "DustProxy"
 const usageMessageRaw = `
 Usage: DustProxy --incomplete PROXY-SPEC
+
 Options:
   --incomplete
 	Acknowledge that this executable does not implement
@@ -34,12 +36,26 @@ Proxy specification syntax:
 	Connect to the Dust server at ADDR:PORT, using PARAMS as
 	though from a torrc Bridge line.  Attach the connection to
 	stdin/stdout of this process.
+
+Models available:$models
 `
 
 var ourFlags *flag.FlagSet
 
+func modelsReadable() string {
+	result := ""
+	for _, name := range Dust.ModelsAvailable() {
+		result += "\n  " + name
+	}
+	return result
+}
+
 func usageMessage() string {
-	return strings.TrimLeft(usageMessageRaw, "\n")
+	template := strings.TrimLeft(usageMessageRaw, "\n")
+	replacements := []string{
+		"$models", modelsReadable(),
+	}
+	return strings.NewReplacer(replacements...).Replace(template)
 }
 
 func usageErrorf(detailFmt string, detailArgs ...interface{}) {

@@ -26,3 +26,16 @@ var registeredModels = make(map[string]ShapingModelConstructor)
 func RegisterModel(name string, constructor ShapingModelConstructor) {
 	registeredModels[name] = constructor
 }
+
+func ModelsAvailable() []string {
+	models := []string{}
+	for name, _ := range registeredModels {
+		models = append(models, name)
+	}
+	return models
+}
+
+func ModelAvailable(name string) bool {
+	_, ok := registeredModels[name]
+	return ok
+}
