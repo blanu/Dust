@@ -56,26 +56,33 @@ The client begins by either initiating a new session or continuing an existing s
 ## Creating a new session
 *     Verify that the client has the certificate for the server
 *     Create an ephemeral Elligator/Curve25519 keypair, associating it with the given server
-*     Send the encrypted ephemeral public key to the server
+*     Send the ephemeral public key to the server
+*     Start sending random bytes to the server until the confirmation code is received
 
-## When the server receives a client request for a new session
-*     Obtain the client’s encrypted ephemeral public key from the message.
-*     Decrypt the client’s encrypted ephemeral public key with Elligator to get the client’s Curve25519 ephemeral public key
+## When the server receives a connection from the client
 *     Create an ephemeral Elligator/Curve25519 keypair
+*     Send the ephemeral public key to the client
+*     Start sending random bytes to the client until the client ephemeral public key is received
+*     Receive the client’s Elligator-encrypted ephemeral public key
+*     Decrypt the client’s encrypted ephemeral public key with Elligator to get the client’s Curve25519 ephemeral public key
 *     Create a shared key (see below)
 *     Create a server confirmation code using the shared key (see below)
-*     Send the ephemeral public key and server confirmation code to the client
+*     Stop sending random bytes to the client
+*     Send the server confirmation code to the client
 *     Delete the ephemeral private key
 *     Store the shared key, associated with the client
 
-## When the client receives a server response for a new session
-*     Obtain the server’s encrypted ephemeral public key and the server confirmation code from the message.
+## When the client receives a response from the server
+*     Receive the server’s Elligator-encrypted ephemeral public key
 *     Decrypt the server’s encrypted ephemeral public key with Elligator to get the server’s ephemeral Curve25519 public key
 *     Create a shared key (see below)
+*     Receive and discard random bytes from the server until the server confirmation code is received
 *     Create a client confirmation code using the shared key (see below)
-*     Verify that the client confirmation code and server confirmation code are identical
+*     Verify the server confirmation code
 *     Delete the ephemeral private key
 *     Store the shared key, associated with the server
+*     Stop sending random bytes to the client
+*     Send the client confirmation code to the client
 
 ## Creating a shared key
 *     On the server, hash with Skein-256-256 the following:
