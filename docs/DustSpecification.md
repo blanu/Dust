@@ -87,14 +87,14 @@ The client begins by either initiating a new session or continuing an existing s
 *     Send the client confirmation code to the client
 
 ## Creating a shared key
-*     On the server, hash with Skein-256-256 the following:
+*     On the server, hash with Skein-512-256 the following:
   *     32 bytes - ECDH(server’s ephemeral private key, client’s ephemeral public key)
   *      32 bytes - ECDH(server’s static private key, client’s ephemeral public key)
   *      7 or 19 bytes - server identifier (see below)
   *      32 bytes - client’s ephemeral public key
   *      32 bytes - server’s ephemeral public key
   *      4 bytes - “ntor”
-*     On the client, hash with Skein-256-256 the following:
+*     On the client, hash with Skein-512-256 the following:
   *      32 bytes - ECDH(client’s ephemeral private key, server’s ephemeral public key)
   *      32 bytes - ECDH(client’s ephemeral private key, server’s static public key)
   *      7 or 10 bytes - server identifier (see below)
@@ -103,13 +103,13 @@ The client begins by either initiating a new session or continuing an existing s
   *      4 bytes - “ntor”
 
 ## Creating a confirmation code
-*     On the server, HMAC with Skein-256-256 and the shared key the following:
+*     On the server, HMAC with Skein-512-256 and the shared key the following:
   *      7 or 19 bytes - server identifier (see below)
   *      32 bytes - server’s ephemeral public key
   *      32 bytes - client’s ephemeral public key
   *      4 bytes - “ntor”
   *      6 bytes - “server”
-*     On the client, HMAC with Skein-256-256 and the shared key the following:
+*     On the client, HMAC with Skein-512-256 and the shared key the following:
   *      7 or 19 bytes - server identifier (see below)
   *      32 bytes - server’s ephemeral public key
   *      32 bytes - client’s ephemeral public key
