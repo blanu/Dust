@@ -41,15 +41,15 @@ func (public *publicKey) Base32() string {
 	padded := base32.StdEncoding.EncodeToString(public.UniformBytes())
 	unpadded := strings.TrimRight(padded, `=`)
 	if len(unpadded) != 52 {
-		panic("weird Base32 consistency error")
+		panic("Dust/cryptions: weird Base32 consistency error")
 	}
 	return unpadded
 }
 
 var (
-	ErrBadPublicKey            = errors.New("bad public key")
-	ErrBadPrivateKey           = errors.New("bad private key")
-	ErrImprobableNonuniformity = errors.New("unreasonably long sequence of un-Elligatorable private keys")
+	ErrBadPublicKey            = errors.New("Dust/cryptions: bad public key")
+	ErrBadPrivateKey           = errors.New("Dust/cryptions: bad private key")
+	ErrImprobableNonuniformity = errors.New("Dust/cryptions: unreasonably long sequence of un-Elligatorable private keys")
 )
 
 // LoadPublicKeyUniform extracts and returns a public key from a 32-byte slice containing its uniform
@@ -168,7 +168,7 @@ func (kp *keyPair) PrivateBase32() string {
 	padded := base32.StdEncoding.EncodeToString(kp.private.Slice())
 	unpadded := strings.TrimRight(padded, `=`)
 	if len(unpadded) != 52 {
-		panic("weird Base32 consistency error")
+		panic("Dust/cryptions: weird Base32 consistency error")
 	}
 	return unpadded
 }

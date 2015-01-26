@@ -24,14 +24,14 @@ type secretBytes struct {
 
 func (sb *secretBytes) Pointer() *[32]byte {
 	if sb.pointer == nil {
-		panic("invalid access to destroyed SecretBytes")
+		panic("Dust/cryptions: invalid access to destroyed SecretBytes")
 	}
 	return sb.pointer
 }
 
 func (sb *secretBytes) Slice() []byte {
 	if sb.pointer == nil {
-		panic("invalid access to destroyed SecretBytes")
+		panic("Dust/cryptions: invalid access to destroyed SecretBytes")
 	}
 	return sb.pointer[:]
 }

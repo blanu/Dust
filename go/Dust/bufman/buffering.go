@@ -71,7 +71,7 @@ func (reassembly Reassembly) ValidLen() int {
 func (reassembly *Reassembly) Consume(n int) {
 	switch {
 	case n > len(*reassembly):
-		panic("consuming more bytes than are available in reassembly buffer")
+		panic("bufman: consuming more bytes than are available in reassembly buffer")
 	case n == len(*reassembly):
 		*reassembly = (*reassembly)[:0]
 	case n < len(*reassembly):

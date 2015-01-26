@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	ErrClosed = errors.New("connection closed")
+	ErrClosed = errors.New("Dust: connection closed")
 )
 
 // Connection acts as a stream-oriented I/O channel.  However, closing it does not necessarily close the

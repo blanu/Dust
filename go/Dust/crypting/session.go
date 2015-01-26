@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	ErrIncompleteFrame = errors.New("incomplete frame")
-	ErrBadHandshake    = errors.New("bad handshake")
-	ErrBadDecode       = errors.New("bad decode")
-	ErrStuck           = errors.New("cannot get anything to send here")
+	ErrIncompleteFrame = errors.New("Dust/crypting: incomplete frame")
+	ErrBadHandshake    = errors.New("Dust/crypting: bad handshake")
+	ErrBadDecode       = errors.New("Dust/crypting: bad decode")
+	ErrStuck           = errors.New("Dust/crypting: cannot get anything to send here")
 )
 
 const (
@@ -142,7 +142,7 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 		}
 
 		if len(frame) < 32 {
-			panic("frame too small?!")
+			panic("Dust/crypting: frame too small?!")
 		}
 
 		// We own frame forever now, and outCipher is valid.  Authenticate and encrypt in-place.
@@ -170,7 +170,7 @@ func (cs *Session) fail() {
 	if err := cryptions.RandomizeSecretBytes(bogusKey); err != nil {
 		// TODO: steal some extra entropy earlier to prevent this case.  (We do actually have to
 		// panic in the absence of that because otherwise we start emitting predictable-ish bytes.)
-		panic("Nooooo what happened to my entropy source, oh god")
+		panic("Dust/crypting: Nooooo what happened to my entropy source, oh god")
 	}
 
 	cs.sessionKey = bogusKey
@@ -214,7 +214,7 @@ func (cs *Session) beginInCipher() {
 	inIV := [32]byte{}
 	copied := copy(inIV[:], cs.handshakeReassembly.Data())
 	if copied != 32 {
-		panic("should not have gotten here without incoming IV")
+		panic("Dust/crypting: should not have gotten here without incoming IV")
 	}
 
 	// Eeeek, raw shared secret as stream cipher key!
@@ -232,13 +232,13 @@ func (cs *Session) completeHandshakeClient() {
 	cs.handshakeReassembly = nil
 
 	if len(response) != 64 {
-		panic("should not have gotten here without a complete response")
+		panic("Dust/crypting: should not have gotten here without a complete response")
 	}
 
 	var err error
 	cs.remotePublic, err = cryptions.LoadPublicKeyUniform(response[0:32])
 	if err != nil {
-		panic("should always be able to load public key here")
+		panic("Dust/crypting: should always be able to load public key here")
 	}
 	pub := cs.serverInfo.(*Public)
 
@@ -291,13 +291,13 @@ func (cs *Session) completeHandshakeServer() {
 	cs.handshakeReassembly = nil
 
 	if len(request) != 32 {
-		panic("should not have gotten here without a complete request")
+		panic("Dust/crypting: should not have gotten here without a complete request")
 	}
 
 	var err error
 	cs.remotePublic, err = cryptions.LoadPublicKeyUniform(request[0:32])
 	if err != nil {
-		panic("should always be able to load public key here")
+		panic("Dust/crypting: should always be able to load public key here")
 	}
 	priv := cs.serverInfo.(*Private)
 
@@ -337,7 +337,7 @@ func (cs *Session) completeHandshakeServer() {
 	confirmation := cryptions.ComputeAuthenticator(confirmationInput, sessionKey)
 	response := append(cs.localPair.Public().UniformBytes(), confirmation...)
 	if len(response) != 64 {
-		panic("something grotesquely wrong with handshake response computation")
+		panic("Dust/crypting: something grotesquely wrong with handshake response computation")
 	}
 	cs.outCryptPending = append(cs.outCryptPending, response...)
 
@@ -401,7 +401,7 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 			// If we were in a handshake or streaming no-IV state, we did a handshake reassembly
 			// cycle above and shouldn't be here.  If we were in a failed state, we've already
 			// returned.  So this isn't a valid state.
-			panic("should not have gotten here without incoming cipher")
+			panic("Dust/crypting: should not have gotten here without incoming cipher")
 		} else {
 			n += bufman.TransformReassemble(&cs.dataReassembly, &p, cs.inCipher.XORKeyStream)
 

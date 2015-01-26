@@ -28,8 +28,9 @@ func (priv *Private) Destroy() {
 }
 
 var (
-	ErrUnrecognizedAddressType = errors.New("unrecognized address type")
-	ipv4MappedPrefix           = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
+	ErrUnrecognizedAddressType = errors.New("Dust: unrecognized address type")
+	
+	ipv4MappedPrefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
 )
 
 // IdentityBytesOfNetworkAddress takes a network address and returns a shared identifier for it.  Currently,

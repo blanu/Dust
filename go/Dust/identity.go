@@ -28,7 +28,7 @@ var (
 	ErrNoModelName      = &ParameterError{ParameterMissing, "model name", ""}
 	ErrInvalidAddress   = &ParameterError{ParameterInvalid, "network address", ""}
 	ErrInvalidModelName = &ParameterError{ParameterInvalid, "model name", ""}
-	ErrSyntax           = errors.New("bad identity record syntax")
+	ErrSyntax           = errors.New("Dust: bad identity record syntax")
 )
 
 type endpointAddress struct {

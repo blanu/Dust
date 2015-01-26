@@ -15,7 +15,7 @@ type frame []byte
 // newPlainDataFrame constructs a frame containing the given data and an invalid authenticator.
 func newPlainDataFrame(data []byte) frame {
 	if len(data) > 65535 {
-		panic("data too long for frame representation")
+		panic("Dust/crypting: data too long for frame representation")
 	}
 
 	payloadSize := len(data) + 33

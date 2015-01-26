@@ -19,7 +19,7 @@ func (d Digest) WriteSecret(sb SecretBytes) {
 func (d Digest) SumSecret(sbOut SecretBytes) {
 	n, err := d.Hash.OutputReader().Read(sbOut.Slice())
 	if n != 32 || err != nil {
-		panic("pure Skein should never fail a read")
+		panic("Dust/cryptions: pure Skein should never fail a read")
 	}
 }
 

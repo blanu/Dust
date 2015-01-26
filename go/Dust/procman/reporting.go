@@ -22,7 +22,7 @@ func Debug(control string, args ...interface{}) {
 }
 
 var (
-	ErrDoubleFault = errors.New("double fault!")
+	ErrDoubleFault = errors.New("procman: double fault!")
 )
 
 type Link struct {
