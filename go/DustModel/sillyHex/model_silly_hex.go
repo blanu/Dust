@@ -47,8 +47,8 @@ func (model *sillyHexModel) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingD
 }
 
 func makeSillyHexModel(params map[string]string) (Dust.ShapingModel, error) {
-	for key, _ := range params {
-		return nil, &Dust.ParameterError{Dust.ParameterUnexpected, "parameter", key}
+	if err := Dust.CheckUnackedParams(params, nil); err != nil {
+		return nil, err
 	}
 
 	return &sillyHexModel{}, nil

@@ -136,7 +136,7 @@ func insertModelSpec(ms *modelSpec, params map[string]string, topKey string) {
 	}
 }
 
-func checkUnackedParams(params map[string]string, ackedParams map[string]bool) error {
+func CheckUnackedParams(params map[string]string, ackedParams map[string]bool) error {
 	for key, _ := range params {
 		if !ackedParams[key] && !strings.HasPrefix(key, bridgeParamOptionalPrefix) {
 			return &ParameterError{ParameterUnexpected, "parameter", key}
@@ -184,7 +184,7 @@ func LoadServerPublicBridgeLine(bline BridgeLine) (result *ServerPublic, err err
 	}
 	ackedParams[bridgeParamPublicKey] = true
 
-	err = checkUnackedParams(bline.Params, ackedParams)
+	err = CheckUnackedParams(bline.Params, ackedParams)
 	if err != nil {
 		return
 	}
@@ -305,7 +305,7 @@ func LoadServerPrivateFile(
 		return
 	}
 
-	err = checkUnackedParams(params, ackedParams)
+	err = CheckUnackedParams(params, ackedParams)
 	if err != nil {
 		return
 	}
@@ -383,7 +383,7 @@ func NewServerPrivateBridgeLine(bline BridgeLine) (result *ServerPrivate, err er
 		return
 	}
 
-	err = checkUnackedParams(bline.Params, ackedParams)
+	err = CheckUnackedParams(bline.Params, ackedParams)
 	if err != nil {
 		return
 	}
