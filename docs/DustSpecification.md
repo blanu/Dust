@@ -48,25 +48,23 @@ The client begins by either initiating a new session or continuing an existing s
 # Encryption Protocol - Handshake
 
 ## Initializing a server
-*     The server generates a static ECDH keypair using Curve25519 and becomes the server’s certificate.
+*     The server generates a static ECDH keypair using Elligator/Curve25519 and becomes the server’s certificate.
 
 ## Initializing a client
 *     The client obtains a copy of the server’s certificate out of band, along with the server’s IP and port
 
 ## Creating a new session
 *     Verify that the client has the certificate for the server
-*     Create an ephemeral Curve25519 keypair, associating it with the given server
-*     Encrypt the ephemeral public key with Elligator
+*     Create an ephemeral Elligator/Curve25519 keypair, associating it with the given server
 *     Send the encrypted ephemeral public key to the server
 
 ## When the server receives a client request for a new session
 *     Obtain the client’s encrypted ephemeral public key from the message.
 *     Decrypt the client’s encrypted ephemeral public key with Elligator to get the client’s Curve25519 ephemeral public key
-*     Create an ephemeral Curve25519 keypair
+*     Create an ephemeral Elligator/Curve25519 keypair
 *     Create a shared key (see below)
 *     Create a server confirmation code using the shared key (see below)
-*     Encrypt the ephemeral public key with Elligator
-*     Send the encrypted ephemeral public key and server confirmation code to the client
+*     Send the ephemeral public key and server confirmation code to the client
 *     Delete the ephemeral private key
 *     Store the shared key, associated with the client
 
