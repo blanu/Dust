@@ -1,8 +1,9 @@
 package main
 
 import (
-	"errors"
+	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -10,12 +11,21 @@ import (
 )
 
 const progName = "DustTool"
-
-var ErrBadArgs = errors.New("bad arguments")
-
 const usageMessageRaw = `
-Usage: DustTool newid FILE HOST:PORT
+Usage: DustTool SUBCOMMAND...
+
+Subcommands:
+  newid -o FILE NICKNAME HOST:PORT PARAMS...
+    Generate a new Dust server identity for a server named NICKNAME,
+    to listen at HOST:PORT, communicating using PARAMS.  Each PARAM must
+    be of the form KEY=VALUE.  Write private information to the new file
+    FILE and output a full bridge line on standard output.
+
+    Currently, PARAMS are not fully validated to make sure that Dust
+    connections could reasonably be established with them.
 `
+
+var ourFlags *flag.FlagSet
 
 func usageMessage() string {
 	return strings.TrimLeft(usageMessageRaw, "\n")
@@ -32,6 +42,29 @@ func exitError(err error) {
 	os.Exit(1)
 }
 
+var argI int = 0
+
+func nextArg(expected string) string {
+	if !(argI < ourFlags.NArg()) {
+		usageErrorf("not enough arguments; expected %s", expected)
+	}
+	arg := ourFlags.Arg(argI)
+	argI++
+	return arg
+}
+
+func remainingArgs() []string {
+	slice := ourFlags.Args()[argI:]
+	argI = ourFlags.NArg()
+	return slice
+}
+
+func endOfArgs() {
+	if argI < ourFlags.NArg() {
+		usageErrorf("too many arguments at %d (\"%s\")", argI, ourFlags.Arg(argI))
+	}
+}
+
 func joinBridgeParams(params map[string]string) string {
 	parts := make([]string, 0, len(params))
 	for k, v := range params {
@@ -40,7 +73,7 @@ func joinBridgeParams(params map[string]string) string {
 	return strings.Join(parts, " ")
 }
 
-func writeNewIdentity(path string, addrString string) error {
+func newidToFile(path string, nickname string, bline Dust.BridgeLine) error {
 	var spriv *Dust.ServerPrivate
 	var err error
 	defer func() {
@@ -50,9 +83,6 @@ func writeNewIdentity(path string, addrString string) error {
 		}
 	}()
 
-	// TODO: un-hardcode
-	bline := Dust.BridgeLine{addrString, map[string]string{"m": "sillyHex"}}
-
 	spriv, err = Dust.NewServerPrivateBridgeLine(bline)
 	if err != nil {
 		return err
@@ -61,31 +91,90 @@ func writeNewIdentity(path string, addrString string) error {
 	if err = spriv.SavePrivateFile(path); err != nil {
 		return err
 	}
-	fmt.Fprintf(os.Stdout, "Identity file saved to: %s\n", path)
 
 	// TODO: clean up handling of address, name, other metadata here?
 	realBline := spriv.Public().BridgeLine()
 	realAddrString := realBline.Address
 	paramsString := joinBridgeParams(realBline.Params)
-	fmt.Fprintf(os.Stdout, "Bridge x %s %s\n", realAddrString, paramsString)
+	fmt.Fprintf(os.Stdout, "Bridge %s %s %s\n", nickname, realAddrString, paramsString)
 	return nil
 }
 
+func newidFromArgs() (func() error, error) {
+	// TODO: refactor subcommand-flags bit, and refactor this with DustProxy flag handling
+	subFlags := flag.NewFlagSet(progName, flag.ContinueOnError)
+	subFlags.Usage = func() {
+		io.WriteString(os.Stderr, usageMessage())
+	}
+
+	outputPathPtr := subFlags.String("o", "", "")
+	
+	argErr := subFlags.Parse(remainingArgs())
+	if argErr == flag.ErrHelp {
+		io.WriteString(os.Stdout, usageMessage())
+		os.Exit(0)
+	} else if argErr != nil {
+		usageErrorf("%s", argErr.Error())
+	}
+
+	ourFlags = subFlags
+	argI = 0
+	nickname := nextArg("NICKNAME")
+	addrString := nextArg("ADDR-STRING")
+	paramArgs := remainingArgs()
+	
+	params := make(map[string]string)
+	for _, pairArg := range paramArgs {
+		equals := strings.IndexRune(pairArg, '=')
+		if equals < 0 {
+			usageErrorf("bridge parameter must be of the form KEY=VALUE")
+		}
+
+		key := pairArg[:equals]
+		val := pairArg[equals+1:]
+		params[key] = val
+	}
+
+	bline := Dust.BridgeLine{addrString, params}
+	
+	if *outputPathPtr == "" {
+		usageErrorf("output file must be specified")
+	}
+
+	return func() error {
+		return newidToFile(*outputPathPtr, nickname, bline)
+	}, nil
+}
+
 func main() {
-	// TODO: proper arg parsing
-	if len(os.Args) < 4 {
-		usageErrorf("not enough arguments")
+	var err error
+	ourFlags = flag.NewFlagSet(progName, flag.ContinueOnError)
+	ourFlags.Usage = func() {
+		io.WriteString(os.Stderr, usageMessage())
 	}
 
-	subcommand := os.Args[1]
-	if subcommand != "newid" {
-		usageErrorf("unrecognized subcommand \"%s\"", subcommand)
+	argErr := ourFlags.Parse(os.Args[1:])
+	if argErr == flag.ErrHelp {
+		io.WriteString(os.Stdout, usageMessage())
+		os.Exit(0)
+	} else if argErr != nil {
+		usageErrorf("%s", argErr.Error())
 	}
 
-	path := os.Args[2]
-	addrString := os.Args[3]
+	var requestedCommand func() error
+	subcommandArg := nextArg("SUBCOMMAND")
+	switch subcommandArg {
+	default:
+		usageErrorf("unrecognized subcommand \"%s\"", subcommandArg)
+	case "newid":
+		requestedCommand, err = newidFromArgs()
+	}
 
-	err := writeNewIdentity(path, addrString)
+	if err != nil {
+		exitError(err)
+	}
+
+	err = requestedCommand()
 	if err != nil {
 		exitError(err)
 	}
