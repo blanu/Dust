@@ -48,8 +48,11 @@ func (dec *Decoder) writeSymbolsTo(dst []byte) (dn int) {
 }
 
 func (dec *Decoder) Decode(dst, src []byte) (dn, sn int) {
-	for dn < len(dst) && sn < len(src) {
+	for {
 		dn += dec.writeSymbolsTo(dst[dn:])
+		if sn == len(src) || dn == len(dst) {
+			return 
+		}
 
 		for sn < len(src) && (32 - dec.heldCount) >= 8 {
 			dec.heldBits = dec.heldBits << 8 | uint32(src[sn])
@@ -57,8 +60,6 @@ func (dec *Decoder) Decode(dst, src []byte) (dn, sn int) {
 			sn++
 		}
 	}
-
-	return
 }
 
 func (dec *Decoder) Aligned() bool {
