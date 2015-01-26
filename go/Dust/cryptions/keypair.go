@@ -1,3 +1,7 @@
+/*
+Package cryptions wraps various cryptographic primitives used by the Dust protocol suite, as well as
+their interfaces to some external representations.
+*/
 package cryptions
 
 import (

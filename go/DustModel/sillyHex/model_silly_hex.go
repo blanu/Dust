@@ -1,3 +1,7 @@
+/*
+Package sillyHex implements the contrived, silly "sillyHex" model for Dust.  This model should not be used
+for serious applications!  Importing this package registers its model.
+*/
 package sillyHex
 
 import (

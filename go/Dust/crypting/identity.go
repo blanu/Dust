@@ -1,3 +1,6 @@
+/*
+Package crypting implements the cryptographic and framing layer of the Dust protocol suite.
+*/
 package crypting
 
 import (
@@ -8,11 +11,13 @@ import (
 	"github.com/blanu/Dust/go/Dust/cryptions"
 )
 
+// A Public holds the longterm public key and shared identifier for a server.
 type Public struct {
 	IdBytes []byte
 	LongtermPublic cryptions.PublicKey
 }
 
+// A Private holds the longterm private key and shared identifier for a server.
 type Private struct {
 	IdBytes []byte
 	LongtermPair cryptions.KeyPair
@@ -27,6 +32,9 @@ var (
 	ipv4MappedPrefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
 )
 
+// IdentityBytesOfNetworkAddress takes a network address and returns a shared identifier for it.  Currently,
+// this address must be a TCP/IP address.  If the address is not of a type for which a shared identifier can
+// be determined, ErrUnrecognizedAddressType is returned.
 func IdentityBytesOfNetworkAddress(netAddr interface{}) ([]byte, error) {
 	var ip net.IP
 	var port int

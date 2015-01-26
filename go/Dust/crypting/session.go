@@ -31,6 +31,12 @@ const (
 	stateHandshakeServer
 )
 
+// A Session holds state for a single secure channel.  There are two "sides" to a session: the outward-facing
+// side and the inward-facing side.  The outward-facing side transceives arbitrary-rate streams of uniform
+// bytes; the inward-facing side transceives a plaintext application protocol to be run over the secure
+// channel.  The outward-facing side is accessed by the shaping layer via PullWrite and PushRead; concurrently,
+// the inward-facing side is accessed by the application via Write and Read.  The two sides communicate using
+// channels, but no more than one goroutine should access a side at a time.
 type Session struct {
 	// This is one of:
 	// 

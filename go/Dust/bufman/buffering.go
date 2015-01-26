@@ -1,3 +1,7 @@
+/*
+Package bufman contains a few imperative buffer-handling utility routines to avoid mistake-prone
+repetition when streaming and reassembling chunks of bytes.
+*/ 
 package bufman
 
 // Copy as many bytes as possible from *in to *out, and advance the start pointers of both *in and *out past

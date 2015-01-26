@@ -1,3 +1,6 @@
+/*
+Package procman holds mainly utilities for managing the lifetime of a goroutine using kill/exit channels.
+*/
 package procman
 
 import (

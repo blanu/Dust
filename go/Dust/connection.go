@@ -22,6 +22,10 @@ var (
 	ErrClosed = errors.New("connection closed")
 )
 
+// Connection acts as a stream-oriented I/O channel.  However, closing it does not necessarily close the
+// backing channel, as Dust connections normally have a predetermined duration.  The HardClose method is
+// specified if the backing channel must also be immediately closed for some reason; this should be avoided
+// as it may cause the Dust connection to be more easily detectable by an intermediary.
 type Connection interface {
 	io.ReadWriteCloser
 	HardClose() error
@@ -73,6 +77,10 @@ func (s *session) HardClose() error {
 	return err
 }
 
+// BeginClient initiates the client side of a Dust connection using the public key and model parameters
+// specified in spub.  Dust-level communication will occur in the background over socket, which is usually the
+// client side of a TCP connection and must be a stream-oriented I/O channel.  The Dust connection takes over
+// responsibility for closing socket.
 func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection, err error) {
 	model, err := spub.ReifyModel()
 	if err != nil {
@@ -103,6 +111,10 @@ func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection
 	return
 }
 
+// BeginServer initiates the server side of a Dust connection using the private key and model parameters
+// specified in spriv.  Dust-level communication will occur in the background over socket, which is usually
+// an accepted TCP connection and must be a stream-oriented I/O channel.  The Dust connection takes over
+// responsibility for closing socket.
 func BeginServer(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connection, err error) {
 	model, err := spriv.ReifyModel()
 	if err != nil {

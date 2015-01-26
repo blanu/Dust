@@ -1,3 +1,7 @@
+/*
+Package huffman implements Huffman streaming encoders and decoders, for 256-symbol tables only,
+with up to 256-bit codeword length.
+*/
 package huffman
 
 type symbol uint8

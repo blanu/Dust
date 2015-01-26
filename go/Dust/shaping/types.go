@@ -1,3 +1,6 @@
+/*
+Package shaping implements the shaping layer of the Dust protocol suite.
+*/
 package shaping
 
 import (
