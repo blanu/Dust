@@ -1,5 +1,5 @@
 #+TITLE: Notes on Dust Go implementation
-Updated: [2015-01-16 Fri]
+Updated: [2015-01-26 Mon]
 
 * State
 ** Packaging
@@ -21,50 +21,65 @@ The SecretBytes API is a little wonky given Go's memory and execution model, and
 it should be taken out entirely.
 
 ** Crypto/framing layer
-Most of this should probably work now, modulo the stubbed-out crypto primitives, but it hasn't been tested
-against anything else yet and needs another verification pass.
+Most of this should probably work now, but the usage of primitives has been moved around and needs to be
+locked down and documented.
 
 ** Shaping layer
-There's an API for models; blanu is working on the model generator, plus there's a silly pseudo-model
-available.  Loopback communication has been verified working with this model, modulo some protocol-design
-difficulties (via the Dust spec) regarding handshake latency versus shaping padding.
+The API for models has been improved; blanu's model generator hasn't been
+
+There's also a silly pseudo-model available.  Loopback communication has been verified working with this
+model, modulo some protocol-design difficulties (via the Dust spec) regarding handshake latency versus shaping
+padding.
+
+Connection durations are not handled.  The ensemble protocol isn't handled, as it's not clear how to deal with
+that practically yet (and it doesn't seem to have been in the original Haskell codebase anyway?).
 
 ** Test proxy
-This mostly seems to work, protocol-wise, modulo all the broken parts above.
+This mostly seems to work, protocol-wise.  The goroutine composition needs to be reworked.
 
-There's some wonkiness surrounding the composition of goroutines somewhere in here; it's not clear whether
-it's here or in the shaping layer, but the symptom is ungraceful exits or maybe deadlock when the connection
-goes away.  This may have been fixed by now.
+Doing statistical tests would be useful here.
 
 ** Key tool
 This mostly works but should have a cleaner CLI.
 
 * Tasks
-** BeginDustClient, BeginDustServer functions
-** Rename newPlainDataFrame -> newDataFrame
-** Document overview of packages
-** Document _actual_ crypto protocol being implemented
-(as this differs from the original Dust spec in a few ways already)
-** Document remaining top-level types/functions/etc.
-** Document buffer ownership better in crypto layer
-** Make sure goroutine composition works reasonably
-** Clean up concrete versus interface type exports
-** Lock down CLI for test proxy
-** Lock down CLI for key tool
-** Lock down file format for private identity files
-*** Consider allowing a PBKDF for this
-** Modify protocol further 
-*** Avoid bogus key material reuse
-*** Avoid stuck states during handshaking
-** Decide what to do with SecretBytes: propagate destroy signals or remove entirely
+** Integrate model generator properly
+** Handle connection durations
+** Determine what to do about the ensemble protocol
+Was this ever verified functional elsewhere?  Can this be deferred?
+** Code cleanup
+*** Rename newPlainDataFrame -> newDataFrame
+*** Recheck goroutine composition
+*** Recheck concrete versus interface type exports
+*** Decide what to do with SecretBytes: propagate destroy signals or remove entirely
 Finalizers are useful as a stopgap if they're kept.  The Skein stuff probably needs
 to be copied in-tree and then modified to allow zeroing the structure... ?
 
 It should probably be possible to use move semantics for SecretBytes, which would make
 the ownership transitions safer.
-** Get needed entropy earlier in CryptoSession initialization to avoid later failures
-** Figure out MTU situation
-** Higher-performance buffer discipline for models?
+
+Then again, the mainline Go crypto packages don't have any early-destroy semantics
+here at all, and it's not entirely clear that the attack set aided by this is usefully
+delimitable.
+*** Reformatting
+Some things probably aren't aligned properly by gofmt standards.
+*** Get needed entropy earlier in CryptoSession initialization to avoid later failures
+** Documentation
+*** Overview of packages
+*** Top-level type/function pass
+*** crypting: Buffer ownership
+*** As-built protocol documentation
+** Interfacing
+*** Lock down CLI for test proxy
+*** Lock down CLI for key tool
+*** Lock down file format for private identity files
+**** Consider allowing a PBKDF for this
+** Protocol modifications
+*** Avoid bogus key material reuse
+*** Avoid stuck states during handshaking
+*** Figure out MTU situation
+** Deferred
+*** Higher-performance buffer discipline for models?
 
 * (metadata)
 
