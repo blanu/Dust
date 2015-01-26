@@ -71,6 +71,8 @@ The client begins by either initiating a new session or continuing an existing s
 *     Send the server confirmation code to the client
 *     Delete the ephemeral private key
 *     Store the shared key, associated with the client
+*     Receive and discard random bytes from the server until the client confirmation code is received
+*     Verify the client confirmation code
 
 ## When the client receives a response from the server
 *     Receive the server’s Elligator-encrypted ephemeral public key
@@ -101,12 +103,18 @@ The client begins by either initiating a new session or continuing an existing s
   *      4 bytes - “ntor”
 
 ## Creating a confirmation code
-*     Identical on both client and server, HMAC with Skein-256-256 and the shared key the following:
+*     On the server, HMAC with Skein-256-256 and the shared key the following:
   *      7 or 19 bytes - server identifier (see below)
   *      32 bytes - server’s ephemeral public key
   *      32 bytes - client’s ephemeral public key
   *      4 bytes - “ntor”
   *      6 bytes - “server”
+*     On the client, HMAC with Skein-256-256 and the shared key the following:
+  *      7 or 19 bytes - server identifier (see below)
+  *      32 bytes - server’s ephemeral public key
+  *      32 bytes - client’s ephemeral public key
+  *      4 bytes - “ntor”
+  *      6 bytes - “client”
 
 ## Creating a server identifier
 *     For an IPv4 address:
