@@ -90,7 +90,6 @@ func (self $codec_type) NextPacketSleep() time.Duration {
 }
 
 func allocatingRecode(f func(dst []byte, src []byte) (dn int, sn int), in []byte) []byte {
-  lin := len(in)
   out := make([]byte, len(in))
   outTail := out
 
