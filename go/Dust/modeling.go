@@ -35,6 +35,8 @@ func ModelsAvailable() []string {
 	return models
 }
 
+// ModelAvailable returns true iff a shaping model with the given name has been registered with the Dust
+// package.
 func ModelAvailable(name string) bool {
 	_, ok := registeredModels[name]
 	return ok

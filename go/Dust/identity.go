@@ -60,11 +60,15 @@ type BridgeLine struct {
 	Params  map[string]string
 }
 
+// ServerPublic represents a server public identity, comprising a public key, model parameters, and network
+// address.
 type ServerPublic struct {
 	endpointConfig
 	longtermPublic cryptions.PublicKey
 }
 
+// ServerPrivate represents a server private identity, comprising a private key, model parameters, and network
+// address.
 type ServerPrivate struct {
 	endpointConfig
 	longtermPair cryptions.KeyPair
@@ -136,6 +140,9 @@ func insertModelSpec(ms *modelSpec, params map[string]string, topKey string) {
 	}
 }
 
+// CheckUnackedParams ensures that all parameters in params are either acknowledged by being associated
+// with a true value in ackedParams or are optional due to being prefixed with a question mark.  If any
+// unacknowledged requisite parameters are present, it returns an appropriate error.
 func CheckUnackedParams(params map[string]string, ackedParams map[string]bool) error {
 	for key, _ := range params {
 		if !ackedParams[key] && !strings.HasPrefix(key, bridgeParamOptionalPrefix) {
@@ -167,6 +174,7 @@ func loadEndpointConfigBridgeLine(
 	return
 }
 
+// LoadServerPublicBridgeLine converts parameters from a bridge line into a server public identity.
 func LoadServerPublicBridgeLine(bline BridgeLine) (result *ServerPublic, err error) {
 	ackedParams := make(map[string]bool)
 	endpointConfig, err := loadEndpointConfigBridgeLine(bline, ackedParams)
@@ -212,6 +220,7 @@ func (spub ServerPublic) cryptoPublic() *crypting.Public {
 	}
 }
 
+// Public returns a server public identity corresponding to the given server private identity.
 func (spriv ServerPrivate) Public() ServerPublic {
 	return ServerPublic{
 		endpointConfig: spriv.endpointConfig,
@@ -226,6 +235,7 @@ func (spriv ServerPrivate) cryptoPrivate() *crypting.Private {
 	}
 }
 
+// LoadServerPrivateFile loads server private identity information from path.
 func LoadServerPrivateFile(
 	path string,
 ) (result *ServerPrivate, err error) {
@@ -320,6 +330,8 @@ func LoadServerPrivateFile(
 	return
 }
 
+// SavePrivateFile saves the given server private identity information to a new file named path.  The file
+// must not already exist.
 func (spriv ServerPrivate) SavePrivateFile(path string) error {
 	headerLines := []string{
 		magicLine,
@@ -376,6 +388,7 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 	return nil
 }
 
+// NewServerPrivateBridgeLine generates a new server private identity suitable for the given bridge line.
 func NewServerPrivateBridgeLine(bline BridgeLine) (result *ServerPrivate, err error) {
 	ackedParams := make(map[string]bool)
 	endpointConfig, err := loadEndpointConfigBridgeLine(bline, ackedParams)
