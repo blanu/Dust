@@ -40,6 +40,8 @@ goes away.  This may have been fixed by now.
 This mostly works but should have a cleaner CLI.
 
 * Tasks
+** BeginDustClient, BeginDustServer functions
+** Rename newPlainDataFrame -> newDataFrame
 ** Document overview of packages
 ** Document _actual_ crypto protocol being implemented
 (as this differs from the original Dust spec in a few ways already)
