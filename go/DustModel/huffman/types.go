@@ -5,19 +5,19 @@ type symbol uint8
 const totalSymbols = 256
 
 // BitString represents a packed bit string.  Within each octet, bits are addressed most significant first.
-// 
+//
 // Invariants:
 //   - 0 <= BitLength <= len(Packed)*8
 //   - if BitLength%8 != 0, the low (8 - BitLength%8) bits of Packed[BitLength/8] are zero
 type BitString struct {
-	Packed []uint8
+	Packed    []uint8
 	BitLength int
 }
 
 // extract extracts req bits starting from offset, where 0 <= req <= 8 and 0 <= offset.  offset may point
 // outside the BitString.
 func (bs BitString) extract(offset int, req int) (packed uint8, n int) {
-	avail := bs.BitLength - offset 
+	avail := bs.BitLength - offset
 	switch {
 	case offset < 0:
 		panic("huffman: extract from invalid negative offset")
@@ -32,10 +32,10 @@ func (bs BitString) extract(offset int, req int) (packed uint8, n int) {
 	default:
 		n = avail
 	}
-	
+
 	// Conversion safety: 0 < req above.
 	requ := uint(req)
-	octetOffset := offset/8
+	octetOffset := offset / 8
 	// Conversion safety: 0 <= offset above, so 0 <= offset%8 <= 7.
 	shift := uint(8 - offset%8)
 	packed = bs.Packed[octetOffset] & (1<<shift - 1)
@@ -74,12 +74,12 @@ func (bs BitString) check() {
 
 func (bs BitString) String() string {
 	prefix := []rune{'#', '*'}
-	allRunes := make([]rune, len(prefix) + bs.BitLength)
+	allRunes := make([]rune, len(prefix)+bs.BitLength)
 	copy(allRunes, prefix)
 
 	bitRunes := allRunes[len(prefix):]
 	for i, _ := range bitRunes {
-		bit := (bs.Packed[i/8] >> uint(7 - i%8)) & 1
+		bit := (bs.Packed[i/8] >> uint(7-i%8)) & 1
 		if bit == 0 {
 			bitRunes[i] = '0'
 		} else {

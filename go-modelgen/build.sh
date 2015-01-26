@@ -1,9 +1,7 @@
-echo "Building dist"
-go build dist
-go install dist
-
 echo "Building Dust"
-go generate Dust
-go build Dust
-go install Dust
-go test Dust
+python src/compile-go.py $1 $2
+pushd $2
+go build $1
+go install $1
+go test $1
+popd
