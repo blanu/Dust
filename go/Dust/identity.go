@@ -381,6 +381,10 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 		return err
 	}
 
+	if err = file.Sync(); err != nil {
+		return err
+	}
+
 	if err := file.Close(); err != nil {
 		file = nil
 		_ = os.Remove(path)
