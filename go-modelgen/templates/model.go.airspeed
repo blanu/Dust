@@ -2,65 +2,122 @@ package $packagename
 
 import (
   "time"
+  "git.torproject.org/pluggable-transports/obfs4.git/common/csrand"
+  "github.com/blanu/Dust/go/Dust"
   "github.com/blanu/Dust/go/DustModel/dist"
   "github.com/blanu/Dust/go/DustModel/huffman"
 )
 
-type $name struct {
+type $model_type struct {
+  $weights.decl
+  $huffman.decl
+}
+
+type $codec_type struct {
+  *$model_type
   $duration.decl
-  $packet_count.decl
   $packet_sleep.decl
   $packet_length.decl
-  $random_bytes.decl
   $encode.decl
   $decode.decl
 }
 
-func New() $name {
-  $weights
-  $huffman
-  return $name{
-    $duration.data
-    $packet_count.data
-    $packet_sleep.data
-    $packet_length.data
-    $random_bytes.data
-    $encode.data
-    $decode.data}
+func computeModel() (result *$model_type) {
+  var err error
+  result = &$model_type{
+    $weights.data}
+  $huffman.body
+  return
 }
 
-func (self $name) wholeStreamDurationMillis() uint16 {
+func (model $model_type) newCodec() (result *$codec_type, err error) {
+  // TODO: is this the best choice of source to use?
+  prng := csrand.Rand
+  result = &$codec_type{
+    $duration.data
+    $packet_sleep.data
+    $packet_length.data
+    $encode.data
+    $decode.data}
+  return
+}
+
+func (model $model_type) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+  codec, err := model.newCodec()
+  return codec, codec, err
+}
+
+func (model $model_type) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+  codec, err := model.newCodec()
+  return codec, codec, err
+}
+
+func init() {
+  model := computeModel()
+  constructor := func(params map[string]string) (Dust.ShapingModel, error) {
+    for key, _ := range params {
+      return nil, &Dust.ParameterError{Dust.ParameterUnexpected, "parameter", key}
+    }
+
+    return model, nil
+  }
+
+  Dust.RegisterModel("$name", constructor)
+}
+
+func (self $codec_type) wholeStreamDurationMillis() uint16 {
   $duration.body
 }
 
-func (self $name) WholeStreamDuration() time.Duration {
+func (self $codec_type) WholeStreamDuration() time.Duration {
   return time.Duration(self.wholeStreamDurationMillis()) * time.Millisecond
 }
 
-func (self $name) PacketCount(milliseconds uint16) uint16 {
-  $packet_count.body
-}
-
-func (self $name) MaxPacketLength() uint16 {
+func (self $codec_type) MaxPacketLength() uint16 {
   return 65535
 }
 
-func (self $name) NextPacketLength() uint16 {
+func (self $codec_type) NextPacketLength() uint16 {
   $packet_length.body
 }
 
-func (self $name) nextPacketSleep() uint16 {
+func (self $codec_type) nextPacketSleepMillis() uint16 {
   $packet_sleep.body
 }
 
-func (self $name) NextPacketSleep() time.Duration {
-  return time.Duration(self.nextPacketSleep()) * time.Millisecond
+func (self $codec_type) NextPacketSleep() time.Duration {
+  return time.Duration(self.nextPacketSleepMillis()) * time.Millisecond
 }
 
-func (self $name) EncodeBytes(bytes []byte) []byte {
-  $encode.body
+func allocatingRecode(f func(dst []byte, src []byte) (dn int, sn int), in []byte) []byte {
+  lin := len(in)
+  out := make([]byte, len(in))
+  outTail := out
+
+  for len(in) > 0 {
+    if len(outTail) == 0 {
+      newOut := make([]byte, 1 + len(out)*2)
+      _ = copy(newOut, out)
+      outTail = newOut[len(out):]
+      out = newOut
+    }
+
+    dn, sn := f(outTail, in)
+    if sn == 0 {
+      // TODO: make sure this invariant should actually hold
+      panic("no recode progress?!")
+    }
+    outTail = outTail[dn:]
+    in = in[sn:]
+  }
+
+  return out[:len(out)-len(outTail)]
 }
 
-func (self $name) DecodeBytes(bytes []byte) []byte {
-  $decode.body
+func (codec $codec_type) ShapeBytes(in []byte) []byte {
+  return allocatingRecode(codec.decoder.Decode, in)
+}
+
+func (codec $codec_type) UnshapeBytes(in []byte) []byte {
+  return allocatingRecode(codec.encoder.Encode, in)
 }

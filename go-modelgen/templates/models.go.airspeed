@@ -1,16 +1,7 @@
-package $packageName
+package $packageBase
 
 import (
-  "github.com/blanu/Dust/go/Dust"
   #foreach($model in $models)
-  "$packageName/$model"
+  _ "$packageName/$model"
   #end
 )
-
-func GetModels() map[string]Dust.Model {
-  var models=make(map[string]Dust.Model)
-  #foreach($model in $models)
-  models["$model"]=${model}.New()
-  #end
-  return models
-}

@@ -31,16 +31,16 @@ def save(data, filename):
 def convertModel(name, data):
   model={}
   model['packagename']=name
-  model['name']=name.capitalize()
+  model['name']=name
+  model['model_type']=name+'Model'
+  model['codec_type']=name+'Codec'
   model['duration']=genDuration(data['duration']['dist'], data['duration']['params'])
   model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'])
-  model['packet_count']=genFlow(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'])
   model['packet_sleep']=genITA(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'])
   model['huffman']=genHuffman(data['incomingModel']['huffman'])
   model['encode']=genEncoder(data['incomingModel']['huffman'])
   model['decode']=genDecoder()
   model['weights']=genWeights("contentDist", data['incomingModel']['content']['params'])
-  model['random_bytes']=genContent(data['incomingModel']['content']['dist'], data['incomingModel']['content']['params'])
 
   return model
 
@@ -54,7 +54,7 @@ def genDuration(dist, params):
 def genExponential(varname, param):
   return {
     'decl': "%s dist.Exponential" % (varname),
-    'data': "%s: dist.Exponential{Rate: float64(%s)}," % (varname, param),
+    'data': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param),
     'body': "return uint16(self.%s.Rand())" % (varname)
   }
 
@@ -68,16 +68,9 @@ def genLength(dist, params):
 def genNormal(varname, mu, sigma):
   return {
     'decl': "%s dist.Normal" % (varname),
-    'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f)}," % (varname, mu, sigma),
+    'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu, sigma),
     'body': "return uint16(self.%s.Rand())" % (varname)
   }
-
-def genFlow(dist, params):
-  if dist=='poisson':
-    return genPoisson("flowDist", params[0])
-  else:
-    print('Unknown flow dist %s' % dist)
-    return None
 
 def genITA(dist, params):
   if dist=='poisson':
@@ -90,7 +83,7 @@ def genITA(dist, params):
 def genPoisson(varname, param):
   return {
     'decl': "%s dist.Poisson" % (varname),
-    'data': "%s: dist.Poisson{Expected: float64(%f)}," % (varname, param),
+    'data': "%s: dist.Poisson{Expected: float64(%f), Source: prng}," % (varname, param),
     'body': "var total uint16 = 0\nfor iteration := 0; iteration < int(milliseconds); iteration++ {\n  total=total+uint16(self.%s.Rand())\n}\n\nreturn total" % (varname)
   }
 
@@ -101,12 +94,15 @@ def genContent(dist, params):
     print('Unknown content dist %s' % dist)
 
 def genWeights(varname, params):
-  return "var %sWeights = []float64 %s" % (varname, genArray(convertToProbs(params)))
+  return {
+    'decl': "%s []float64" % (varname),
+    'data': "%s: []float64 %s," % (varname, genArray(convertToProbs(params)))
+  }
 
 def genMultinomial(varname, params):
   return {
     'decl': "%s dist.Multinomial" % (varname),
-    'data': "%s: dist.Multinomial{Weights: %sWeights}," % (varname, varname),
+    'data': "%s: dist.Multinomial{Weights: %sWeights, Source: prng}," % (varname, varname),
     'body': """
       var bytes=make([]byte, requestedLength)
       for index := range bytes {
@@ -123,13 +119,16 @@ def convertToProbs(arr):
   return map(lambda item: float(item)/total, arr)
 
 def genHuffman(params):
-  return "var huffmanCodes, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params))
+  return {
+    'decl': "coding *huffman.Coding",
+    'body': "result.coding, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params))
+  }
 
 def genEncoder(params):
   varname="contentDist"
   return {
     'decl': "encoder *huffman.Encoder",
-    'data': "encoder: huffman.NewEncoder(huffmanCodes),",
+    'data': "encoder: huffman.NewEncoder(model.coding),",
     'body': """
       dst := make([]byte, 0, len(bytes))
       self.encoder.Encode(dst, bytes)
@@ -141,7 +140,7 @@ def genDecoder():
   varname="contentDist"
   return {
     'decl': "decoder *huffman.Decoder",
-    'data': "decoder: huffman.NewDecoder(huffmanCodes)",
+    'data': "decoder: huffman.NewDecoder(model.coding)",
     'body': """
       dst := make([]byte, 0, len(bytes))
       self.decoder.Decode(dst, bytes)
@@ -159,19 +158,14 @@ def genBitstring(arr):
   return "huffman.BitString{Packed: %s, BitLength: %d}" % (genByteArray(packBytes(arr)), len(arr))
 
 def genByteArray(arr):
-  return "[]uint8 {" + ', '.join(map(str, arr)) + '}'
+  return "[]uint8 {" + ', '.join('%#02x' % (byte,) for byte in arr) + '}'
 
 def packBytes(arr):
   bs=[]
-  b=0
-  for x in range(len(arr)):
-    offset=x%8
-    b=b | (arr[x]<<offset)
-    if offset==7:
-      bs.append(b)
-      b=0
-  if offset!=7:
-    bs.append(b)
+  for i in range(len(arr)):
+    if i%8==0:
+      bs.append(0)
+    bs[-1]|=arr[i]<<(7-(i%8))
   return bs
 
 templateName='model.go.airspeed'
@@ -181,17 +175,14 @@ loader = CachingFileLoader('templates')
 def looksLikeModelFile(name):
   return re.search(r'\.(?:yaml|json)\Z', name)
 
-packageName=sys.argv[1]
-packageDir=sys.argv[2]
+modelDir=sys.argv[1]
+packageName=sys.argv[2]
+packageDir=sys.argv[3]
+packageBase=packageName.split('/')[-1]
 
 if not os.path.exists(packageDir):
-  print('Could not find destination directory '+packageDir)
-  sys.exit(1)
+  os.mkdir(packageDir)
 
-if not os.path.exists(packageDir+'/'+packageName):
-  os.mkdir(packageDir+'/'+packageName)
-
-modelDir='./models'
 models=filter(looksLikeModelFile, os.listdir(modelDir))
 modelBases=[]
 for modelName in models:
@@ -199,7 +190,7 @@ for modelName in models:
   modelBasename=modelName.split('.')[0]
   modelBases.append(modelBasename)
   modelFilename=modelDir+'/'+modelName
-  outputDir=packageDir+'/'+packageName+'/'+modelBasename
+  outputDir=packageDir+'/'+modelBasename
   if not os.path.exists(outputDir):
     os.mkdir(outputDir)
   outputName=outputDir+'/'+modelBasename+'.go'
@@ -222,18 +213,18 @@ for modelName in models:
   print("Formatting %s" % (modelBasename+'_test.go'))
   subprocess.call(['gofmt', '-s=true', '-w=true', testOutputName])
 
-context={'models': modelBases, 'packageName': packageName}
+context={'models': modelBases, 'packageName': packageName, 'packageBase': packageBase}
 print("Generating models.go")
 template = loader.load_template("models.go.airspeed")
 body=template.merge(context, loader=loader)
-save(body, packageDir+'/'+packageName+'/'+"models.go")
+save(body, packageDir+'/'+"models.go")
 print("Formatting models.go")
-subprocess.call(['gofmt', '-s=true', '-w=true', packageDir+'/'+packageName+'/'+"models.go"])
+subprocess.call(['gofmt', '-s=true', '-w=true', packageDir+'/'+"models.go"])
 
-context={'models': modelBases, 'packageName': packageName}
-print("Generating models_test.go")
-template = loader.load_template("models_test.go.airspeed")
-body=template.merge(context, loader=loader)
-save(body, packageDir+'/'+packageName+'/'+"models_test.go")
-print("Formatting models_test.go")
-subprocess.call(['gofmt', '-s=true', '-w=true', packageDir+'/'+packageName+'/'+"models_test.go"])
+#context={'models': modelBases, 'packageName': packageName, 'packageBase': packageBase}
+#print("Generating models_test.go")
+#template = loader.load_template("models_test.go.airspeed")
+#body=template.merge(context, loader=loader)
+#save(body, packageDir+'/'+"models_test.go")
+#print("Formatting models_test.go")
+#subprocess.call(['gofmt', '-s=true', '-w=true', packageDir+'/'+"models_test.go"])
