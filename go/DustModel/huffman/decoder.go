@@ -49,11 +49,14 @@ func (dec *Decoder) writeSymbolsTo(dst []byte) (dn int) {
 
 func (dec *Decoder) Decode(dst, src []byte) (dn, sn int) {
 	for {
+		if dn == len(dst) {
+			return
+		}
 		dn += dec.writeSymbolsTo(dst[dn:])
-		if sn == len(src) || dn == len(dst) {
+
+		if sn == len(src) {
 			return 
 		}
-
 		for sn < len(src) && (32 - dec.heldCount) >= 8 {
 			dec.heldBits = dec.heldBits << 8 | uint32(src[sn])
 			dec.heldCount += 8
