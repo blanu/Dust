@@ -87,6 +87,7 @@ type Encoder struct {
 	heldBitOffset int
 }
 
+// NewEncoder constructs a stateful Huffman encoder for the given coding.
 func NewEncoder(coding *Coding) *Encoder {
 	return &Encoder{
 		coding: coding,
@@ -106,6 +107,9 @@ func (enc *Encoder) writeHeld(bwr *bitWriter) {
 	}
 }
 
+// Encode continues encoding bytes from src into dst, stopping when either no further source bytes can be
+// consumed or no further destination bytes can be written.  It returns the number of bytes written to dst and
+// consumed from src, respectively.
 func (enc *Encoder) Encode(dst []byte, src []byte) (dn int, sn int) {
 	codeTable := enc.coding.codeTable
 	bwr := newBitWriter(dst)
@@ -145,10 +149,16 @@ func (enc *Encoder) Encode(dst []byte, src []byte) (dn int, sn int) {
 	return bwr.wroteOctets(), si
 }
 
+// Aligned returns true iff the input consumed so far corresponds exactly to the output produced so far or
+// a successful Flush has been performed.
 func (enc *Encoder) Aligned() bool {
 	return !enc.anyHeldSymbol
 }
 
+// Flush pads the output with zero bits to the next byte and attempts to write any pending output into dst.
+// It returns the number of bytes written into dst and whether or not all pending output has been successfully
+// written.  Since this padding is not delimited, the resultant output stream ceases to be a consistent Huffman
+// coded stream at this point; if resynchronization is necessary it must be done elsewhere.
 func (enc *Encoder) Flush(dst []byte) (dn int, finished bool) {
 	bwr := newBitWriter(dst)
 	enc.writeHeld(&bwr)

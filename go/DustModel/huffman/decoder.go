@@ -7,6 +7,7 @@ type Decoder struct {
 	heldCount uint8
 }
 
+// NewDecoder constructs a stateful Huffman decoder for the given coding.
 func NewDecoder(coding *Coding) *Decoder {
 	return &Decoder{
 		coding:    coding,
@@ -47,6 +48,9 @@ func (dec *Decoder) writeSymbolsTo(dst []byte) (dn int) {
 	return
 }
 
+// Decode continues decoding bytes from src into dst, stopping when either no further source bytes can be
+// consumed or no further destination bytes can be written.  It returns the number of bytes written to dst and
+// consumed from src, respectively.
 func (dec *Decoder) Decode(dst, src []byte) (dn, sn int) {
 	for {
 		if dn == len(dst) {
@@ -65,10 +69,13 @@ func (dec *Decoder) Decode(dst, src []byte) (dn, sn int) {
 	}
 }
 
+// Aligned returns true iff the input consumed so far corresponds exactly to the output produced so far.
 func (dec *Decoder) Aligned() bool {
 	return dec.heldBits == 0
 }
 
+// Flush attempts to write any pending symbols into dst.  It returns the number of bytes written into dst and
+// whether or not the total input consumed corresponds exactly to the output.
 func (dec *Decoder) Flush(dst []byte) (dn int, finished bool) {
 	dn = dec.writeSymbolsTo(dst)
 	finished = (dec.heldBits == 0)

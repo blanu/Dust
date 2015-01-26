@@ -11,6 +11,7 @@ func ComputeAuthenticator(message []byte, key SecretBytes) []byte {
 	return mac.Sum(nil)
 }
 
+// VerifyAuthenticator returns true iff receivedAuthenticator is a valid authenticator for message given key.
 func VerifyAuthenticator(message []byte, key SecretBytes, receivedAuthenticator []byte) bool {
 	// This should always be true anyway.
 	if len(receivedAuthenticator) != 32 {

@@ -80,6 +80,8 @@ func (node treeNode) String() string {
 	return "[" + strings.Join(parts, " ") + "]"
 }
 
+// Coding holds the internal representation of a table mapping between Huffman codewords and eight-bit
+// symbols.  A Coding can only be constructed given a consistent code table.
 type Coding struct {
 	codeTable []BitString
 	treeNodes []treeNode
@@ -206,6 +208,10 @@ func makeTree(codeTable []BitString) (result []treeNode, err error) {
 	return
 }
 
+// NewCoding constructs a Coding from the given code table, or returns an error if the code table is
+// inconsistent with Huffman modeling.  codeTable must have exactly 256 BitString entries.  codeTable[S] is
+// the codeword for symbol S.  The set of codewords must be prefix-free, and each codeword must conform to
+// BitString invariants.
 func NewCoding(codeTable []BitString) (*Coding, error) {
 	if len(codeTable) != totalSymbols {
 		return nil, ErrCodeTableWrongLength

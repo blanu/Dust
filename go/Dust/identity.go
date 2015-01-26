@@ -55,6 +55,8 @@ type endpointConfig struct {
 	modelSpec
 }
 
+// BridgeLine represents a Tor-style bridge line in parsed-text form, with a string corresponding to a network
+// address and a string map of parameters.
 type BridgeLine struct {
 	Address string
 	Params  map[string]string
@@ -204,6 +206,7 @@ func LoadServerPublicBridgeLine(bline BridgeLine) (result *ServerPublic, err err
 	return
 }
 
+// BridgeLine returns a suitable bridge line for a server public identity.
 func (spub ServerPublic) BridgeLine() BridgeLine {
 	addrString := spub.tcpAddr.String()
 	params := map[string]string{
@@ -413,10 +416,14 @@ func NewServerPrivateBridgeLine(bline BridgeLine) (result *ServerPrivate, err er
 	return
 }
 
+// ListenAddr returns the TCP address on which a server corresponding to the given identity would normally
+// listen.
 func (spriv ServerPrivate) ListenAddr() *net.TCPAddr {
 	return spriv.tcpAddr
 }
 
+// DialAddr returns the TCP address to which a client wishing to contact the given identity would normally
+// connect.
 func (spub ServerPublic) DialAddr() *net.TCPAddr {
 	return spub.tcpAddr
 }
