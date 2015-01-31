@@ -1,25 +1,44 @@
 package cryptions
 
 import (
-	"crypto/hmac"
+	cryptoSubtle "crypto/subtle"
 	"hash"
+
+	"github.com/dchest/skein"
 )
 
-func ComputeAuthenticator(message []byte, key SecretBytes) []byte {
-	mac := hmac.New(func() hash.Hash { return NewDigest() }, key.Slice())
-	mac.Write(message)
-	return mac.Sum(nil)
+type MAC interface {
+	hash.Hash
+	SumSecret(sbOut SecretBytes)
+	Verify(expected []byte) bool
 }
 
-// VerifyAuthenticator returns true iff receivedAuthenticator is a valid authenticator for message given key.
-func VerifyAuthenticator(message []byte, key SecretBytes, receivedAuthenticator []byte) bool {
-	// This should always be true anyway.
-	if len(receivedAuthenticator) != 32 {
+type skeinMAC struct {
+	*skein.Hash
+	outBuf [32]byte
+}
+
+func (sm *skeinMAC) Verify(expected []byte) bool {
+	if len(expected) != 32 {
 		return false
 	}
 
-	mac := hmac.New(func() hash.Hash { return NewDigest() }, key.Slice())
-	mac.Write(message)
-	expected := mac.Sum(nil)
-	return hmac.Equal(receivedAuthenticator, expected)
+	actual := sm.Sum(sm.outBuf[:0])
+	return cryptoSubtle.ConstantTimeCompare(actual, expected) == 1
+}
+
+func (sm *skeinMAC) SumSecret(sbOut SecretBytes) {
+	n, err := sm.Hash.OutputReader().Read(sbOut.Slice())
+	if n != 32 || err != nil {
+		panic("Dust/cryptions: pure Skein should never fail a read")
+	}
+}
+
+func NewMAC(key SecretBytes) MAC {
+	args := skein.Args{
+		Key: key.Slice(),
+	}
+	sk := skein.New(32, &args)
+
+	return &skeinMAC{Hash: sk}
 }

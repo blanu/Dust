@@ -80,6 +80,11 @@ func (reassembly *Reassembly) Consume(n int) {
 	}
 }
 
+// Reset alters reassembly to contain no valid bytes, reusing the same underlying slice.
+func (reassembly *Reassembly) Reset() {
+	*reassembly = (*reassembly)[:0]
+}
+
 // CopyNew returns a fresh slice containing the same bytes as an existing slice.
 func CopyNew(slice []byte) []byte {
 	out := make([]byte, len(slice))
