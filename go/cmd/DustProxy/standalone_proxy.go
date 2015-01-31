@@ -1,46 +1,56 @@
 package main
 
 import (
-	"errors"
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
 	"net"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/blanu/Dust/go/Dust"
-	"github.com/blanu/Dust/go/Dust/procman"
 
 	_ "github.com/blanu/Dust/go/DustModel/sillyHex"
 )
 
 const progName = "DustProxy"
 const usageMessageRaw = `
-Usage: DustProxy --incomplete PROXY-SPEC
+Usage: DustProxy --incomplete OPTIONS DUST-SIDE
 
 Options:
   --incomplete
 	Acknowledge that this executable does not implement
 	the full Dust stack and is just a shell of its future
 	self.  Required.
+  --listen HOST:PORT, -l HOST:PORT
+	Listen for TCP connections on HOST:PORT.
+  --connect HOST:PORT, -c HOST:PORT
+	Connect outgoing TCP connections to HOST:PORT.
+  --restrict HOST, -r HOST
+	Only accept incoming TCP connections from HOST.
 
-Proxy specification syntax:
-  in IDENTITY-FILE PROGRAM ARGS...
-	Using the address, port, and private key in IDENTITY-FILE,
-	listen for Dust connections.  For each such connection,
-	spawn a process running PROGRAM with ARGS and attach the
-	connection to its stdin/stdout.
+Dust side syntax:
+  in IDENTITY-FILE
+	Listen for Dust connections using the private key and
+	parameters in IDENTITY-FILE.  --connect must be used,
+	and will receive proxied clear-side connections.  If
+	--listen is used, it overrides the physical address.
   out ADDR:PORT PARAMS...
 	Connect to the Dust server at ADDR:PORT, using PARAMS as
-	though from a torrc Bridge line.  Attach the connection to
-	stdin/stdout of this process.
+	though from a bridge line.  --listen must be used, and
+	will accept clear-side connections to be proxied.  If
+	--connect is used, it overrides the physical address.
 
 Models available:$models
 `
 
+var ipv4MappedPrefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
+
 var ourFlags *flag.FlagSet
+var userListenAddr, userDialAddr string
+var userRestrictAddr string
+var restrictIP *net.IPAddr
 
 func modelsReadable() string {
 	result := ""
@@ -92,160 +102,58 @@ func endOfArgs() {
 	}
 }
 
-type ioPair struct {
-	rd io.ReadCloser
-	wr io.WriteCloser
+func tcpAddrEqual(a, b *net.TCPAddr) bool {
+	return a.IP.Equal(b.IP) && a.Port == b.Port && a.Zone == b.Zone
 }
 
-func (pair ioPair) Read(p []byte) (n int, err error) {
-	return pair.rd.Read(p)
+func ipAddrEqual(a, b *net.IPAddr) bool {
+	return a.IP.Equal(b.IP) && a.Zone == b.Zone
 }
 
-func (pair ioPair) Write(p []byte) (n int, err error) {
-	return pair.wr.Write(p)
-}
-
-func (pair ioPair) Close() error {
-	err1 := pair.rd.Close()
-	err2 := pair.wr.Close()
-	if err1 != nil {
-		return err1
-	} else {
-		return err2
-	}
-}
-
-type (
-	readerHalf struct {
-		conn *net.TCPConn
-	}
-	writerHalf struct {
-		conn *net.TCPConn
-	}
-)
-
-func (r *readerHalf) Read(p []byte) (n int, err error) {
-	return r.conn.Read(p)
-}
-
-func (r *readerHalf) Close() error {
-	return r.conn.CloseRead()
-}
-
-func (w *writerHalf) Write(p []byte) (n int, err error) {
-	return w.conn.Write(p)
-}
-
-func (w *writerHalf) Close() error {
-	return w.conn.CloseWrite()
-}
-
-func stdioPair() ioPair {
-	return ioPair{os.Stdin, os.Stdout}
-}
-
-func tcpPair(tcp *net.TCPConn) ioPair {
-	return ioPair{&readerHalf{tcp}, &writerHalf{tcp}}
-}
-
-func spawnPair(prog string, progArgs []string) (result ioPair, err error) {
-	var rd io.ReadCloser
-	var wr io.WriteCloser
-	defer func() {
-		if err != nil {
-			if rd != nil {
-				_ = rd.Close()
-			}
-			if wr != nil {
-				_ = wr.Close()
-			}
-		}
-	}()
-
-	cmd := exec.Command(prog, progArgs...)
-	rd, err = cmd.StdoutPipe()
-	if err != nil {
-		return
-	}
-	wr, err = cmd.StdinPipe()
-	if err != nil {
-		return
+func parseRestrictAddr(relativeTo *net.TCPAddr) error {
+	if userRestrictAddr == "" {
+		return nil
 	}
 
-	err = cmd.Start()
-	if err != nil {
-		return
-	}
-
-	result = ioPair{rd, wr}
-	return
-}
-
-func doProxy(dconn Dust.Connection, plainSide ioPair) error {
-	// TODO: on client side, doesn't hang around for full duration
-	defer dconn.Close()
-
-	copyThunk := func(dst io.Writer, src io.Reader) func() error {
-		return func() error {
-			// TODO: this doesn't respect kill signaling
-			_, err := io.Copy(dst, src)
-			return err
+	realNet := "ip"
+	switch len(relativeTo.IP) {
+	default:
+		// Someone's invented IPv8.  Just hope for the best; if we get an address that doesn't match
+		// the listening family at all, then no connections will be accepted.
+	case net.IPv4len:
+		realNet = "ip4"
+	case net.IPv6len:
+		// Sometimes net.IP stores IPv4 addresses in 16-byte slices too.  Sigh.
+		if bytes.HasPrefix(relativeTo.IP, ipv4MappedPrefix) {
+			realNet = "ip4"
+		} else {
+			realNet = "ip6"
 		}
 	}
 
-	var inCopy, outCopy procman.Link
-	inCopy.InitLink(copyThunk(plainSide.wr, dconn))
-	outCopy.InitLink(copyThunk(dconn, plainSide.rd))
-	defer inCopy.CloseDetach()
-	defer outCopy.CloseDetach()
-	inCopy.Spawn()
-	outCopy.Spawn()
-
-	select {
-	case _, _ = <-inCopy.Exit:
-	case _, _ = <-outCopy.Exit:
-		//case _, _ = <-dconn.Exit:
+	// This does not propagate IPv6 scopes; the user must specify the same scope explicitly both times
+	// if needed.
+	ip, err := net.ResolveIPAddr(realNet, userRestrictAddr)
+	if err != nil {
+		return err
 	}
 
-	// TODO: error propagation
+	restrictIP = ip
 	return nil
 }
 
-func incomingSpawn(conn *net.TCPConn, spriv *Dust.ServerPrivate, prog string, progArgs []string) error {
-	commit := false
-	defer func() {
-		if !commit {
-			conn.Close()
-		}
-	}()
-
-	dconn, err := Dust.BeginServer(conn, spriv)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if !commit {
-			dconn.Close()
-		}
-	}()
-
-	// TODO: clean up spawned processes properly
-	plainSide, err := spawnPair(prog, progArgs)
-	if err != nil {
-		return err
-	}
-
-	commit = true
-	go doProxy(dconn, plainSide)
+func dustProxy(dustSide Dust.Connection, plainSide *net.TCPConn) error {
+	// TODO: re-add process management here when connection-close is handled more effectively.
+	go io.Copy(plainSide, dustSide)
+	go io.Copy(dustSide, plainSide)
 	return nil
 }
 
-func listenAndSpawn(spriv *Dust.ServerPrivate, prog string, progArgs []string) error {
-	listener, err := net.ListenTCP("tcp", spriv.ListenAddr())
+func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
+	listener, err := net.ListenTCP("tcp", addr)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(os.Stderr, "Listening on %s\n", listener.Addr().String())
 	defer listener.Close()
 
 	for {
@@ -254,78 +162,200 @@ func listenAndSpawn(spriv *Dust.ServerPrivate, prog string, progArgs []string) e
 			return err
 		}
 
-		// TODO: be able to drop connections except from a specific remote address,
-		// to limit visibility during testing
+		var remoteIP *net.IPAddr
+		switch a := conn.RemoteAddr().(type) {
+		case *net.TCPAddr:
+			remoteIP = &net.IPAddr{
+				IP:   a.IP,
+				Zone: a.Zone,
+			}
+		}
 
-		_ = incomingSpawn(conn, spriv, prog, progArgs)
+		if restrictIP != nil && !(remoteIP != nil && ipAddrEqual(remoteIP, restrictIP)) {
+			fmt.Fprintf(os.Stderr, "%s: rejecting connection from %s\n", progName, remoteIP.String())
+			_ = conn.Close()
+			continue
+		}
+
+		go eachConn(conn)
 	}
 }
 
-func listenFromArgs() (func() error, error) {
+func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) error {
+	eachConn := func(in *net.TCPConn) error {
+		dconn, err := Dust.BeginServer(in, spriv)
+		if err != nil {
+			return err
+		}
+
+		out, err := net.DialTCP("tcp", nil, dialAddr)
+		if err != nil {
+			return err
+		}
+
+		return dustProxy(dconn, out)
+	}
+
+	return listenOn(listenAddr, eachConn)
+}
+
+func dustToPlainFromArgs() (func() error, error) {
+	var err error
+	var warnings []string
+
+	if userDialAddr == "" {
+		usageErrorf("must specify address to connect to")
+	}
+	dialAddr, err := net.ResolveTCPAddr("tcp", userDialAddr)
+	if err != nil {
+		return nil, err
+	}
+
 	idPath := nextArg("IDENTITY-FILE")
+	endOfArgs()
+
 	spriv, err := Dust.LoadServerPrivateFile(idPath)
 	if err != nil {
 		return nil, err
 	}
 
-	prog := nextArg("PROGRAM")
-	progArgs := remainingArgs()
-	return func() error { return listenAndSpawn(spriv, prog, progArgs) }, nil
-}
+	listenAddr := spriv.ListenAddr()
+	if userListenAddr != "" {
+		// Overrides address in identity file.
+		physListenAddr, err := net.ResolveTCPAddr("tcp", userListenAddr)
+		if err != nil {
+			return nil, err
+		}
 
-func dialAndStdio(spub *Dust.ServerPublic) error {
-	conn, err := net.DialTCP("tcp", nil, spub.DialAddr())
-	if err != nil {
-		return err
-	}
-	fmt.Fprintf(os.Stderr, "Connected to %s\n", conn.RemoteAddr().String())
-
-	// TODO: the Dust side should probably have most of its initialization happen before the dial so that
-	// there's less risk of dialing visibly and then getting hosed on some other part of initialization.
-
-	dconn, err := Dust.BeginClient(conn, spub)
-	if err != nil {
-		return err
+		if !tcpAddrEqual(physListenAddr, listenAddr) {
+			warnings = append(warnings, fmt.Sprintf("listening on %s even though identity address is %s", physListenAddr.String(), listenAddr.String()))
+		}
+		listenAddr = physListenAddr
 	}
 
-	return doProxy(dconn, stdioPair())
+	err = parseRestrictAddr(listenAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, warning := range warnings {
+		fmt.Fprintf(os.Stderr, "%s: warning: %s\n", progName, warning)
+	}
+
+	return func() error {
+		return dustToPlain(listenAddr, dialAddr, spriv)
+	}, nil
 }
 
-func dialFromArgs() (func() error, error) {
+func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) error {
+	eachConn := func(in *net.TCPConn) error {
+		out, err := net.DialTCP("tcp", nil, dialAddr)
+		if err != nil {
+			return err
+		}
+
+		// TODO: the Dust side should probably have most of its initialization happen before the dial
+		// so that there's less risk of dialing visibly and then getting hosed on some other part of
+		// initialization.
+
+		dconn, err := Dust.BeginClient(out, spub)
+		if err != nil {
+			return err
+		}
+
+		return dustProxy(dconn, in)
+	}
+
+	return listenOn(listenAddr, eachConn)
+}
+
+func plainToDustFromArgs() (func() error, error) {
+	var warnings []string
+
+	if userListenAddr == "" {
+		usageErrorf("must specify address to listen on")
+	}
+	listenAddr, err := net.ResolveTCPAddr("tcp", userListenAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	err = parseRestrictAddr(listenAddr)
+	if err != nil {
+		return nil, err
+	}
+
 	connString := nextArg("CONNECT-ADDRESS")
 
 	params := make(map[string]string)
 	for _, param := range remainingArgs() {
-		pair := strings.SplitN(param, "=", 2)
-		if len(pair) != 2 {
-			return nil, errors.New("malformed bridge-like parameter (expected equals sign)")
+		equals := strings.IndexRune(param, '=')
+		if equals < 0 {
+			usageErrorf("malformed bridge-like parameter (expected equals sign)")
 		}
 
-		params[pair[0]] = pair[1]
+		key := param[:equals]
+		val := param[equals+1:]
+		params[key] = val
 	}
 
 	bline := Dust.BridgeLine{
 		// No need to set the nickname.
-		Address:  connString,
-		Params:   params,
+		Address: connString,
+		Params:  params,
 	}
+
 	spub, err := Dust.LoadServerPublicBridgeLine(bline)
 	if err != nil {
 		return nil, err
 	}
 
-	return func() error { return dialAndStdio(spub) }, nil
+	dialAddr := spub.DialAddr()
+	if userDialAddr != "" {
+		// Overrides address in bridge line.
+		physDialAddr, err := net.ResolveTCPAddr("tcp", userDialAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		if !tcpAddrEqual(physDialAddr, dialAddr) {
+			warnings = append(warnings, fmt.Sprintf("connecting to %s even though identity address is %s", physDialAddr.String(), dialAddr.String()))
+		}
+		dialAddr = physDialAddr
+	}
+
+	for _, warning := range warnings {
+		fmt.Fprintf(os.Stderr, "%s: warning: %s\n", progName, warning)
+	}
+
+	return func() error {
+		return plainToDust(listenAddr, dialAddr, spub)
+	}, nil
+}
+
+type nullWriter struct{}
+
+func (n *nullWriter) Write(p []byte) (int, error) {
+	return len(p), nil
 }
 
 func main() {
 	var err error
 	ourFlags = flag.NewFlagSet(progName, flag.ContinueOnError)
-	ourFlags.Usage = func() {
-		io.WriteString(os.Stderr, usageMessage())
-	}
+	ourFlags.Usage = func() {}
+	ourFlags.SetOutput(&nullWriter{})
 
 	// Usage strings are hardcoded above.
-	incompleteAck := ourFlags.Bool("incomplete", false, "")
+
+	var incompleteAck bool
+	ourFlags.BoolVar(&incompleteAck, "incomplete", false, "")
+	ourFlags.StringVar(&userListenAddr, "listen", "", "")
+	ourFlags.StringVar(&userListenAddr, "l", "", "")
+	ourFlags.StringVar(&userDialAddr, "connect", "", "")
+	ourFlags.StringVar(&userDialAddr, "c", "", "")
+	ourFlags.StringVar(&userRestrictAddr, "restrict", "", "")
+	ourFlags.StringVar(&userRestrictAddr, "r", "", "")
+
 	argErr := ourFlags.Parse(os.Args[1:])
 	if argErr == flag.ErrHelp {
 		io.WriteString(os.Stdout, usageMessage())
@@ -340,16 +370,16 @@ func main() {
 	default:
 		usageErrorf("bad direction \"%s\"", dirArg)
 	case "in":
-		requestedCommand, err = listenFromArgs()
+		requestedCommand, err = dustToPlainFromArgs()
 	case "out":
-		requestedCommand, err = dialFromArgs()
+		requestedCommand, err = plainToDustFromArgs()
 	}
 
 	if err != nil {
 		exitError(err)
 	}
 
-	if !*incompleteAck {
+	if !incompleteAck {
 		usageErrorf("this executable is incomplete; you must use --incomplete")
 	}
 
