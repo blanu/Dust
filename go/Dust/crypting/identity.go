@@ -57,7 +57,7 @@ func IdentityBytesOfNetworkAddress(netAddr interface{}) ([]byte, error) {
 		l3Flag = 0x00
 	case net.IPv6len:
 		// Sometimes net.IP stores IPv4 addresses in 16-byte slices too.  Sigh.
-		if bytes.Equal(ip[:len(ipv4MappedPrefix)], ipv4MappedPrefix) {
+		if bytes.HasPrefix(ip, ipv4MappedPrefix) {
 			l3Flag = 0x00
 		} else {
 			l3Flag = 0x01
