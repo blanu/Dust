@@ -1,5 +1,28 @@
 package Dust
 
+import (
+	"bufio"
+	"errors"
+	"net"
+	"os"
+	"strconv"
+	"strings"
+
+	"github.com/blanu/Dust/go/Dust/crypting"
+	"github.com/blanu/Dust/go/Dust/cryptions"
+)
+
+var (
+	ErrNoMagic          = &ParameterError{ParameterMissing, "magic line", ""}
+	ErrNoAddress        = &ParameterError{ParameterMissing, "network address", ""}
+	ErrNoPrivateKey     = &ParameterError{ParameterMissing, "private key", ""}
+	ErrNoPublicKey      = &ParameterError{ParameterMissing, "public key", ""}
+	ErrNoModelName      = &ParameterError{ParameterMissing, "model name", ""}
+	ErrInvalidAddress   = &ParameterError{ParameterInvalid, "network address", ""}
+	ErrInvalidModelName = &ParameterError{ParameterInvalid, "model name", ""}
+	ErrSyntax           = errors.New("Dust: bad identity record syntax")
+)
+
 func parseEndpointAddress(addrString string) (*endpointAddress, error) {
 	// Do all the splitting manually, because we really don't want to accidentally take a DNS lookup here.
 	// Unfortunately, there's no net.ParseTCPAddr, only net.ResolveTCPAddr.
@@ -297,4 +320,3 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 	commit = true
 	return nil
 }
-
