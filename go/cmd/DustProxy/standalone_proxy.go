@@ -304,7 +304,12 @@ func dialFromArgs() (func() error, error) {
 		params[pair[0]] = pair[1]
 	}
 
-	spub, err := Dust.LoadServerPublicBridgeLine(Dust.BridgeLine{connString, params})
+	bline := Dust.BridgeLine{
+		// No need to set the nickname.
+		Address:  connString,
+		Params:   params,
+	}
+	spub, err := Dust.LoadServerPublicBridgeLine(bline)
 	if err != nil {
 		return nil, err
 	}

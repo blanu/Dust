@@ -15,7 +15,7 @@ import (
 const (
 	bridgeParamPublicKey      string = "p"
 	bridgeParamModel          string = "m"
-	bridgeParamOptionalPrefix string = "?"
+	bridgeParamOptionalSuffix string = "?"
 
 	magicLine = "!!Dust-Server-Private!!"
 )
@@ -55,17 +55,19 @@ type endpointConfig struct {
 	modelSpec
 }
 
-// BridgeLine represents a Tor-style bridge line in parsed-text form, with a string corresponding to a network
-// address and a string map of parameters.
+// BridgeLine represents a Tor-style bridge line in parsed-text form, with strings corresponding to opaque
+// nickname, network address, and parameters.
 type BridgeLine struct {
-	Address string
-	Params  map[string]string
+	Nickname string
+	Address  string
+	Params   map[string]string
 }
 
 // ServerPublic represents a server public identity, comprising a public key, model parameters, and network
 // address.
 type ServerPublic struct {
 	endpointConfig
+	nickname       string
 	longtermPublic cryptions.PublicKey
 }
 
@@ -73,6 +75,7 @@ type ServerPublic struct {
 // address.
 type ServerPrivate struct {
 	endpointConfig
+	nickname     string
 	longtermPair cryptions.KeyPair
 }
 
@@ -143,11 +146,11 @@ func insertModelSpec(ms *modelSpec, params map[string]string, topKey string) {
 }
 
 // CheckUnackedParams ensures that all parameters in params are either acknowledged by being associated
-// with a true value in ackedParams or are optional due to being prefixed with a question mark.  If any
+// with a true value in ackedParams or are optional due to being suffixed with a question mark.  If any
 // unacknowledged requisite parameters are present, it returns an appropriate error.
 func CheckUnackedParams(params map[string]string, ackedParams map[string]bool) error {
 	for key, _ := range params {
-		if !ackedParams[key] && !strings.HasPrefix(key, bridgeParamOptionalPrefix) {
+		if !ackedParams[key] && !strings.HasSuffix(key, bridgeParamOptionalSuffix) {
 			return &ParameterError{ParameterUnexpected, "parameter", key}
 		}
 	}
@@ -200,6 +203,7 @@ func LoadServerPublicBridgeLine(bline BridgeLine) (result *ServerPublic, err err
 	}
 
 	result = &ServerPublic{
+		nickname:       bline.Nickname,
 		endpointConfig: *endpointConfig,
 		longtermPublic: longtermPublic,
 	}
@@ -213,7 +217,7 @@ func (spub ServerPublic) BridgeLine() BridgeLine {
 		bridgeParamPublicKey: spub.longtermPublic.Base32(),
 	}
 	insertModelSpec(&spub.modelSpec, params, "m")
-	return BridgeLine{addrString, params}
+	return BridgeLine{spub.nickname, addrString, params}
 }
 
 func (spub ServerPublic) cryptoPublic() *crypting.Public {
@@ -226,6 +230,7 @@ func (spub ServerPublic) cryptoPublic() *crypting.Public {
 // Public returns a server public identity corresponding to the given server private identity.
 func (spriv ServerPrivate) Public() ServerPublic {
 	return ServerPublic{
+		nickname:       spriv.nickname,
 		endpointConfig: spriv.endpointConfig,
 		longtermPublic: spriv.longtermPair.Public(),
 	}
@@ -269,6 +274,11 @@ func LoadServerPrivateFile(
 	if lines.Text() != magicLine {
 		return nil, ErrNoMagic
 	}
+
+	if !lines.Scan() {
+		return nil, scanErrorOr(ErrSyntax)
+	}
+	nickname := lines.Text() 
 
 	if !lines.Scan() {
 		return nil, scanErrorOr(ErrNoAddress)
@@ -324,6 +334,7 @@ func LoadServerPrivateFile(
 	}
 
 	result = &ServerPrivate{
+		nickname: nickname,
 		endpointConfig: endpointConfig{
 			endpointAddress: *endpointAddress,
 			modelSpec:       *modelSpec,
@@ -338,8 +349,15 @@ func LoadServerPrivateFile(
 func (spriv ServerPrivate) SavePrivateFile(path string) error {
 	headerLines := []string{
 		magicLine,
+		spriv.nickname,
 		spriv.tcpAddr.String(),
 		spriv.longtermPair.PrivateBase32(),
+	}
+
+	for _, line := range headerLines {
+		if strings.ContainsAny(line, "\r\n") {
+			return ErrSyntax
+		}
 	}
 
 	paramLines := []string{}
@@ -414,6 +432,7 @@ func NewServerPrivateBridgeLine(bline BridgeLine) (result *ServerPrivate, err er
 	}
 
 	result = &ServerPrivate{
+		nickname:       bline.Nickname,
 		endpointConfig: *endpointConfig,
 		longtermPair:   keyPair,
 	}

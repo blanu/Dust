@@ -65,15 +65,19 @@ func endOfArgs() {
 	}
 }
 
-func joinBridgeParams(params map[string]string) string {
-	parts := make([]string, 0, len(params))
-	for k, v := range params {
-		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
+func formatBridgeLine(bline Dust.BridgeLine) string {
+	parts := []string{
+		bline.Nickname,
+		bline.Address,
 	}
+	for k, v := range bline.Params {
+		parts = append(parts, k+"="+v)
+	}
+
 	return strings.Join(parts, " ")
 }
 
-func newidToFile(path string, nickname string, bline Dust.BridgeLine) error {
+func newidToFile(path string, bline Dust.BridgeLine) error {
 	var spriv *Dust.ServerPrivate
 	var err error
 	defer func() {
@@ -92,11 +96,8 @@ func newidToFile(path string, nickname string, bline Dust.BridgeLine) error {
 		return err
 	}
 
-	// TODO: clean up handling of address, name, other metadata here?
 	realBline := spriv.Public().BridgeLine()
-	realAddrString := realBline.Address
-	paramsString := joinBridgeParams(realBline.Params)
-	fmt.Fprintf(os.Stdout, "Bridge %s %s %s\n", nickname, realAddrString, paramsString)
+	fmt.Fprintf(os.Stdout, "Bridge %s\n", formatBridgeLine(realBline))
 	return nil
 }
 
@@ -135,14 +136,18 @@ func newidFromArgs() (func() error, error) {
 		params[key] = val
 	}
 
-	bline := Dust.BridgeLine{addrString, params}
+	bline := Dust.BridgeLine{
+		Nickname: nickname,
+		Address:  addrString,
+		Params:   params,
+	}
 	
 	if *outputPathPtr == "" {
 		usageErrorf("output file must be specified")
 	}
 
 	return func() error {
-		return newidToFile(*outputPathPtr, nickname, bline)
+		return newidToFile(*outputPathPtr, bline)
 	}, nil
 }
 

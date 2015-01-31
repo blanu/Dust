@@ -27,11 +27,14 @@ A bridge line consists of an (uninterpreted) nickname, a TCP/IP endpoint address
 - `m=MODEL-NAME`: the model name being requested, out of an application-specific set.
 - `m.KEY=VALUE`: possible model-specific parameters.
 
+Parameter keys that have a question mark as the last character are considered optional hints and may be discarded by versions or configurations of software that do not support them without causing connection failures.
+
 A private identity file consists of the following lines, each terminated by LF or CR LF:
 
 1. Format-identifying magic text: `!!Dust-Server-Private!!`
-2. The TCP/IP endpoint address.
-3. The long-term Curve25519 *private* key of the server in Base32.  Currently, there is no provision for encrypting this key, so identity files must be strongly protected at the storage level.
-4. One or more lines corresponding to bridge line parameters, excluding the `p` parameter.
+2. An arbitrary nickname.
+3. The TCP/IP endpoint address.
+4. The long-term Curve25519 *private* key of the server in Base32.  Currently, there is no provision for encrypting this key, so identity files must be strongly protected at the storage level.
+5. One or more lines corresponding to bridge line parameters, excluding the `p` parameter.
 
 Server identities can be manipulated using the DustTool program (in `cmd/DustTool`).
