@@ -23,6 +23,10 @@ Subcommands:
 
     Currently, PARAMS are not fully validated to make sure that Dust
     connections could reasonably be established with them.
+
+  bridgeline FILE
+    Read a Dust server private identity from FILE and write its bridge
+    line to standard output.
 `
 
 type nullWriter struct{}
@@ -156,6 +160,42 @@ func newidFromArgs() (func() error, error) {
 	}, nil
 }
 
+func bridgelineFromFile(path string) error {
+	spriv, err := Dust.LoadServerPrivateFile(path)
+	if err != nil {
+		return err
+	}
+
+	bline := spriv.Public().BridgeLine()
+	fmt.Fprintf(os.Stdout, "Bridge %s\n", formatBridgeLine(bline))
+	return nil
+}
+
+func bridgelineFromArgs() (func() error, error) {
+	// TODO: in DustProxy, do the same sort of thing here (when this is all refactored) so that subcommands
+	// can parse their own options.
+	subFlags := flag.NewFlagSet(progName, flag.ContinueOnError)
+	subFlags.Usage = func() {}
+	subFlags.SetOutput(&nullWriter{})
+
+	argErr := subFlags.Parse(remainingArgs())
+	if argErr == flag.ErrHelp {
+		io.WriteString(os.Stdout, usageMessage())
+		os.Exit(0)
+	} else if argErr != nil {
+		usageErrorf("%s", argErr.Error())
+	}
+
+	ourFlags = subFlags
+	argI = 0
+	path := nextArg("FILE")
+	endOfArgs()
+
+	return func() error {
+		return bridgelineFromFile(path)
+	}, nil
+}
+
 func main() {
 	var err error
 	ourFlags = flag.NewFlagSet(progName, flag.ContinueOnError)
@@ -177,6 +217,8 @@ func main() {
 		usageErrorf("unrecognized subcommand \"%s\"", subcommandArg)
 	case "newid":
 		requestedCommand, err = newidFromArgs()
+	case "bridgeline":
+		requestedCommand, err = bridgelineFromArgs()
 	}
 
 	if err != nil {
