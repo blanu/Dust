@@ -72,6 +72,8 @@ func (st *shaperTimer) cycle(dur time.Duration) {
 	st.PutRequest(dur)
 }
 
+// Shaper represents a process mediating between a shaped channel and a Dust crypting session.  It can be
+// managed through its procman.Link structure.
 type Shaper struct {
 	procman.Link
 
@@ -175,6 +177,9 @@ func (sh *Shaper) run() (err error) {
 	}
 }
 
+// NewShaper initializes a new shaper process object for the outward-facing side of crypter, using in/out for
+// receiving and sending shaped data and decoder/encoder as the model for this side of the Dust connection.
+// The shaper will not be running.  Call Spawn() on the Shaper afterwards to start it in the background.
 func NewShaper(
 	crypter *crypting.Session,
 	in io.Reader,

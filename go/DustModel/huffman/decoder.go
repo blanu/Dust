@@ -1,5 +1,6 @@
 package huffman
 
+// Decoder holds state for a single streaming Huffman decoding, converting one byte stream into another.
 type Decoder struct {
 	coding    *Coding
 	treeIndex int
@@ -7,7 +8,7 @@ type Decoder struct {
 	heldCount uint8
 }
 
-// NewDecoder constructs a stateful Huffman decoder for the given coding.
+// NewDecoder constructs a stateful decoder for the given coding.
 func NewDecoder(coding *Coding) *Decoder {
 	return &Decoder{
 		coding:    coding,

@@ -11,13 +11,13 @@ import (
 	"github.com/blanu/Dust/go/Dust/cryptions"
 )
 
-// A Public holds the longterm public key and shared identifier for a server.
+// Public holds the longterm public key and shared identifier for a server.
 type Public struct {
 	IdBytes        []byte
 	LongtermPublic cryptions.PublicKey
 }
 
-// A Private holds the longterm private key and shared identifier for a server.
+// Private holds the longterm private key and shared identifier for a server.
 type Private struct {
 	IdBytes      []byte
 	LongtermPair cryptions.KeyPair

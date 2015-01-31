@@ -113,7 +113,7 @@ type Session struct {
 // available to write with enough padding frames to completely fill p immediately.  In some handshake states,
 // err may be set to ErrStuck with n < len(p) to indicate that we actually can't send anything more,
 // which is kind of terrible.  Note that we may still have n > 0 in that case.  This method must be called
-// from the outward-facing side of the Session.
+// from the outward-facing side of the Session.  The signature is similar to that of io.Reader.Read.
 func (cs *Session) PullWrite(p []byte) (n int, err error) {
 	n, err = 0, nil
 	for len(p) > 0 {
@@ -514,6 +514,8 @@ func (cs *Session) Init(state state, serverInfo interface{}) error {
 	return nil
 }
 
+// BeginClient starts a new crypting session from the client's perspective, given a server's public
+// cryptographic parameters.
 func BeginClient(pub *Public) (*Session, error) {
 	var err error
 	cs := &Session{}
@@ -526,6 +528,8 @@ func BeginClient(pub *Public) (*Session, error) {
 	return cs, nil
 }
 
+// BeginServer starts a new crypting session from the server's perspective, given the server's private
+// cryptographic parameters.
 func BeginServer(priv *Private) (*Session, error) {
 	var err error
 	cs := &Session{}

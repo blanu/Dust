@@ -80,6 +80,7 @@ func (bwr bitWriter) wroteOctets() int {
 	return bwr.di
 }
 
+// Encoder holds state for a single streaming Huffman encoding, converting one byte stream into another.
 type Encoder struct {
 	coding        *Coding
 	anyHeldSymbol bool
@@ -87,7 +88,7 @@ type Encoder struct {
 	heldBitOffset int
 }
 
-// NewEncoder constructs a stateful Huffman encoder for the given coding.
+// NewEncoder constructs a stateful encoder for the given coding.
 func NewEncoder(coding *Coding) *Encoder {
 	return &Encoder{
 		coding: coding,
