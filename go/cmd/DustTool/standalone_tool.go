@@ -25,6 +25,12 @@ Subcommands:
     connections could reasonably be established with them.
 `
 
+type nullWriter struct{}
+
+func (n *nullWriter) Write(p []byte) (int, error) {
+	return len(p), nil
+}
+
 var ourFlags *flag.FlagSet
 
 func usageMessage() string {
@@ -104,12 +110,11 @@ func newidToFile(path string, bline Dust.BridgeLine) error {
 func newidFromArgs() (func() error, error) {
 	// TODO: refactor subcommand-flags bit, and refactor this with DustProxy flag handling
 	subFlags := flag.NewFlagSet(progName, flag.ContinueOnError)
-	subFlags.Usage = func() {
-		io.WriteString(os.Stderr, usageMessage())
-	}
+	subFlags.Usage = func() {}
+	subFlags.SetOutput(&nullWriter{})
 
 	outputPathPtr := subFlags.String("o", "", "")
-	
+
 	argErr := subFlags.Parse(remainingArgs())
 	if argErr == flag.ErrHelp {
 		io.WriteString(os.Stdout, usageMessage())
@@ -123,7 +128,7 @@ func newidFromArgs() (func() error, error) {
 	nickname := nextArg("NICKNAME")
 	addrString := nextArg("ADDR-STRING")
 	paramArgs := remainingArgs()
-	
+
 	params := make(map[string]string)
 	for _, pairArg := range paramArgs {
 		equals := strings.IndexRune(pairArg, '=')
@@ -141,7 +146,7 @@ func newidFromArgs() (func() error, error) {
 		Address:  addrString,
 		Params:   params,
 	}
-	
+
 	if *outputPathPtr == "" {
 		usageErrorf("output file must be specified")
 	}
@@ -154,9 +159,8 @@ func newidFromArgs() (func() error, error) {
 func main() {
 	var err error
 	ourFlags = flag.NewFlagSet(progName, flag.ContinueOnError)
-	ourFlags.Usage = func() {
-		io.WriteString(os.Stderr, usageMessage())
-	}
+	ourFlags.Usage = func() {}
+	ourFlags.SetOutput(&nullWriter{})
 
 	argErr := ourFlags.Parse(os.Args[1:])
 	if argErr == flag.ErrHelp {
