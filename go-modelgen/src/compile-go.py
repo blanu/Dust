@@ -55,7 +55,7 @@ def genExponential(varname, param):
   return {
     'decl': "%s dist.Exponential" % (varname),
     'data': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param),
-    'body': "return uint16(self.%s.Rand())" % (varname)
+    'expr': "clampUint16(self.%s.Rand())" % (varname)
   }
 
 def genLength(dist, params):
@@ -69,7 +69,7 @@ def genNormal(varname, mu, sigma):
   return {
     'decl': "%s dist.Normal" % (varname),
     'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu, sigma),
-    'body': "return uint16(self.%s.Rand())" % (varname)
+    'expr': "clampUint16(self.%s.Rand())" % (varname)
   }
 
 def genITA(dist, params):
