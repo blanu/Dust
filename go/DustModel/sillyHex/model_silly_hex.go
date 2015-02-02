@@ -12,7 +12,7 @@ import (
 )
 
 type sillyHexCodec struct {
-	topNybble                                int8
+	inTopNybble, outBotNybble                int8
 	lenNext, lenMin, lenStep, lenMax         uint16
 	sleepNext, sleepMin, sleepStep, sleepMax time.Duration
 }
@@ -26,7 +26,9 @@ type sillyHexModel struct {
 
 func newSillyHexCodec() Dust.ShapingCodec {
 	return &sillyHexCodec{
-		topNybble: -1,
+		inTopNybble:  -1,
+		outBotNybble: -1,
+
 		lenNext:   200,
 		lenMin:    200,
 		lenStep:   200,
@@ -39,11 +41,13 @@ func newSillyHexCodec() Dust.ShapingCodec {
 }
 
 func (model *sillyHexModel) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
-	return newSillyHexCodec(), newSillyHexCodec(), nil
+	codec := newSillyHexCodec()
+	return codec, codec, nil
 }
 
 func (model *sillyHexModel) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
-	return newSillyHexCodec(), newSillyHexCodec(), nil
+	codec := newSillyHexCodec()
+	return codec, codec, nil
 }
 
 func makeSillyHexModel(params map[string]string) (Dust.ShapingModel, error) {
@@ -59,7 +63,7 @@ func init() {
 }
 
 func (hex *sillyHexCodec) WholeStreamDuration() time.Duration {
-	return 1000 * time.Hour
+	return 10 * time.Second
 }
 
 func (hex *sillyHexCodec) MaxPacketLength() uint16 {
@@ -84,58 +88,66 @@ func (hex *sillyHexCodec) NextPacketSleep() time.Duration {
 	return hex.sleepNext
 }
 
-func (hex *sillyHexCodec) ShapeBytes(p []byte) []byte {
-	out := make([]byte, len(p)*4)
-	j := 0
+func (hex *sillyHexCodec) ShapeBytes(dst, src []byte) (dn, sn int) {
 	pattern := uint64(rand.Int63())
 
 	maybeIntersperse := func() {
-		if pattern&1 != 0 {
-			out[j] = '.'
-			j++
+		if pattern&1 != 0 && dn < len(dst) {
+			dst[dn] = '.'
+			dn++
 		}
 		pattern = pattern>>1 | pattern<<63
 	}
 
-	for _, byte := range p {
-		out[j] = hexAlphabet[byte>>4]
-		j++
-		maybeIntersperse()
-		out[j] = hexAlphabet[byte&0xf]
-		j++
-		maybeIntersperse()
+	for dn < len(dst) {
+		if hex.outBotNybble >= 0 {
+			dst[dn] = hexAlphabet[hex.outBotNybble]
+			dn++
+			hex.outBotNybble = -1
+			maybeIntersperse()
+		} else if sn == len(src) {
+			return
+		} else {
+			byte := src[sn]
+			sn++
+			dst[dn] = hexAlphabet[byte>>4]
+			dn++
+			hex.outBotNybble = int8(byte&0xf)
+			maybeIntersperse()
+		}
 	}
 
-	return out[:j]
+	return
 }
 
-func (hex *sillyHexCodec) UnshapeBytes(p []byte) []byte {
-	out := make([]byte, 1+(len(p)/2))
-	j := 0
+func (hex *sillyHexCodec) UnshapeBytes(dst, src []byte) (dn, sn int) {
+	for sn < len(src) {
+		byte := src[sn]
+		sn++
 
-	for _, byte := range p {
 		var nybble int8 = -1
-
 		if '0' <= byte && byte <= '9' {
 			nybble = int8(byte - '0')
 		} else if 'a' <= byte && byte <= 'f' {
 			nybble = int8(10 + (byte - 'a'))
 		} else if 'A' <= byte && byte <= 'F' {
 			nybble = int8(10 + (byte - 'A'))
-		}
-
-		if nybble < 0 {
+		} else {
 			continue
 		}
 
-		if hex.topNybble < 0 {
-			hex.topNybble = nybble
+		if hex.inTopNybble < 0 {
+			hex.inTopNybble = nybble
+		} else if dn == len(dst) {
+			// Unread last nybble-containing byte.
+			sn--
+			return
 		} else {
-			out[j] = uint8(hex.topNybble)<<4 | uint8(nybble)
-			hex.topNybble = -1
-			j++
+			dst[dn] = uint8(hex.inTopNybble)<<4 | uint8(nybble)
+			dn++
+			hex.inTopNybble = -1
 		}
 	}
 
-	return out[:j]
+	return
 }

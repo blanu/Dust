@@ -28,18 +28,17 @@ type Encoder interface {
 	// may be called in either order.
 	NextPacketSleep() time.Duration
 
-	// ShapeBytes takes the next chunk of uniform bytes and returns as many shaped bytes as it can at a
-	// time, streaming-style.  The encoder may not retain p, but is presumed to keep other state as
-	// necessary.
-	ShapeBytes(p []byte) []byte
+	// ShapeBytes continues transforming a uniform byte stream into a shaped byte stream.  Upon return, it
+	// has consumed sn bytes of src and overwritten dn bytes of dst, and len(src) == sn or len(dst) == dn.
+	ShapeBytes(dst, src []byte) (dn, sn int)
 }
 
 // Decoder applies to the receiving side of a Dust half-connection.  Incoming "soft" characteristics such as
 // timing and length are discarded, but the decoder still provides the stateful inverse of the content shaping
 // for the byte stream.
 type Decoder interface {
-	// UnshapeBytes takes the next chunk of shaped bytes and returns a decoded chunk of (expected-to-be)
-	// uniform bytes, streaming-style.  The decoder may not retain p, but is presumed to keep other state
-	// as necessary.
-	UnshapeBytes(p []byte) []byte
+	// UnshapeBytes continues transforming a shaped byte stream into an expected-to-be-uniform byte stream.
+	// Upon return, it has consumed sn bytes of src and overwritten dn bytes of dst, and len(src) == sn or
+	// len(dst) == dn.
+	UnshapeBytes(dst, src []byte) (dn, sn int)
 }

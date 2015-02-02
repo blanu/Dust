@@ -4,7 +4,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/blanu/Dust/go/Dust/bufman"
 	"github.com/blanu/Dust/go/Dust/crypting"
 	"github.com/blanu/Dust/go/Dust/procman"
 )
@@ -84,20 +83,31 @@ type Shaper struct {
 	reader  *shaperReader
 	decoder Decoder
 	inBuf   []byte
+	pushBuf []byte
 
 	timer      *shaperTimer
 	encoder    Encoder
 	outBuf     []byte
-	outPending []byte
 	pullBuf    []byte
+	pullMark   int
 }
 
 func (sh *Shaper) handleRead(subn int) error {
 	// We own inBuf until we cycle the reader again.
-	decoded := sh.decoder.UnshapeBytes(sh.inBuf[:subn])
-	_, err := sh.crypter.PushRead(decoded)
-	if err != nil {
-		return err
+	in := sh.inBuf[:subn]
+	for {
+		dn, sn := sh.decoder.UnshapeBytes(sh.pushBuf, in)
+		if dn > 0 {
+			_, err := sh.crypter.PushRead(sh.pushBuf[:dn])
+			if err != nil {
+				return err
+			}
+		}
+
+		in = in[sn:]
+		if len(in) == 0 {
+			break
+		}
 	}
 
 	sh.reader.cycle(0)
@@ -105,26 +115,31 @@ func (sh *Shaper) handleRead(subn int) error {
 }
 
 func (sh *Shaper) handleTimer() error {
-	outLen := sh.encoder.NextPacketLength()
+	outLen := int(sh.encoder.NextPacketLength())
 	sh.timer.cycle(sh.encoder.NextPacketSleep())
 
-	outValid := 0
-	outTail := sh.outBuf[:outLen]
-	for len(outTail) > 0 {
-		if len(sh.outPending) > 0 {
-			outValid += bufman.CopyAdvance(&outTail, &sh.outPending)
-			continue
+	outMark := 0
+	out := sh.outBuf[:outLen]
+	for outMark < outLen {
+		var err error
+		if sh.pullMark == 0 {
+			req := outLen - outMark
+			if req >= len(sh.pullBuf) - sh.pullMark {
+				req = len(sh.pullBuf) - sh.pullMark
+			}
+
+			pulled, err := sh.crypter.PullWrite(sh.pullBuf[sh.pullMark:sh.pullMark+req])
+			if err != nil && err != crypting.ErrStuck {
+				return err
+			}
+
+			sh.pullMark += pulled
 		}
 
-		pullN, err := sh.crypter.PullWrite(sh.pullBuf)
-		if err != nil && err != crypting.ErrStuck {
-			return err
-		}
-		encodedTail := sh.encoder.ShapeBytes(sh.pullBuf[:pullN])
-		outValid += bufman.CopyAdvance(&outTail, &encodedTail)
-		if len(encodedTail) > 0 {
-			sh.outPending = append(sh.outPending, encodedTail...)
-		}
+		dn, sn := sh.encoder.ShapeBytes(out[outMark:], sh.pullBuf[:sh.pullMark])
+		outMark += dn
+		copy(sh.pullBuf, sh.pullBuf[sn:sh.pullMark])
+		sh.pullMark -= sn
 
 		if err != nil {
 			// It was an ErrStuck, otherwise we'd have returned above.
@@ -132,7 +147,7 @@ func (sh *Shaper) handleTimer() error {
 		}
 	}
 
-	_, err := sh.shapedOut.Write(sh.outBuf[:outValid])
+	_, err := sh.shapedOut.Write(sh.outBuf[:outMark])
 	if err != nil {
 		return err
 	}
@@ -194,15 +209,16 @@ func NewShaper(
 		shapedIn:  in,
 		shapedOut: out,
 
-		reader:  nil, // initialized below
-		decoder: decoder,
-		inBuf:   make([]byte, shaperBufSize),
+		reader:    nil, // initialized below
+		decoder:   decoder,
+		inBuf:     make([]byte, shaperBufSize),
+		pushBuf:   make([]byte, shaperBufSize),
 
 		timer:      nil, // initialized below
 		encoder:    encoder,
 		outBuf:     make([]byte, encoder.MaxPacketLength()),
-		outPending: nil,
 		pullBuf:    make([]byte, shaperBufSize),
+		pullMark:   0,
 	}
 
 	sh.InitLink(sh.run)

@@ -89,34 +89,10 @@ func (self $codec_type) NextPacketSleep() time.Duration {
   return time.Duration(self.nextPacketSleepMillis()) * time.Millisecond
 }
 
-func allocatingRecode(f func(dst []byte, src []byte) (dn int, sn int), in []byte) []byte {
-  out := make([]byte, len(in))
-  outTail := out
-
-  for len(in) > 0 {
-    if len(outTail) == 0 {
-      newOut := make([]byte, 1 + len(out)*2)
-      _ = copy(newOut, out)
-      outTail = newOut[len(out):]
-      out = newOut
-    }
-
-    dn, sn := f(outTail, in)
-    if sn == 0 {
-      // TODO: make sure this invariant should actually hold
-      panic("no recode progress?!")
-    }
-    outTail = outTail[dn:]
-    in = in[sn:]
-  }
-
-  return out[:len(out)-len(outTail)]
+func (codec $codec_type) ShapeBytes(dst, src []byte) (dn, sn int) {
+  return codec.decoder.Decode(dst, src)
 }
 
-func (codec $codec_type) ShapeBytes(in []byte) []byte {
-  return allocatingRecode(codec.decoder.Decode, in)
-}
-
-func (codec $codec_type) UnshapeBytes(in []byte) []byte {
-  return allocatingRecode(codec.encoder.Encode, in)
+func (codec $codec_type) UnshapeBytes(dst, src []byte) (dn, sn int) {
+  return codec.encoder.Encode(dst, src)
 }
