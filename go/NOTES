@@ -1,5 +1,5 @@
 #+TITLE: Notes on Dust Go implementation
-Updated: [2015-01-26 Mon]
+Updated: [2015-02-02 Mon]
 
 * State
 ** Packaging
@@ -11,79 +11,57 @@ Copyright/licensing information:
   - DustModel/dist was moved from a fork of another Go package by blanu earlier, and it refers to
     its own LICENSE file which may not have been copied; it claims to be BSD-style.
 
-Need better external documentation in general as things become more stable.
-
 ** Crypto primitives
-Skein-512-256 is being used instead of Skein-256-256, and the MAC/stream stuff is a little ambiguous right
-now versus the original Dust specification used.  We're using dchest's Skein, which needs to be audited.
-
-The SecretBytes API is a little wonky given Go's memory and execution model, and is mostly voodoo.  Possibly
-it should be taken out entirely.
+The cryptions package needs something of an interface rework, and some things need to be locked down re
+Skein-native MAC/KDF versus HMAC/HKDF and such.  The SecretBytes API should be split up and have its
+Destroy functionality removed along the way.
 
 ** Crypto/framing layer
-Most of this should probably work now, but the usage of primitives has been moved around and needs to be
-locked down and documented.
+Much of this works now, but the protocol is being revised to address various flaws and this isn't documented
+yet.  There is no ensemble layer on top of this, which means it's not actually completely usable for
+bidirectional streams yet; that needs to be added.
 
 ** Shaping layer
-The API for models has been improved; blanu's model generator hasn't been
+The interface for models is mostly stable now.  A silly pseudo-model is available which has loopback
+communication verified functional.  The model generator generates models which half-work with encode/decode,
+but they have bad interaction with flow control and weird parameters.
 
-There's also a silly pseudo-model available.  Loopback communication has been verified working with this
-model, modulo some protocol-design difficulties (via the Dust spec) regarding handshake latency versus shaping
-padding.
-
-Connection durations are not handled.  The ensemble protocol isn't handled, as it's not clear how to deal with
-that practically yet (and it doesn't seem to have been in the original Haskell codebase anyway?).
+Connection durations are handled in the most basic way possible; the model generator is currently generating
+models with such low durations that no data can make it without ensemble capability.
 
 ** Test proxy
-This mostly seems to work, protocol-wise.  The goroutine composition needs to be reworked.
-
-Doing statistical tests would be useful here.
+This now works as a TCP/TCP proxy.  It does not do anything too fancy.  Error reporting should be better
+(using managed processes).  Doing statistical tests would be useful here.
 
 ** Key tool
-This mostly works but should have a cleaner CLI.
+Basically works, and the CLI is now reasonable.  It would be nice to be able to password-protect the private
+keys in identity files, and it's an open question whether the current textual format(s) have any other bad
+environmental characteristics; possibly need to ask the Tor people about this.
 
 * Tasks
-** Protocol modifications
-*** Avoid bogus key material reuse
-*** Avoid stuck states during handshaking
-This is now much more serious; it actually breaks things in the presence of codecs that must hold input octets
-back at bit positions where an output octet cannot be emitted yet.  If the last octet before a stuck state
-gets "stuck in the buffer" then nothing can ever proceed; the assumption for codecs is that new data will
-always eventually be pushed in from both sides.
-*** Figure out MTU situation
-** Integrate model generator properly
-** Handle connection durations
-** Determine what to do about the ensemble protocol
-Was this ever verified functional elsewhere?  Can this be deferred?
-** Code cleanup
+** Protocol: hash out re-ensembling, including MTU situation
+** Redo exported types in cryptions subpackage
+Use all concrete exported types.  Use the type system to help constrain key usage.
+** Drop destroy signals for SecretBytes etc.
+None of the mainline Go crypto packages use early-destroy semantics, and there's too
+much sensitive material floating around---we just have to assume the process's entire
+address space is safe for all relevant secrets.
+
+Maybe in a few decades we'll have a compiler that lets us do this better.
+** Minor/specific cleanups
 *** Rename newPlainDataFrame -> newDataFrame
-*** Recheck goroutine composition
-*** Recheck concrete versus interface type exports
-*** Decide what to do with SecretBytes: propagate destroy signals or remove entirely
-Finalizers are useful as a stopgap if they're kept.  The Skein stuff probably needs
-to be copied in-tree and then modified to allow zeroing the structure... ?
-
-It should probably be possible to use move semantics for SecretBytes, which would make
-the ownership transitions safer.
-
-Then again, the mainline Go crypto packages don't have any early-destroy semantics
-here at all, and it's not entirely clear that the attack set aided by this is usefully
-delimitable.
-*** Reformatting
-Some things probably aren't aligned properly by gofmt standards.
 *** Get needed entropy earlier in CryptoSession initialization to avoid later failures
+*** Use more generic network address types
+*** Consider whether to use Google's "contexts" mechanism instead of current procman.Link
 ** Documentation
-*** Overview of packages
-*** Top-level type/function pass
-*** crypting: Buffer ownership
+*** Top-level type/function passes
 *** As-built protocol documentation
-** Interfacing
-*** Lock down CLI for test proxy
-*** Lock down CLI for key tool
-*** Lock down file format for private identity files
-**** Consider allowing a PBKDF for this
-** Deferred
-*** Higher-performance buffer discipline for models?
+*** Consistent 'byte' versus 'octet' terminology
+This isn't a _terribly_ big deal maybe, but Go likes to say 'byte' and so does the original Dust
+spec, but dsy1 likes using 'octet' along the lines of how the IETF etc. do things, so there's
+probably some inconsistent usage here.
+** Stashed
+*** Consider allowing a PBKDF for private identity files
 
 * (metadata)
 
