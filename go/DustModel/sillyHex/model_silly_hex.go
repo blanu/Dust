@@ -112,7 +112,7 @@ func (hex *sillyHexCodec) ShapeBytes(dst, src []byte) (dn, sn int) {
 			sn++
 			dst[dn] = hexAlphabet[byte>>4]
 			dn++
-			hex.outBotNybble = int8(byte&0xf)
+			hex.outBotNybble = int8(byte & 0xf)
 			maybeIntersperse()
 		}
 	}

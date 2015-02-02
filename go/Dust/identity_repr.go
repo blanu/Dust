@@ -186,7 +186,7 @@ func LoadServerPrivateFile(
 	if !lines.Scan() {
 		return nil, scanErrorOr(ErrSyntax)
 	}
-	nickname := lines.Text() 
+	nickname := lines.Text()
 
 	if !lines.Scan() {
 		return nil, scanErrorOr(ErrNoAddress)

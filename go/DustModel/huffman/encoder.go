@@ -90,7 +90,7 @@ func (bwr bitWriter) wroteOctets() int {
 // Encoder holds state for a single streaming Huffman encoding, converting one byte stream into another.
 type Encoder struct {
 	coding *Coding
-	
+
 	// held refers to heldStorage, which is mutated while encoding.  It can hold up to 8 pending bits.
 	held        BitString
 	heldStorage [1]byte

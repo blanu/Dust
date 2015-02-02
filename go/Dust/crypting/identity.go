@@ -29,7 +29,7 @@ func (priv *Private) Destroy() {
 
 var (
 	ErrUnrecognizedAddressType = errors.New("Dust: unrecognized address type")
-	
+
 	ipv4MappedPrefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
 )
 

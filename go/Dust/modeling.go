@@ -39,7 +39,7 @@ var registeredModels = make(map[string]ShapingModelConstructor)
 func RegisterModel(name string, constructor ShapingModelConstructor) {
 	_, already := registeredModels[name]
 	if already {
-		panic("Dust: registering model '"+name+"' twice")
+		panic("Dust: registering model '" + name + "' twice")
 	}
 
 	registeredModels[name] = constructor

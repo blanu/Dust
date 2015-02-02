@@ -21,7 +21,7 @@ const (
 	kdfS2C = `s2c.`
 
 	kdfCipherData = `hide`
-	kdfMACData = `chck`
+	kdfMACData    = `chck`
 	kdfMACConfirm = `play`
 )
 
@@ -140,7 +140,7 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 			cs.outCipher.XORKeyStream(p, p)
 
 			if len(p)%32 != 0 {
-				leftover := make([]byte, 32 - len(p)%32)
+				leftover := make([]byte, 32-len(p)%32)
 				cs.outCipher.XORKeyStream(leftover, leftover)
 				cs.outCryptPending = append(cs.outCryptPending, leftover...)
 			}
@@ -234,20 +234,20 @@ func (cs *Session) receivedEphemeralKey() {
 
 	// TODO: security proof or revision for confirmation code generation with new KDF structure.
 	rawKey := cryptions.NewSecretBytes()
-	cryptions.DeriveKey(sessionSecret, outKdfPrefix + kdfMACConfirm, rawKey)
+	cryptions.DeriveKey(sessionSecret, outKdfPrefix+kdfMACConfirm, rawKey)
 	cs.outCryptPending = cryptions.NewMAC(rawKey).Sum(cs.outCryptPending)
-	cryptions.DeriveKey(sessionSecret, outKdfPrefix + kdfCipherData, rawKey)
+	cryptions.DeriveKey(sessionSecret, outKdfPrefix+kdfCipherData, rawKey)
 	cs.outCipher = cryptions.NewStreamCipher(rawKey, [32]byte{})
-	cryptions.DeriveKey(sessionSecret, outKdfPrefix + kdfMACData, rawKey)
+	cryptions.DeriveKey(sessionSecret, outKdfPrefix+kdfMACData, rawKey)
 	cs.outMAC = cryptions.NewMAC(rawKey)
 
 	// TODO: maybe only set these after checkConfirmation, for better defensive coding.
 	cs.inConfirmation = cryptions.NewSecretBytes()
-	cryptions.DeriveKey(sessionSecret, inKdfPrefix + kdfMACConfirm, rawKey)
+	cryptions.DeriveKey(sessionSecret, inKdfPrefix+kdfMACConfirm, rawKey)
 	cryptions.NewMAC(rawKey).SumSecret(cs.inConfirmation)
-	cryptions.DeriveKey(sessionSecret, inKdfPrefix + kdfCipherData, rawKey)
+	cryptions.DeriveKey(sessionSecret, inKdfPrefix+kdfCipherData, rawKey)
 	cs.inCipher = cryptions.NewStreamCipher(rawKey, [32]byte{})
-	cryptions.DeriveKey(sessionSecret, inKdfPrefix + kdfMACData, rawKey)
+	cryptions.DeriveKey(sessionSecret, inKdfPrefix+kdfMACData, rawKey)
 	cs.inMAC = cryptions.NewMAC(rawKey)
 
 	cs.handshakeReassembly = bufman.BeginReassembly(32)

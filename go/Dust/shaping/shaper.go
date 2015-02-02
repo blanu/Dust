@@ -105,11 +105,11 @@ type Shaper struct {
 	inBuf   []byte
 	pushBuf []byte
 
-	timer      *shaperTimer
-	encoder    Encoder
-	outBuf     []byte
-	pullBuf    []byte
-	pullMark   int
+	timer    *shaperTimer
+	encoder  Encoder
+	outBuf   []byte
+	pullBuf  []byte
+	pullMark int
 }
 
 func (sh *Shaper) handleRead(subn int) error {
@@ -144,11 +144,11 @@ func (sh *Shaper) handleTimer() error {
 		var err error
 		if sh.pullMark == 0 {
 			req := outLen - outMark
-			if req >= len(sh.pullBuf) - sh.pullMark {
+			if req >= len(sh.pullBuf)-sh.pullMark {
 				req = len(sh.pullBuf) - sh.pullMark
 			}
 
-			pulled, err := sh.crypter.PullWrite(sh.pullBuf[sh.pullMark:sh.pullMark+req])
+			pulled, err := sh.crypter.PullWrite(sh.pullBuf[sh.pullMark : sh.pullMark+req])
 			if err != nil && err != crypting.ErrStuck {
 				return err
 			}
@@ -233,16 +233,16 @@ func NewShaper(
 		shapedOut: out,
 		closer:    closer,
 
-		reader:    nil, // initialized below
-		decoder:   decoder,
-		inBuf:     make([]byte, shaperBufSize),
-		pushBuf:   make([]byte, shaperBufSize),
+		reader:  nil, // initialized below
+		decoder: decoder,
+		inBuf:   make([]byte, shaperBufSize),
+		pushBuf: make([]byte, shaperBufSize),
 
-		timer:      nil, // initialized below
-		encoder:    encoder,
-		outBuf:     make([]byte, encoder.MaxPacketLength()),
-		pullBuf:    make([]byte, shaperBufSize),
-		pullMark:   0,
+		timer:    nil, // initialized below
+		encoder:  encoder,
+		outBuf:   make([]byte, encoder.MaxPacketLength()),
+		pullBuf:  make([]byte, shaperBufSize),
+		pullMark: 0,
 	}
 
 	sh.InitLink(sh.run)
