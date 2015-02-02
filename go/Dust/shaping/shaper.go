@@ -48,6 +48,8 @@ func (sr *shaperReader) cycle(offset int) {
 
 type shaperTimer struct {
 	procman.Link
+
+	maxDuration time.Duration
 }
 
 func newShaperTimer() *shaperTimer {
@@ -56,12 +58,29 @@ func newShaperTimer() *shaperTimer {
 	return st
 }
 
+func (st *shaperTimer) setDuration(dur time.Duration) {
+	st.maxDuration = dur
+}
+
 func (st *shaperTimer) run() (err error) {
-	st.PutReply(time.Now())
+	// TODO: does Go provide access to the monotonic clock?  This is problematic if it's using
+	// CLOCK_REALTIME or similar as a base and we have time skew due to NTP etc.
+	fixedEndTime := time.Now().Add(st.maxDuration)
+
 	for req, any := st.GetRequest(); any; req, any = st.GetRequest() {
 		dur := req.(time.Duration)
+		beforeSleep := time.Now()
+		reqEndTime := beforeSleep.Add(dur)
+		if reqEndTime.After(fixedEndTime) {
+			dur = fixedEndTime.Sub(beforeSleep)
+		}
+
 		time.Sleep(dur)
-		st.PutReply(time.Now())
+		afterSleep := time.Now()
+		if afterSleep.After(fixedEndTime) {
+			break
+		}
+		st.PutReply(afterSleep)
 	}
 
 	return nil
@@ -79,6 +98,7 @@ type Shaper struct {
 	crypter   *crypting.Session
 	shapedIn  io.Reader
 	shapedOut io.Writer
+	closer    io.Closer
 
 	reader  *shaperReader
 	decoder Decoder
@@ -156,11 +176,14 @@ func (sh *Shaper) handleTimer() error {
 }
 
 func (sh *Shaper) run() (err error) {
+	defer sh.closer.Close()
 	defer sh.reader.CloseDetach()
 	sh.reader.Spawn()
 	defer sh.timer.CloseDetach()
+	sh.timer.setDuration(sh.encoder.WholeStreamDuration())
 	sh.timer.Spawn()
 	sh.reader.cycle(0)
+	sh.timer.cycle(sh.encoder.NextPacketSleep())
 
 	for {
 		select {
@@ -194,20 +217,21 @@ func (sh *Shaper) run() (err error) {
 
 // NewShaper initializes a new shaper process object for the outward-facing side of crypter, using in/out for
 // receiving and sending shaped data and decoder/encoder as the model for this side of the Dust connection.
-// The shaper will not be running.  Call Spawn() on the Shaper afterwards to start it in the background.
+// The shaper will not be running.  Call Spawn() on the shaper afterwards to start it in the background; after
+// that point, the shaper takes responsibility for delivering a close signal to closer.
 func NewShaper(
 	crypter *crypting.Session,
 	in io.Reader,
 	decoder Decoder,
 	out io.Writer,
 	encoder Encoder,
+	closer io.Closer,
 ) (*Shaper, error) {
-	// INCOMPLETE: does not handle connection duration.
-
 	sh := &Shaper{
 		crypter:   crypter,
 		shapedIn:  in,
 		shapedOut: out,
+		closer:    closer,
 
 		reader:    nil, // initialized below
 		decoder:   decoder,

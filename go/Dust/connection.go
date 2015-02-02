@@ -59,8 +59,10 @@ func (s *session) Close() error {
 		return ErrClosed
 	}
 
-	// TODO: actually support close
-	//err := s.crypter.SoftClose()
+	// We don't actually need to do anything here; we let the shaper continue to run in the background.
+	// It'll exit when its designated interval elapses.  The crypter already has backpressure relief, so
+	// it'll automatically be draining any further real data frames into the bit bucket (maybe a bit
+	// inefficiently).  The shaper has responsibility for closing the socket too.
 	s.closed = true
 	return nil
 }
@@ -70,10 +72,12 @@ func (s *session) HardClose() error {
 		return ErrClosed
 	}
 
-	// TODO: actually support hard-close beyond this... ?
+	// Make the shaper exit as soon as it can, and close the socket immediately.  Can't do much beyond
+	// that.
 	err := s.socket.Close()
 	s.socket = nil
 	s.shaper.CloseDetach()
+	s.closed = true
 	return err
 }
 
@@ -97,7 +101,7 @@ func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection
 		return
 	}
 
-	shaper, err := shaping.NewShaper(crypter, socket, dec, socket, enc)
+	shaper, err := shaping.NewShaper(crypter, socket, dec, socket, enc, socket)
 	if err != nil {
 		return
 	}
@@ -131,7 +135,7 @@ func BeginServer(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connecti
 		return
 	}
 
-	shaper, err := shaping.NewShaper(crypter, socket, dec, socket, enc)
+	shaper, err := shaping.NewShaper(crypter, socket, dec, socket, enc, socket)
 	if err != nil {
 		return
 	}
