@@ -130,9 +130,7 @@ def genEncoder(params):
     'decl': "encoder *huffman.Encoder",
     'data': "encoder: huffman.NewEncoder(model.coding),",
     'body': """
-      dst := make([]byte, 0, len(bytes))
-      self.encoder.Encode(dst, bytes)
-      return dst
+      return codec.encoder.Encode(dst, src)
       """
   }
 
@@ -142,9 +140,7 @@ def genDecoder():
     'decl': "decoder *huffman.Decoder",
     'data': "decoder: huffman.NewDecoder(model.coding)",
     'body': """
-      dst := make([]byte, 0, len(bytes))
-      self.decoder.Decode(dst, bytes)
-      return dst
+      return codec.decoder.Decode(dst, src)
       """
   }
 

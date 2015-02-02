@@ -94,9 +94,9 @@ func (self $codec_type) NextPacketSleep() time.Duration {
 }
 
 func (codec $codec_type) ShapeBytes(dst, src []byte) (dn, sn int) {
-  return codec.decoder.Decode(dst, src)
+  $decode.body
 }
 
 func (codec $codec_type) UnshapeBytes(dst, src []byte) (dn, sn int) {
-  return codec.encoder.Encode(dst, src)
+  $encode.body
 }
