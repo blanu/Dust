@@ -9,7 +9,6 @@ import (
 )
 
 type $model_type struct {
-  $weights.decl
   $huffman.decl
 }
 
@@ -24,8 +23,7 @@ type $codec_type struct {
 
 func computeModel() (result *$model_type) {
   var err error
-  result = &$model_type{
-    $weights.data}
+  result = &$model_type{}
   $huffman.body
   return
 }

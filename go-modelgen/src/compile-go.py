@@ -38,9 +38,8 @@ def convertModel(name, data):
   model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'])
   model['packet_sleep']=genITA(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'])
   model['huffman']=genHuffman(data['incomingModel']['huffman'])
-  model['encode']=genEncoder(data['incomingModel']['huffman'])
+  model['encode']=genEncoder()
   model['decode']=genDecoder()
-  model['weights']=genWeights("contentDist", data['incomingModel']['content']['params'])
 
   return model
 
@@ -87,44 +86,13 @@ def genPoisson(varname, param):
     'body': "var total uint16 = 0\nfor iteration := 0; iteration < int(milliseconds); iteration++ {\n  total=total+uint16(self.%s.Rand())\n}\n\nreturn total" % (varname)
   }
 
-def genContent(dist, params):
-  if dist=='multinomial':
-    return genMultinomial("contentDist", params)
-  else:
-    print('Unknown content dist %s' % dist)
-
-def genWeights(varname, params):
-  return {
-    'decl': "%s []float64" % (varname),
-    'data': "%s: []float64 %s," % (varname, genArray(convertToProbs(params)))
-  }
-
-def genMultinomial(varname, params):
-  return {
-    'decl': "%s dist.Multinomial" % (varname),
-    'data': "%s: dist.Multinomial{Weights: %sWeights, Source: prng}," % (varname, varname),
-    'body': """
-      var bytes=make([]byte, requestedLength)
-      for index := range bytes {
-        bytes[index]=byte(self.%s.Rand())
-      }
-
-      return bytes
-      """
-      % (varname)
-  }
-
-def convertToProbs(arr):
-  total=float(sum(arr))
-  return map(lambda item: float(item)/total, arr)
-
 def genHuffman(params):
   return {
     'decl': "coding *huffman.Coding",
     'body': "result.coding, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params))
   }
 
-def genEncoder(params):
+def genEncoder():
   varname="contentDist"
   return {
     'decl': "encoder *huffman.Encoder",
