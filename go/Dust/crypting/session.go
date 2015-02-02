@@ -290,7 +290,12 @@ func (cs *Session) decodeAndShipoutPlainFrame(p []byte) (consumed int, err error
 	authenticated := frame.verifyAuthenticator(cs.inMAC)
 	dataCarrying := frame.hasData()
 	if dataCarrying && authenticated {
-		cs.inPlains <- bufman.CopyNew(frame.data())
+		// If there isn't enough buffer space in the channel, just drop the frame.  We cannot afford
+		// to apply backpressure, as that would break the model.
+		select {
+		case cs.inPlains <- bufman.CopyNew(frame.data()):
+		default:
+		}
 	}
 
 	return frame.wireSize(), nil
