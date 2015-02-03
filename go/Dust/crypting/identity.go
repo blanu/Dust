@@ -11,13 +11,13 @@ import (
 	"github.com/blanu/Dust/go/Dust/cryptions"
 )
 
-// A Public holds the longterm public key and shared identifier for a server.
+// Public holds the longterm public key and shared identifier for a server.
 type Public struct {
 	IdBytes        []byte
 	LongtermPublic cryptions.PublicKey
 }
 
-// A Private holds the longterm private key and shared identifier for a server.
+// Private holds the longterm private key and shared identifier for a server.
 type Private struct {
 	IdBytes      []byte
 	LongtermPair cryptions.KeyPair
@@ -29,7 +29,7 @@ func (priv *Private) Destroy() {
 
 var (
 	ErrUnrecognizedAddressType = errors.New("Dust: unrecognized address type")
-	
+
 	ipv4MappedPrefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
 )
 
@@ -57,7 +57,7 @@ func IdentityBytesOfNetworkAddress(netAddr interface{}) ([]byte, error) {
 		l3Flag = 0x00
 	case net.IPv6len:
 		// Sometimes net.IP stores IPv4 addresses in 16-byte slices too.  Sigh.
-		if bytes.Equal(ip[:len(ipv4MappedPrefix)], ipv4MappedPrefix) {
+		if bytes.HasPrefix(ip, ipv4MappedPrefix) {
 			l3Flag = 0x00
 		} else {
 			l3Flag = 0x01

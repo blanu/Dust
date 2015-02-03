@@ -23,7 +23,17 @@ Subcommands:
 
     Currently, PARAMS are not fully validated to make sure that Dust
     connections could reasonably be established with them.
+
+  bridgeline FILE
+    Read a Dust server private identity from FILE and write its bridge
+    line to standard output.
 `
+
+type nullWriter struct{}
+
+func (n *nullWriter) Write(p []byte) (int, error) {
+	return len(p), nil
+}
 
 var ourFlags *flag.FlagSet
 
@@ -65,15 +75,19 @@ func endOfArgs() {
 	}
 }
 
-func joinBridgeParams(params map[string]string) string {
-	parts := make([]string, 0, len(params))
-	for k, v := range params {
-		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
+func formatBridgeLine(bline Dust.BridgeLine) string {
+	parts := []string{
+		bline.Nickname,
+		bline.Address,
 	}
+	for k, v := range bline.Params {
+		parts = append(parts, k+"="+v)
+	}
+
 	return strings.Join(parts, " ")
 }
 
-func newidToFile(path string, nickname string, bline Dust.BridgeLine) error {
+func newidToFile(path string, bline Dust.BridgeLine) error {
 	var spriv *Dust.ServerPrivate
 	var err error
 	defer func() {
@@ -92,23 +106,19 @@ func newidToFile(path string, nickname string, bline Dust.BridgeLine) error {
 		return err
 	}
 
-	// TODO: clean up handling of address, name, other metadata here?
 	realBline := spriv.Public().BridgeLine()
-	realAddrString := realBline.Address
-	paramsString := joinBridgeParams(realBline.Params)
-	fmt.Fprintf(os.Stdout, "Bridge %s %s %s\n", nickname, realAddrString, paramsString)
+	fmt.Fprintf(os.Stdout, "Bridge %s\n", formatBridgeLine(realBline))
 	return nil
 }
 
 func newidFromArgs() (func() error, error) {
 	// TODO: refactor subcommand-flags bit, and refactor this with DustProxy flag handling
 	subFlags := flag.NewFlagSet(progName, flag.ContinueOnError)
-	subFlags.Usage = func() {
-		io.WriteString(os.Stderr, usageMessage())
-	}
+	subFlags.Usage = func() {}
+	subFlags.SetOutput(&nullWriter{})
 
 	outputPathPtr := subFlags.String("o", "", "")
-	
+
 	argErr := subFlags.Parse(remainingArgs())
 	if argErr == flag.ErrHelp {
 		io.WriteString(os.Stdout, usageMessage())
@@ -122,7 +132,7 @@ func newidFromArgs() (func() error, error) {
 	nickname := nextArg("NICKNAME")
 	addrString := nextArg("ADDR-STRING")
 	paramArgs := remainingArgs()
-	
+
 	params := make(map[string]string)
 	for _, pairArg := range paramArgs {
 		equals := strings.IndexRune(pairArg, '=')
@@ -135,23 +145,62 @@ func newidFromArgs() (func() error, error) {
 		params[key] = val
 	}
 
-	bline := Dust.BridgeLine{addrString, params}
-	
+	bline := Dust.BridgeLine{
+		Nickname: nickname,
+		Address:  addrString,
+		Params:   params,
+	}
+
 	if *outputPathPtr == "" {
 		usageErrorf("output file must be specified")
 	}
 
 	return func() error {
-		return newidToFile(*outputPathPtr, nickname, bline)
+		return newidToFile(*outputPathPtr, bline)
+	}, nil
+}
+
+func bridgelineFromFile(path string) error {
+	spriv, err := Dust.LoadServerPrivateFile(path)
+	if err != nil {
+		return err
+	}
+
+	bline := spriv.Public().BridgeLine()
+	fmt.Fprintf(os.Stdout, "Bridge %s\n", formatBridgeLine(bline))
+	return nil
+}
+
+func bridgelineFromArgs() (func() error, error) {
+	// TODO: in DustProxy, do the same sort of thing here (when this is all refactored) so that subcommands
+	// can parse their own options.
+	subFlags := flag.NewFlagSet(progName, flag.ContinueOnError)
+	subFlags.Usage = func() {}
+	subFlags.SetOutput(&nullWriter{})
+
+	argErr := subFlags.Parse(remainingArgs())
+	if argErr == flag.ErrHelp {
+		io.WriteString(os.Stdout, usageMessage())
+		os.Exit(0)
+	} else if argErr != nil {
+		usageErrorf("%s", argErr.Error())
+	}
+
+	ourFlags = subFlags
+	argI = 0
+	path := nextArg("FILE")
+	endOfArgs()
+
+	return func() error {
+		return bridgelineFromFile(path)
 	}, nil
 }
 
 func main() {
 	var err error
 	ourFlags = flag.NewFlagSet(progName, flag.ContinueOnError)
-	ourFlags.Usage = func() {
-		io.WriteString(os.Stderr, usageMessage())
-	}
+	ourFlags.Usage = func() {}
+	ourFlags.SetOutput(&nullWriter{})
 
 	argErr := ourFlags.Parse(os.Args[1:])
 	if argErr == flag.ErrHelp {
@@ -168,6 +217,8 @@ func main() {
 		usageErrorf("unrecognized subcommand \"%s\"", subcommandArg)
 	case "newid":
 		requestedCommand, err = newidFromArgs()
+	case "bridgeline":
+		requestedCommand, err = bridgelineFromArgs()
 	}
 
 	if err != nil {

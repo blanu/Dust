@@ -9,7 +9,6 @@ import (
 )
 
 type $model_type struct {
-  $weights.decl
   $huffman.decl
 }
 
@@ -24,8 +23,7 @@ type $codec_type struct {
 
 func computeModel() (result *$model_type) {
   var err error
-  result = &$model_type{
-    $weights.data}
+  result = &$model_type{}
   $huffman.body
   return
 }
@@ -65,12 +63,20 @@ func init() {
   Dust.RegisterModel("$name", constructor)
 }
 
-func (self $codec_type) wholeStreamDurationMillis() uint16 {
-  $duration.body
+func clampUint16(n float64) uint16 {
+  // Use positive test for in-range to handle NaN properly, just in case.
+  switch {
+  case 0.0 <= n && n <= 65535.0:
+    return uint16(n)
+  case 65535.0 < n:
+    return 65535
+  default:
+    return 0
+  }
 }
 
 func (self $codec_type) WholeStreamDuration() time.Duration {
-  return time.Duration(self.wholeStreamDurationMillis()) * time.Millisecond
+  return time.Duration($duration.expr) * time.Millisecond
 }
 
 func (self $codec_type) MaxPacketLength() uint16 {
@@ -78,45 +84,17 @@ func (self $codec_type) MaxPacketLength() uint16 {
 }
 
 func (self $codec_type) NextPacketLength() uint16 {
-  $packet_length.body
-}
-
-func (self $codec_type) nextPacketSleepMillis() uint16 {
-  $packet_sleep.body
+  return $packet_length.expr
 }
 
 func (self $codec_type) NextPacketSleep() time.Duration {
-  return time.Duration(self.nextPacketSleepMillis()) * time.Millisecond
+  return time.Duration($packet_sleep.expr) * time.Millisecond
 }
 
-func allocatingRecode(f func(dst []byte, src []byte) (dn int, sn int), in []byte) []byte {
-  out := make([]byte, len(in))
-  outTail := out
-
-  for len(in) > 0 {
-    if len(outTail) == 0 {
-      newOut := make([]byte, 1 + len(out)*2)
-      _ = copy(newOut, out)
-      outTail = newOut[len(out):]
-      out = newOut
-    }
-
-    dn, sn := f(outTail, in)
-    if sn == 0 {
-      // TODO: make sure this invariant should actually hold
-      panic("no recode progress?!")
-    }
-    outTail = outTail[dn:]
-    in = in[sn:]
-  }
-
-  return out[:len(out)-len(outTail)]
+func (codec $codec_type) ShapeBytes(dst, src []byte) (dn, sn int) {
+  $decode.body
 }
 
-func (codec $codec_type) ShapeBytes(in []byte) []byte {
-  return allocatingRecode(codec.decoder.Decode, in)
-}
-
-func (codec $codec_type) UnshapeBytes(in []byte) []byte {
-  return allocatingRecode(codec.encoder.Encode, in)
+func (codec $codec_type) UnshapeBytes(dst, src []byte) (dn, sn int) {
+  $encode.body
 }

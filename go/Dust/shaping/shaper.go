@@ -4,7 +4,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/blanu/Dust/go/Dust/bufman"
 	"github.com/blanu/Dust/go/Dust/crypting"
 	"github.com/blanu/Dust/go/Dust/procman"
 )
@@ -49,6 +48,8 @@ func (sr *shaperReader) cycle(offset int) {
 
 type shaperTimer struct {
 	procman.Link
+
+	maxDuration time.Duration
 }
 
 func newShaperTimer() *shaperTimer {
@@ -57,12 +58,29 @@ func newShaperTimer() *shaperTimer {
 	return st
 }
 
+func (st *shaperTimer) setDuration(dur time.Duration) {
+	st.maxDuration = dur
+}
+
 func (st *shaperTimer) run() (err error) {
-	st.PutReply(time.Now())
+	// TODO: does Go provide access to the monotonic clock?  This is problematic if it's using
+	// CLOCK_REALTIME or similar as a base and we have time skew due to NTP etc.
+	fixedEndTime := time.Now().Add(st.maxDuration)
+
 	for req, any := st.GetRequest(); any; req, any = st.GetRequest() {
 		dur := req.(time.Duration)
+		beforeSleep := time.Now()
+		reqEndTime := beforeSleep.Add(dur)
+		if reqEndTime.After(fixedEndTime) {
+			dur = fixedEndTime.Sub(beforeSleep)
+		}
+
 		time.Sleep(dur)
-		st.PutReply(time.Now())
+		afterSleep := time.Now()
+		if afterSleep.After(fixedEndTime) {
+			break
+		}
+		st.PutReply(afterSleep)
 	}
 
 	return nil
@@ -72,30 +90,44 @@ func (st *shaperTimer) cycle(dur time.Duration) {
 	st.PutRequest(dur)
 }
 
+// Shaper represents a process mediating between a shaped channel and a Dust crypting session.  It can be
+// managed through its procman.Link structure.
 type Shaper struct {
 	procman.Link
 
 	crypter   *crypting.Session
 	shapedIn  io.Reader
 	shapedOut io.Writer
+	closer    io.Closer
 
 	reader  *shaperReader
 	decoder Decoder
 	inBuf   []byte
+	pushBuf []byte
 
-	timer      *shaperTimer
-	encoder    Encoder
-	outBuf     []byte
-	outPending []byte
-	pullBuf    []byte
+	timer    *shaperTimer
+	encoder  Encoder
+	outBuf   []byte
+	pullBuf  []byte
+	pullMark int
 }
 
 func (sh *Shaper) handleRead(subn int) error {
 	// We own inBuf until we cycle the reader again.
-	decoded := sh.decoder.UnshapeBytes(sh.inBuf[:subn])
-	_, err := sh.crypter.PushRead(decoded)
-	if err != nil {
-		return err
+	in := sh.inBuf[:subn]
+	for {
+		dn, sn := sh.decoder.UnshapeBytes(sh.pushBuf, in)
+		if dn > 0 {
+			_, err := sh.crypter.PushRead(sh.pushBuf[:dn])
+			if err != nil {
+				return err
+			}
+		}
+
+		in = in[sn:]
+		if len(in) == 0 {
+			break
+		}
 	}
 
 	sh.reader.cycle(0)
@@ -103,26 +135,31 @@ func (sh *Shaper) handleRead(subn int) error {
 }
 
 func (sh *Shaper) handleTimer() error {
-	outLen := sh.encoder.NextPacketLength()
+	outLen := int(sh.encoder.NextPacketLength())
 	sh.timer.cycle(sh.encoder.NextPacketSleep())
 
-	outValid := 0
-	outTail := sh.outBuf[:outLen]
-	for len(outTail) > 0 {
-		if len(sh.outPending) > 0 {
-			outValid += bufman.CopyAdvance(&outTail, &sh.outPending)
-			continue
+	outMark := 0
+	out := sh.outBuf[:outLen]
+	for outMark < outLen {
+		var err error
+		if sh.pullMark == 0 {
+			req := outLen - outMark
+			if req >= len(sh.pullBuf)-sh.pullMark {
+				req = len(sh.pullBuf) - sh.pullMark
+			}
+
+			pulled, err := sh.crypter.PullWrite(sh.pullBuf[sh.pullMark : sh.pullMark+req])
+			if err != nil && err != crypting.ErrStuck {
+				return err
+			}
+
+			sh.pullMark += pulled
 		}
 
-		pullN, err := sh.crypter.PullWrite(sh.pullBuf)
-		if err != nil && err != crypting.ErrStuck {
-			return err
-		}
-		encodedTail := sh.encoder.ShapeBytes(sh.pullBuf[:pullN])
-		outValid += bufman.CopyAdvance(&outTail, &encodedTail)
-		if len(encodedTail) > 0 {
-			sh.outPending = append(sh.outPending, encodedTail...)
-		}
+		dn, sn := sh.encoder.ShapeBytes(out[outMark:], sh.pullBuf[:sh.pullMark])
+		outMark += dn
+		copy(sh.pullBuf, sh.pullBuf[sn:sh.pullMark])
+		sh.pullMark -= sn
 
 		if err != nil {
 			// It was an ErrStuck, otherwise we'd have returned above.
@@ -130,7 +167,7 @@ func (sh *Shaper) handleTimer() error {
 		}
 	}
 
-	_, err := sh.shapedOut.Write(sh.outBuf[:outValid])
+	_, err := sh.shapedOut.Write(sh.outBuf[:outMark])
 	if err != nil {
 		return err
 	}
@@ -139,11 +176,14 @@ func (sh *Shaper) handleTimer() error {
 }
 
 func (sh *Shaper) run() (err error) {
+	defer sh.closer.Close()
 	defer sh.reader.CloseDetach()
 	sh.reader.Spawn()
 	defer sh.timer.CloseDetach()
+	sh.timer.setDuration(sh.encoder.WholeStreamDuration())
 	sh.timer.Spawn()
 	sh.reader.cycle(0)
+	sh.timer.cycle(sh.encoder.NextPacketSleep())
 
 	for {
 		select {
@@ -175,29 +215,34 @@ func (sh *Shaper) run() (err error) {
 	}
 }
 
+// NewShaper initializes a new shaper process object for the outward-facing side of crypter, using in/out for
+// receiving and sending shaped data and decoder/encoder as the model for this side of the Dust connection.
+// The shaper will not be running.  Call Spawn() on the shaper afterwards to start it in the background; after
+// that point, the shaper takes responsibility for delivering a close signal to closer.
 func NewShaper(
 	crypter *crypting.Session,
 	in io.Reader,
 	decoder Decoder,
 	out io.Writer,
 	encoder Encoder,
+	closer io.Closer,
 ) (*Shaper, error) {
-	// INCOMPLETE: does not handle connection duration.
-
 	sh := &Shaper{
 		crypter:   crypter,
 		shapedIn:  in,
 		shapedOut: out,
+		closer:    closer,
 
 		reader:  nil, // initialized below
 		decoder: decoder,
 		inBuf:   make([]byte, shaperBufSize),
+		pushBuf: make([]byte, shaperBufSize),
 
-		timer:      nil, // initialized below
-		encoder:    encoder,
-		outBuf:     make([]byte, encoder.MaxPacketLength()),
-		outPending: nil,
-		pullBuf:    make([]byte, shaperBufSize),
+		timer:    nil, // initialized below
+		encoder:  encoder,
+		outBuf:   make([]byte, encoder.MaxPacketLength()),
+		pullBuf:  make([]byte, shaperBufSize),
+		pullMark: 0,
 	}
 
 	sh.InitLink(sh.run)

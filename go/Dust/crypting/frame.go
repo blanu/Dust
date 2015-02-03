@@ -77,15 +77,19 @@ func (frame frame) wellFormed() bool {
 	}
 }
 
-// authenticateWith mutates a frame to contain a valid authenticator based on authenticatorKey.
-func (frame frame) authenticateWith(authenticatorKey cryptions.SecretBytes) {
-	authenticator := cryptions.ComputeAuthenticator(frame[:len(frame)-32], authenticatorKey)
-	copy(frame[len(frame)-32:], authenticator)
+// authenticateWith mutates a frame to contain a valid authenticator given a starting MAC state, which may
+// be destroyed.
+func (frame frame) authenticateWith(mac cryptions.MAC) {
+	mac.Write(frame[:len(frame)-32])
+	outputArea := frame[len(frame)-32:]
+	copy(frame[len(frame)-32:], mac.Sum(outputArea[:0]))
 }
 
-// verifyAuthenticator returns true iff the frame's authenticator is valid based on authenticatorKey.
-func (frame frame) verifyAuthenticator(authenticatorKey cryptions.SecretBytes) bool {
-	return cryptions.VerifyAuthenticator(frame[:len(frame)-32], authenticatorKey, frame[len(frame)-32:])
+// verifyAuthenticator returns true iff the frame's authenticator is valid given a starting MAC state, which
+// may be destroyed.
+func (frame frame) verifyAuthenticator(mac cryptions.MAC) bool {
+	mac.Write(frame[:len(frame)-32])
+	return mac.Verify(frame[len(frame)-32:])
 }
 
 // hasData returns true iff the frame contains data that should be passed through to the next layer.

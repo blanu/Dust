@@ -1,5 +1,8 @@
 package Dust
 
+// ParameterErrorHow describes whether the data element referenced in a ParameterError is missing, unexpected
+// (present but without a known interpretation), or invalid (present when expected but with an uninterpretable
+// value).
 type ParameterErrorHow int
 
 const (
@@ -9,6 +12,8 @@ const (
 	ParameterInvalid
 )
 
+// ParameterError describes a problem relating to a specific data element.  Specific may be the empty string
+// to refer to the single element of a kind.
 type ParameterError struct {
 	How      ParameterErrorHow
 	Kind     string

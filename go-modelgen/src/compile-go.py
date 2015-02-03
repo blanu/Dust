@@ -38,9 +38,8 @@ def convertModel(name, data):
   model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'])
   model['packet_sleep']=genITA(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'])
   model['huffman']=genHuffman(data['incomingModel']['huffman'])
-  model['encode']=genEncoder(data['incomingModel']['huffman'])
+  model['encode']=genEncoder()
   model['decode']=genDecoder()
-  model['weights']=genWeights("contentDist", data['incomingModel']['content']['params'])
 
   return model
 
@@ -55,7 +54,7 @@ def genExponential(varname, param):
   return {
     'decl': "%s dist.Exponential" % (varname),
     'data': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param),
-    'body': "return uint16(self.%s.Rand())" % (varname)
+    'expr': "clampUint16(self.%s.Rand())" % (varname)
   }
 
 def genLength(dist, params):
@@ -69,7 +68,7 @@ def genNormal(varname, mu, sigma):
   return {
     'decl': "%s dist.Normal" % (varname),
     'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu, sigma),
-    'body': "return uint16(self.%s.Rand())" % (varname)
+    'expr': "clampUint16(self.%s.Rand())" % (varname)
   }
 
 def genITA(dist, params):
@@ -87,52 +86,19 @@ def genPoisson(varname, param):
     'body': "var total uint16 = 0\nfor iteration := 0; iteration < int(milliseconds); iteration++ {\n  total=total+uint16(self.%s.Rand())\n}\n\nreturn total" % (varname)
   }
 
-def genContent(dist, params):
-  if dist=='multinomial':
-    return genMultinomial("contentDist", params)
-  else:
-    print('Unknown content dist %s' % dist)
-
-def genWeights(varname, params):
-  return {
-    'decl': "%s []float64" % (varname),
-    'data': "%s: []float64 %s," % (varname, genArray(convertToProbs(params)))
-  }
-
-def genMultinomial(varname, params):
-  return {
-    'decl': "%s dist.Multinomial" % (varname),
-    'data': "%s: dist.Multinomial{Weights: %sWeights, Source: prng}," % (varname, varname),
-    'body': """
-      var bytes=make([]byte, requestedLength)
-      for index := range bytes {
-        bytes[index]=byte(self.%s.Rand())
-      }
-
-      return bytes
-      """
-      % (varname)
-  }
-
-def convertToProbs(arr):
-  total=float(sum(arr))
-  return map(lambda item: float(item)/total, arr)
-
 def genHuffman(params):
   return {
     'decl': "coding *huffman.Coding",
     'body': "result.coding, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params))
   }
 
-def genEncoder(params):
+def genEncoder():
   varname="contentDist"
   return {
     'decl': "encoder *huffman.Encoder",
     'data': "encoder: huffman.NewEncoder(model.coding),",
     'body': """
-      dst := make([]byte, 0, len(bytes))
-      self.encoder.Encode(dst, bytes)
-      return dst
+      return codec.encoder.Encode(dst, src)
       """
   }
 
@@ -142,9 +108,7 @@ def genDecoder():
     'decl': "decoder *huffman.Decoder",
     'data': "decoder: huffman.NewDecoder(model.coding)",
     'body': """
-      dst := make([]byte, 0, len(bytes))
-      self.decoder.Decode(dst, bytes)
-      return dst
+      return codec.decoder.Decode(dst, src)
       """
   }
 

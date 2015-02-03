@@ -16,6 +16,7 @@ type SecretBytes interface {
 	Pointer() *[32]byte
 	Slice() []byte
 	Destroy()
+	Equal(o []byte) bool
 }
 
 type secretBytes struct {
@@ -34,6 +35,15 @@ func (sb *secretBytes) Slice() []byte {
 		panic("Dust/cryptions: invalid access to destroyed SecretBytes")
 	}
 	return sb.pointer[:]
+}
+
+func (sb *secretBytes) Equal(o []byte) bool {
+	if len(o) != 32 {
+		// This shouldn't happen anyway, generally.
+		return false
+	}
+
+	return cryptoSubtle.ConstantTimeCompare(sb.Slice(), o) == 1
 }
 
 func (sb *secretBytes) Destroy() {
