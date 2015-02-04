@@ -1,7 +1,7 @@
 #!/bin/bash
 export PROTOCOL=sillyHex
 export DUSTIP=`ifconfig eth0 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}'`
-export DESTINATION=$DUSTIP:8090
+export DESTINATION=127.0.0.1:80
 
 if [ ! -d "~/go/src/caolta3iaejox3z4madc5wmp4z.uuid" ]; then
   mkdir ~/go/src/caolta3iaejox3z4madc5wmp4z.uuid
