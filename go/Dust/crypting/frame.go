@@ -17,6 +17,7 @@ func newPlainDataFrame(data []byte) frame {
 	if len(data) > 65535 {
 		panic("Dust/crypting: data too long for frame representation")
 	}
+	log.Debug("data frame with %d data bytes", len(data))
 
 	payloadSize := len(data) + 33
 	wire := make([]byte, 2+payloadSize)
@@ -39,6 +40,7 @@ func newPaddingFrame(requestedSize int) frame {
 	if size > 65535 {
 		size = 65535
 	}
+	log.Debug("padding of size %d reqd, actual wire size %d", requestedSize, size)
 
 	wire := make([]byte, size)
 	payloadSize := len(wire) - 2

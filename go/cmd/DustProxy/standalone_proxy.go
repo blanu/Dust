@@ -9,6 +9,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/op/go-logging"
+
 	"github.com/blanu/Dust/go/Dust"
 
 	_ "github.com/blanu/Dust/go/DustModel/sillyHex"
@@ -29,6 +31,8 @@ Options:
 	Connect outgoing TCP connections to HOST:PORT.
   --restrict HOST, -r HOST
 	Only accept incoming TCP connections from HOST.
+  --debug, -d
+	Spew enormous quantities of garbage to standard error.
 
 Dust side syntax:
   in IDENTITY-FILE
@@ -339,7 +343,22 @@ func (n *nullWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
+var leveledLogBackend logging.Leveled
+
+func startLogging() {
+	backend := logging.NewLogBackend(os.Stderr, "DustProxy: ", 0)
+	formatSpec := "%{color:bold}%{level:6s}%{color:reset} %{module:-20s} | %{message}"
+	formatter := logging.MustStringFormatter(formatSpec)
+	formatted := logging.NewBackendFormatter(backend, formatter)
+	leveled := logging.AddModuleLevel(formatted)
+	leveled.SetLevel(logging.NOTICE, "")
+	logging.SetBackend(leveled)
+	leveledLogBackend = leveled
+}
+
 func main() {
+	startLogging()
+
 	var err error
 	ourFlags = flag.NewFlagSet(progName, flag.ContinueOnError)
 	ourFlags.Usage = func() {}
@@ -348,6 +367,7 @@ func main() {
 	// Usage strings are hardcoded above.
 
 	var incompleteAck bool
+	var debugLogging bool
 	ourFlags.BoolVar(&incompleteAck, "incomplete", false, "")
 	ourFlags.StringVar(&userListenAddr, "listen", "", "")
 	ourFlags.StringVar(&userListenAddr, "l", "", "")
@@ -355,6 +375,8 @@ func main() {
 	ourFlags.StringVar(&userDialAddr, "c", "", "")
 	ourFlags.StringVar(&userRestrictAddr, "restrict", "", "")
 	ourFlags.StringVar(&userRestrictAddr, "r", "", "")
+	ourFlags.BoolVar(&debugLogging, "debug", false, "")
+	ourFlags.BoolVar(&debugLogging, "d", false, "")
 
 	argErr := ourFlags.Parse(os.Args[1:])
 	if argErr == flag.ErrHelp {
@@ -362,6 +384,10 @@ func main() {
 		os.Exit(0)
 	} else if argErr != nil {
 		usageErrorf("%s", argErr.Error())
+	}
+
+	if debugLogging {
+		leveledLogBackend.SetLevel(logging.DEBUG, "")
 	}
 
 	var requestedCommand func() error

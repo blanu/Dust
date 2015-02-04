@@ -14,6 +14,8 @@ import (
 	"errors"
 	"io"
 
+	"github.com/op/go-logging"
+
 	"github.com/blanu/Dust/go/Dust/crypting"
 	"github.com/blanu/Dust/go/Dust/shaping"
 )
@@ -21,6 +23,8 @@ import (
 var (
 	ErrClosed = errors.New("Dust: connection closed")
 )
+
+var log = logging.MustGetLogger("Dust")
 
 // Connection acts as a stream-oriented I/O channel.  However, closing it does not necessarily close the
 // backing channel, as Dust connections normally have a predetermined duration.  The HardClose method is
@@ -88,21 +92,25 @@ func (s *session) HardClose() error {
 func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection, err error) {
 	model, err := spub.ReifyModel()
 	if err != nil {
+		log.Error("BeginClient: retrieving model: %v", err)
 		return
 	}
 
 	enc, dec, err := model.MakeClientPair()
 	if err != nil {
+		log.Error("BeginClient: constructing codec: %v", err)
 		return
 	}
 
 	crypter, err := crypting.BeginClient(spub.cryptoPublic())
 	if err != nil {
+		log.Error("BeginClient: starting crypting session: %v", err)
 		return
 	}
 
 	shaper, err := shaping.NewShaper(crypter, socket, dec, socket, enc, socket)
 	if err != nil {
+		log.Error("BeginClient: starting shaper: %v", err)
 		return
 	}
 
@@ -122,21 +130,25 @@ func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection
 func BeginServer(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connection, err error) {
 	model, err := spriv.ReifyModel()
 	if err != nil {
+		log.Error("BeginServer: retrieving model: %v", err)
 		return
 	}
 
 	enc, dec, err := model.MakeServerPair()
 	if err != nil {
+		log.Error("BeginServer: constructing codec: %v", err)
 		return
 	}
 
 	crypter, err := crypting.BeginServer(spriv.cryptoPrivate())
 	if err != nil {
+		log.Error("BeginServer: starting crypting session: %v", err)
 		return
 	}
 
 	shaper, err := shaping.NewShaper(crypter, socket, dec, socket, enc, socket)
 	if err != nil {
+		log.Error("BeginServer: starting shaper: %v", err)
 		return
 	}
 
