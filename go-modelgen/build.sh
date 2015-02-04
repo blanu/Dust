@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 # compile-go.py [modelDir] [packageName] [packageDir]
 python src/compile-go.py "$1" "$2" "$3"
