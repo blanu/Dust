@@ -1,2 +1,2 @@
 #!/bin/bash
-~/go/bin/DustProxy --incomplete -c $DESTINATION in ~/DustProxy.invite
+~/go/bin/DustProxy -d --incomplete -c $DESTINATION in ~/DustProxy.invite
