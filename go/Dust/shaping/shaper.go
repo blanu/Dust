@@ -196,7 +196,7 @@ func (sh *Shaper) run() (err error) {
 	sh.timer.Spawn()
 	sh.reader.cycle(0)
 	sh.timer.cycle(sh.encoder.NextPacketSleep())
-	defer log.Info("shaper exiting")
+	defer log.Debug("shaper exiting")
 
 	for {
 		select {

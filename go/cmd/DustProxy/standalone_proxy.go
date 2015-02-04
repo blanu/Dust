@@ -16,6 +16,8 @@ import (
 	_ "github.com/blanu/Dust/go/DustModel/sillyHex"
 )
 
+var log = logging.MustGetLogger("DustProxy")
+
 const progName = "DustProxy"
 const usageMessageRaw = `
 Usage: DustProxy --incomplete OPTIONS DUST-SIDE
@@ -142,6 +144,7 @@ func parseRestrictAddr(relativeTo *net.TCPAddr) error {
 		return err
 	}
 
+	log.Info("restricting to connections from %v", ip)
 	restrictIP = ip
 	return nil
 }
@@ -176,7 +179,7 @@ func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
 		}
 
 		if restrictIP != nil && !(remoteIP != nil && ipAddrEqual(remoteIP, restrictIP)) {
-			fmt.Fprintf(os.Stderr, "%s: rejecting connection from %s\n", progName, remoteIP.String())
+			log.Error("rejecting connection from %v", remoteIP)
 			_ = conn.Close()
 			continue
 		}
@@ -186,17 +189,21 @@ func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
 }
 
 func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) error {
+	log.Notice("listening for Dusts on %v, will dial plains on %v", listenAddr, dialAddr)
 	eachConn := func(in *net.TCPConn) error {
 		dconn, err := Dust.BeginServer(in, spriv)
 		if err != nil {
+			log.Error("cannot begin Dust connection: %v", err)
 			return err
 		}
 
 		out, err := net.DialTCP("tcp", nil, dialAddr)
 		if err != nil {
+			log.Error("cannot dial for plain: %v", err)
 			return err
 		}
 
+		log.Info("proxying from %v-> to %v->", in.RemoteAddr(), out.LocalAddr())
 		return dustProxy(dconn, out)
 	}
 
@@ -205,7 +212,7 @@ func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) e
 
 func dustToPlainFromArgs() (func() error, error) {
 	var err error
-	var warnings []string
+	var warnings [][]interface{}
 
 	if userDialAddr == "" {
 		usageErrorf("must specify address to connect to")
@@ -232,7 +239,7 @@ func dustToPlainFromArgs() (func() error, error) {
 		}
 
 		if !tcpAddrEqual(physListenAddr, listenAddr) {
-			warnings = append(warnings, fmt.Sprintf("listening on %s even though identity address is %s", physListenAddr.String(), listenAddr.String()))
+			warnings = append(warnings, []interface{}{"listening on %v even though identity address is %v", physListenAddr, listenAddr})
 		}
 		listenAddr = physListenAddr
 	}
@@ -243,7 +250,7 @@ func dustToPlainFromArgs() (func() error, error) {
 	}
 
 	for _, warning := range warnings {
-		fmt.Fprintf(os.Stderr, "%s: warning: %s\n", progName, warning)
+		log.Warning(warning[0].(string), warning[1:]...)
 	}
 
 	return func() error {
@@ -252,9 +259,11 @@ func dustToPlainFromArgs() (func() error, error) {
 }
 
 func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) error {
+	log.Notice("listening for plains on %v, will dial Dusts on %v", listenAddr, dialAddr)
 	eachConn := func(in *net.TCPConn) error {
 		out, err := net.DialTCP("tcp", nil, dialAddr)
 		if err != nil {
+			log.Error("cannot dial for Dust: %v", err)
 			return err
 		}
 
@@ -264,9 +273,11 @@ func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) err
 
 		dconn, err := Dust.BeginClient(out, spub)
 		if err != nil {
+			log.Error("cannot begin Dust connection: %v", err)
 			return err
 		}
 
+		log.Info("proxying from %v-> to %v->", in.RemoteAddr(), out.LocalAddr())
 		return dustProxy(dconn, in)
 	}
 
@@ -274,7 +285,7 @@ func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) err
 }
 
 func plainToDustFromArgs() (func() error, error) {
-	var warnings []string
+	var warnings [][]interface{}
 
 	if userListenAddr == "" {
 		usageErrorf("must specify address to listen on")
@@ -323,13 +334,13 @@ func plainToDustFromArgs() (func() error, error) {
 		}
 
 		if !tcpAddrEqual(physDialAddr, dialAddr) {
-			warnings = append(warnings, fmt.Sprintf("connecting to %s even though identity address is %s", physDialAddr.String(), dialAddr.String()))
+			warnings = append(warnings, []interface{}{"connecting to %v even though identity address is %v", physDialAddr, dialAddr})
 		}
 		dialAddr = physDialAddr
 	}
 
 	for _, warning := range warnings {
-		fmt.Fprintf(os.Stderr, "%s: warning: %s\n", progName, warning)
+		log.Warning(warning[0].(string), warning[1:]...)
 	}
 
 	return func() error {
@@ -346,12 +357,12 @@ func (n *nullWriter) Write(p []byte) (int, error) {
 var leveledLogBackend logging.Leveled
 
 func startLogging() {
-	backend := logging.NewLogBackend(os.Stderr, "DustProxy: ", 0)
+	backend := logging.NewLogBackend(os.Stderr, progName+": ", 0)
 	formatSpec := "%{color:bold}%{level:6s}%{color:reset} %{module:-20s} | %{message}"
 	formatter := logging.MustStringFormatter(formatSpec)
 	formatted := logging.NewBackendFormatter(backend, formatter)
 	leveled := logging.AddModuleLevel(formatted)
-	leveled.SetLevel(logging.NOTICE, "")
+	leveled.SetLevel(logging.INFO, "")
 	logging.SetBackend(leveled)
 	leveledLogBackend = leveled
 }

@@ -277,7 +277,7 @@ func (cs *Session) checkConfirmation() {
 		return
 	}
 
-	log.Info("  <- entering streaming state")
+	log.Debug("  <- entering streaming state")
 	// We already set up all the derived keys when we received the ephemeral key.
 	cs.handshakeReassembly = nil
 	cs.inConfirmation = nil
