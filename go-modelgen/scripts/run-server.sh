@@ -1,4 +1,4 @@
 #!/bin/bash
 . scripts/run-base.sh
-echo "Launching $DUSTPROXYID $DUSTIP"
+echo "Launching $DUSTIP $DUSTPROXYID"
 scripts/run-only-server.sh
