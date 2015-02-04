@@ -358,7 +358,7 @@ var leveledLogBackend logging.Leveled
 
 func startLogging() {
 	backend := logging.NewLogBackend(os.Stderr, progName+": ", 0)
-	formatSpec := "%{color:bold}%{level:6s}%{color:reset} %{module:-20s} | %{message}"
+	formatSpec := "%{color:bold}%{level:8s}%{color:reset} %{module:-20s} | %{message}"
 	formatter := logging.MustStringFormatter(formatSpec)
 	formatted := logging.NewBackendFormatter(backend, formatter)
 	leveled := logging.AddModuleLevel(formatted)
