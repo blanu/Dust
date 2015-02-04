@@ -4,9 +4,13 @@ import (
 	"io"
 	"time"
 
+	"github.com/op/go-logging"
+
 	"github.com/blanu/Dust/go/Dust/crypting"
 	"github.com/blanu/Dust/go/Dust/procman"
 )
+
+var log = logging.MustGetLogger("Dust/shaper")
 
 type shaperReader struct {
 	procman.Link
@@ -43,6 +47,7 @@ func (sr *shaperReader) run() (err error) {
 }
 
 func (sr *shaperReader) cycle(offset int) {
+	//log.Debug("cycling reader")
 	sr.PutRequest(offset)
 }
 
@@ -59,6 +64,7 @@ func newShaperTimer() *shaperTimer {
 }
 
 func (st *shaperTimer) setDuration(dur time.Duration) {
+	log.Debug("-> expected total duration: %v", dur)
 	st.maxDuration = dur
 }
 
@@ -75,6 +81,7 @@ func (st *shaperTimer) run() (err error) {
 			dur = fixedEndTime.Sub(beforeSleep)
 		}
 
+		//log.Debug("sleeping for %v", dur)
 		time.Sleep(dur)
 		afterSleep := time.Now()
 		if afterSleep.After(fixedEndTime) {
@@ -87,6 +94,7 @@ func (st *shaperTimer) run() (err error) {
 }
 
 func (st *shaperTimer) cycle(dur time.Duration) {
+	log.Debug("-> waiting %v", dur)
 	st.PutRequest(dur)
 }
 
@@ -114,9 +122,11 @@ type Shaper struct {
 
 func (sh *Shaper) handleRead(subn int) error {
 	// We own inBuf until we cycle the reader again.
+	//log.Debug("read %d bytes", subn)
 	in := sh.inBuf[:subn]
 	for {
 		dn, sn := sh.decoder.UnshapeBytes(sh.pushBuf, in)
+		log.Debug("  <- unshaped %d from %d bytes", dn, sn)
 		if dn > 0 {
 			_, err := sh.crypter.PushRead(sh.pushBuf[:dn])
 			if err != nil {
@@ -157,6 +167,7 @@ func (sh *Shaper) handleTimer() error {
 		}
 
 		dn, sn := sh.encoder.ShapeBytes(out[outMark:], sh.pullBuf[:sh.pullMark])
+		log.Debug("-> shaped %d from %d bytes", dn, sn)
 		outMark += dn
 		copy(sh.pullBuf, sh.pullBuf[sn:sh.pullMark])
 		sh.pullMark -= sn
@@ -167,6 +178,7 @@ func (sh *Shaper) handleTimer() error {
 		}
 	}
 
+	//log.Debug("writing %d/%d bytes", outMark, outLen)
 	_, err := sh.shapedOut.Write(sh.outBuf[:outMark])
 	if err != nil {
 		return err
@@ -184,6 +196,7 @@ func (sh *Shaper) run() (err error) {
 	sh.timer.Spawn()
 	sh.reader.cycle(0)
 	sh.timer.cycle(sh.encoder.NextPacketSleep())
+	defer log.Debug("shaper exiting")
 
 	for {
 		select {

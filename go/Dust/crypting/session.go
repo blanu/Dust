@@ -5,9 +5,13 @@ import (
 	"errors"
 	"io"
 
+	"github.com/op/go-logging"
+
 	"github.com/blanu/Dust/go/Dust/bufman"
 	"github.com/blanu/Dust/go/Dust/cryptions"
 )
+
+var log = logging.MustGetLogger("Dust/crypting")
 
 var (
 	ErrIncompleteFrame = errors.New("Dust/crypting: incomplete frame")
@@ -103,6 +107,8 @@ type Session struct {
 // which is kind of terrible.  Note that we may still have n > 0 in that case.  This method must be called
 // from the outward-facing side of the Session.  The signature is similar to that of io.Reader.Read.
 func (cs *Session) PullWrite(p []byte) (n int, err error) {
+	log.Debug("-> pulling %d bytes", len(p))
+
 	n, err = 0, nil
 	for len(p) > 0 {
 		if len(cs.outCryptPending) > 0 {
@@ -139,12 +145,14 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 			}
 			cs.outCipher.XORKeyStream(p, p)
 
+			var leftover []byte
 			if len(p)%32 != 0 {
-				leftover := make([]byte, 32-len(p)%32)
+				leftover = make([]byte, 32-len(p)%32)
 				cs.outCipher.XORKeyStream(leftover, leftover)
 				cs.outCryptPending = append(cs.outCryptPending, leftover...)
 			}
 
+			log.Debug("-> handshake interstitial %d bytes", len(p) + len(leftover))
 			n += len(p)
 			return n, err
 		}
@@ -169,6 +177,7 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 
 // Move from any state to the Failed state, setting a bogus session key and destroying any in-progress data.
 func (cs *Session) fail() {
+	log.Info("session failure")
 	cs.state = stateFailed
 	cs.handshakeReassembly = nil
 	cs.dataReassembly = nil
@@ -197,6 +206,8 @@ func (cs *Session) receivedEphemeralKey() {
 	if err != nil {
 		panic("Dust/crypting: should always be able to load public key here")
 	}
+
+	log.Debug("  <- received ephemeral key")
 
 	rawDH := cryptions.NewSecretBytes()
 	sk := cryptions.NewDigest()
@@ -236,6 +247,8 @@ func (cs *Session) receivedEphemeralKey() {
 	rawKey := cryptions.NewSecretBytes()
 	cryptions.DeriveKey(sessionSecret, outKdfPrefix+kdfMACConfirm, rawKey)
 	cs.outCryptPending = cryptions.NewMAC(rawKey).Sum(cs.outCryptPending)
+	// TODO: add a logx thing for hex bytes?
+	log.Debug("-> send confirmation starting with %v", cs.outCryptPending[len(cs.outCryptPending)-32:len(cs.outCryptPending)-28])
 	cryptions.DeriveKey(sessionSecret, outKdfPrefix+kdfCipherData, rawKey)
 	cs.outCipher = cryptions.NewStreamCipher(rawKey, [32]byte{})
 	cryptions.DeriveKey(sessionSecret, outKdfPrefix+kdfMACData, rawKey)
@@ -245,6 +258,7 @@ func (cs *Session) receivedEphemeralKey() {
 	cs.inConfirmation = cryptions.NewSecretBytes()
 	cryptions.DeriveKey(sessionSecret, inKdfPrefix+kdfMACConfirm, rawKey)
 	cryptions.NewMAC(rawKey).SumSecret(cs.inConfirmation)
+	log.Debug("  <- want confirmation starting with %v", cs.inConfirmation.Slice()[0:4])
 	cryptions.DeriveKey(sessionSecret, inKdfPrefix+kdfCipherData, rawKey)
 	cs.inCipher = cryptions.NewStreamCipher(rawKey, [32]byte{})
 	cryptions.DeriveKey(sessionSecret, inKdfPrefix+kdfMACData, rawKey)
@@ -258,10 +272,12 @@ func (cs *Session) receivedEphemeralKey() {
 // the 32-byte chunk and continue.
 func (cs *Session) checkConfirmation() {
 	if !cs.inConfirmation.Equal(cs.handshakeReassembly.Data()) {
+		//log.Debug("<- discarding not-a-confirmation")
 		cs.handshakeReassembly.Reset()
 		return
 	}
 
+	log.Debug("  <- entering streaming state")
 	// We already set up all the derived keys when we received the ephemeral key.
 	cs.handshakeReassembly = nil
 	cs.inConfirmation = nil
@@ -289,12 +305,15 @@ func (cs *Session) decodeAndShipoutPlainFrame(p []byte) (consumed int, err error
 	cs.inMAC.Reset()
 	authenticated := frame.verifyAuthenticator(cs.inMAC)
 	dataCarrying := frame.hasData()
+	log.Debug("  <- frame of wire size %d, auth %v, data %v", frame.wireSize(), authenticated, dataCarrying)
 	if dataCarrying && authenticated {
 		// If there isn't enough buffer space in the channel, just drop the frame.  We cannot afford
 		// to apply backpressure, as that would break the model.
 		select {
 		case cs.inPlains <- bufman.CopyNew(frame.data()):
+			log.Debug("  <- delivered")
 		default:
+			log.Debug("  <- dropped (no space)")
 		}
 	}
 
@@ -305,6 +324,7 @@ func (cs *Session) decodeAndShipoutPlainFrame(p []byte) (consumed int, err error
 // plaintext that results to the inward-facing side of the Session.  This method must be called from the
 // outward-facing side of the Session.  The signature is similar to io.Writer.Write.
 func (cs *Session) PushRead(p []byte) (n int, err error) {
+	log.Debug("  <- pushing %d bytes", len(p))
 	n, err = 0, nil
 
 	for len(p) > 0 {
@@ -368,6 +388,12 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 // Read reads as much new plaintext data as is available from cs, blocking if and only if none would otherwise
 // be available.  The signature is that of io.Reader.Read.
 func (cs *Session) Read(p []byte) (n int, err error) {
+	if log.IsEnabledFor(logging.DEBUG) {
+		defer func() {
+			log.Debug("  <- %d plain bytes", n)
+		}()
+	}
+
 	n, err = 0, nil
 	for len(p) > 0 {
 		var data []byte
@@ -407,6 +433,12 @@ func (cs *Session) Read(p []byte) (n int, err error) {
 // Write queues the plaintext data p for transmission via cs, blocking if intermediary buffers are full.  The
 // signature is that of io.Writer.Write.
 func (cs *Session) Write(p []byte) (n int, err error) {
+	if log.IsEnabledFor(logging.DEBUG) {
+		defer func() {
+			log.Debug("-> %d plain bytes", n)
+		}()
+	}
+
 	// TODO: should we really do the framing here?  Right now, maxOutFrameDataSize is a kludge to make sure
 	// very low-performance models don't get _too_ much delay from long frames.
 
