@@ -105,8 +105,8 @@ crypting layer has the following design properties:
   (R, S‖P) is semantically equivalent to (R, S).  (Note that this implies that for any extension length N,
   a suitable P at least N long can be constructed by repeating this process.)
 * If D_0, D_1, …, D_n are the datagrams sent in order in one half-connection, the receiving endpoint will
-  receive E_0, E_1, …, E_k where k ≤ n and each E_j is either D_j or a distinguishable indicator that the
-  datagram numbered j was lost.
+  receive E_0, E_1, …, E_k where k ≤ n and each E_j is either D_j or a distinguishable symbol indicating that
+  the datagram numbered j was lost.
 
 ## Preparation
 
@@ -142,34 +142,59 @@ Example: the identity string for a server listening on TCP port 16667 at 2001:db
 A half-connection starts with a handshake.  The sending endpoint generates an ephemeral keypair, and
 transmits:
 
-- [PK_LEN] Ephemeral public key uniform representative
+- [PK_LEN] Ephemeral public key repr
 - [MAC_LEN×N] Random bytes, for integer N ≥ 0
 
 The amount of random bytes transmitted is arbitrary at this layer, but an “expandable” component is necessary
 here due to the chatterbox constraint.  After the endpoint receives the ephemeral public key from the other
-side, it can generate a shared secret.  [XXX: etc. etc.] and transmits:
+side, it can generate the shared cryptographic values needed:
 
-- [MAC_LEN] Confirmation code
+1. Secret = Digest(input) where input is the concatenation of:
+  1. [DH_LEN] DH(server ephemeral, client ephemeral)
+  2. [DH_LEN] DH(server long-term, client ephemeral)
+  3. [*] Server identity string
+  4. [PK_LEN] Server long-term public key repr
+  5. [PK_LEN] Client ephemeral public key repr
+  6. [PK_LEN] Server ephemeral public key repr
+2. FromLocal = `"cli."` for the client, `"srv."` for the server
+3. Derived keys:
+  - ConfKey = KDF(Secret, `"mac."`‖FromLocal‖`"bgn."`)
+  - StreamKey = KDF(Secret, `"clk."`‖FromLocal‖`"dta."`)
+  - AuthKey = KDF(Secret, `"mac."`‖FromLocal‖`"grm."`)
+4. Confirmation = MAC(input, 0, ConfKey) where input is the concatenation of:
+  1. [*] Server identity string
+  2. [PK_LEN] Server long-term public key repr
+  3. [PK_LEN] Client ephemeral public key repr
+  4. [PK_LEN] Server ephemeral public key repr
 
-After these bytes, the sending half-connection enters the streaming state.
+All steps after the shared secret generation are also computed from the perspective of the other endpoint, for
+determining when the confirmation has been received and keying the receiving half-connection.  Once this is
+done, endpoint can transmit:
+
+- [MAC_LEN] Confirmation
+
+After these bytes, the sending half-connection enters the streaming state.  The receiving side should
+therefore check each chunk of MAC_LEN bytes after the initial public key transmission, and have the receiving
+half-connection enter the streaming state when one such chunk matches the confirmation code expected to be
+sent from the other side.
 
 ## Streaming
 
 A half-connection in the streaming state transmits authenticated data frames arbitrarily interleaved with
-padding.  All bytes are encrypted with a stream cipher, keyed as described in the “Handshake” section; the
-stream cipher is never rekeyed.  Byte position zero in the half-connection starts immediately after the
-handshake.
+padding.  All bytes are encrypted with a stream cipher, keyed with StreamKey as described in the “Handshake”
+section; the stream cipher is never rekeyed.  Byte position zero in the half-connection starts immediately
+after the handshake.
 
 An authenticated data frame has the structure:
 
 - [2] TLen: Len + 256, where Len is the length of the datagram being transmitted, 0 ≤ Len ≤ MTU ≤ 32000.
 - [Len] Data: the raw datagram being transmitted.
-- [MAC_LEN] MAC(cpart, start, stream-auth-key), where:
+- [MAC_LEN] MAC(cpart, start, AuthKey), where:
   - start is the starting byte position in the half-connection for the authenticated region: zero for the
     earliest authenticator transmitted, and immediately after the most recent previous authenticator
     otherwise.
   - cpart is all _encrypted_ bytes from the start position to before this authenticator.
-  - stream-auth-key is as described in the “Handshake” section.
+  - AuthKey is as described in the “Handshake” section.
 
 Any number of zero-valued bytes may be inserted as padding between data frames.  The first byte of such a
 frame is never 0, because 256 ≤ TLen, so the start position of any subsequent data frame is unambiguous.
