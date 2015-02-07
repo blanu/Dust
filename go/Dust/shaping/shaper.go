@@ -7,13 +7,13 @@ import (
 	"github.com/op/go-logging"
 
 	"github.com/blanu/Dust/go/Dust/crypting"
-	"github.com/blanu/Dust/go/Dust/procman"
+	"github.com/blanu/Dust/go/Dust/proc"
 )
 
 var log = logging.MustGetLogger("Dust/shaper")
 
 type shaperReader struct {
-	procman.Link
+	proc.Link
 	readFrom  io.Reader
 	sharedBuf []byte
 }
@@ -52,7 +52,7 @@ func (sr *shaperReader) cycle(offset int) {
 }
 
 type shaperTimer struct {
-	procman.Link
+	proc.Link
 
 	maxDuration time.Duration
 }
@@ -99,9 +99,9 @@ func (st *shaperTimer) cycle(dur time.Duration) {
 }
 
 // Shaper represents a process mediating between a shaped channel and a Dust crypting session.  It can be
-// managed through its procman.Link structure.
+// managed through its proc.Link structure.
 type Shaper struct {
-	procman.Link
+	proc.Link
 
 	crypter   *crypting.Session
 	shapedIn  io.Reader

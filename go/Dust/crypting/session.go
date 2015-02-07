@@ -7,7 +7,7 @@ import (
 
 	"github.com/op/go-logging"
 
-	"github.com/blanu/Dust/go/Dust/bufman"
+	"github.com/blanu/Dust/go/Dust/buf"
 	"github.com/blanu/Dust/go/Dust/prim"
 )
 
@@ -67,7 +67,7 @@ type Session struct {
 	// Incoming data must be processed against this first, if set, before inCipher.  When HandshakeNoKey:
 	// reassembling an ephemeral public key.  When HandshakeKey: searching for the confirmation code from
 	// the remote side.
-	handshakeReassembly bufman.Reassembly
+	handshakeReassembly buf.Reassembly
 
 	// Set in HandshakeKey state.
 	inConfirmation prim.AuthValue
@@ -79,7 +79,7 @@ type Session struct {
 
 	// Decrypted data is reassembled into frames here.  The reassembly capacity is the maximum frame
 	// wire size.
-	dataReassembly bufman.Reassembly
+	dataReassembly buf.Reassembly
 
 	// Stream-oriented byte chunks are sent to inPlains from the outward-facing side of the crypto
 	// session.  The receiver owns the chunks.  inPlainHeld is controlled by the receiver methods from
@@ -114,7 +114,7 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 	n, err = 0, nil
 	for len(p) > 0 {
 		if len(cs.outCryptPending) > 0 {
-			n += bufman.CopyAdvance(&p, &cs.outCryptPending)
+			n += buf.CopyAdvance(&p, &cs.outCryptPending)
 			continue
 		}
 
@@ -168,7 +168,7 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 		frame.authenticateWith(&cs.outMAC)
 		frame.encryptWith(&cs.outCipher)
 		remaining := frame.slice()
-		n += bufman.CopyAdvance(&p, &remaining)
+		n += buf.CopyAdvance(&p, &remaining)
 		if len(remaining) > 0 {
 			cs.outCryptPending = append(cs.outCryptPending, remaining...)
 		}
@@ -248,7 +248,7 @@ func (cs *Session) receivedEphemeralKey() {
 	cs.inCipher.SetKey(secret.DeriveCipherKey(inKdfPrefix+kdfCipherData))
 	cs.inMAC.SetKey(secret.DeriveAuthKey(inKdfPrefix+kdfMACData))
 
-	cs.handshakeReassembly = bufman.BeginReassembly(32)
+	cs.handshakeReassembly = buf.BeginReassembly(32)
 	cs.state = stateHandshakeKey
 }
 
@@ -264,7 +264,7 @@ func (cs *Session) checkConfirmation() {
 	log.Debug("  <- entering streaming state")
 	// We already set up all the derived keys when we received the ephemeral key.
 	cs.handshakeReassembly = nil
-	cs.dataReassembly = bufman.BeginReassembly(maxInFrameDataSize + 35)
+	cs.dataReassembly = buf.BeginReassembly(maxInFrameDataSize + 35)
 	cs.state = stateStreaming
 	return
 }
@@ -293,7 +293,7 @@ func (cs *Session) decodeAndShipoutPlainFrame(p []byte) (consumed int, err error
 		// If there isn't enough buffer space in the channel, just drop the frame.  We cannot afford
 		// to apply backpressure, as that would break the model.
 		select {
-		case cs.inPlains <- bufman.CopyNew(frame.data()):
+		case cs.inPlains <- buf.CopyNew(frame.data()):
 			log.Debug("  <- delivered")
 		default:
 			log.Debug("  <- dropped (no space)")
@@ -319,7 +319,7 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 		}
 
 		if cs.handshakeReassembly != nil {
-			n += bufman.CopyReassemble(&cs.handshakeReassembly, &p)
+			n += buf.CopyReassemble(&cs.handshakeReassembly, &p)
 			if cs.handshakeReassembly.FixedSizeComplete() {
 				switch cs.state {
 				default:
@@ -331,7 +331,7 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 				}
 			}
 		} else {
-			n += bufman.TransformReassemble(&cs.dataReassembly, &p, cs.inCipher.XORKeyStream)
+			n += buf.TransformReassemble(&cs.dataReassembly, &p, cs.inCipher.XORKeyStream)
 
 			possibleFrames := cs.dataReassembly.Data()
 		Frames:
@@ -399,7 +399,7 @@ func (cs *Session) Read(p []byte) (n int, err error) {
 			return n, err
 		}
 
-		n += bufman.CopyAdvance(&p, &data)
+		n += buf.CopyAdvance(&p, &data)
 		if len(data) > 0 {
 			cs.inPlainHeld = data
 		}
@@ -448,8 +448,8 @@ func (cs *Session) Init(sinfo interface{}) error {
 	cs.outFrames = make(chan frame, 4)
 	cs.inCipher.SetRandomKey()
 	cs.outCipher.SetRandomKey()
-	cs.outCryptPending = bufman.CopyNew(cs.localPrivate.Public.Binary())
-	cs.handshakeReassembly = bufman.BeginReassembly(32)
+	cs.outCryptPending = buf.CopyNew(cs.localPrivate.Public.Binary())
+	cs.handshakeReassembly = buf.BeginReassembly(32)
 	cs.state = stateHandshakeNoKey
 	return nil
 }
