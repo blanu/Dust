@@ -151,7 +151,6 @@ func (sh *Shaper) handleTimer() error {
 	outMark := 0
 	out := sh.outBuf[:outLen]
 	for outMark < outLen {
-		var err error
 		if sh.pullMark == 0 {
 			req := outLen - outMark
 			if req >= len(sh.pullBuf)-sh.pullMark {
@@ -159,7 +158,7 @@ func (sh *Shaper) handleTimer() error {
 			}
 
 			pulled, err := sh.crypter.PullWrite(sh.pullBuf[sh.pullMark : sh.pullMark+req])
-			if err != nil && err != crypting.ErrStuck {
+			if err != nil {
 				return err
 			}
 
@@ -171,11 +170,6 @@ func (sh *Shaper) handleTimer() error {
 		outMark += dn
 		copy(sh.pullBuf, sh.pullBuf[sn:sh.pullMark])
 		sh.pullMark -= sn
-
-		if err != nil {
-			// It was an ErrStuck, otherwise we'd have returned above.
-			break
-		}
 	}
 
 	//log.Debug("writing %d/%d bytes", outMark, outLen)

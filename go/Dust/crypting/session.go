@@ -14,24 +14,22 @@ import (
 var log = logging.MustGetLogger("Dust/crypting")
 
 var (
-	ErrIncompleteFrame = errors.New("Dust/crypting: incomplete frame")
-	ErrBadHandshake    = errors.New("Dust/crypting: bad handshake")
-	ErrBadDecode       = errors.New("Dust/crypting: bad decode")
-	ErrStuck           = errors.New("Dust/crypting: cannot get anything to send here")
+	ErrBadMTU            = errors.New("Dust/crypting: bad MTU")
+	ErrBadHandshake      = errors.New("Dust/crypting: bad handshake")
+	ErrBadDecode         = errors.New("Dust/crypting: bad decode")
+	ErrDatagramTooLarge  = errors.New("Dust/crypting: datagram too large")
+	ErrSomeDatagramsLost = errors.New("Dust/crypting: some datagrams lost")
 )
 
 const (
+	frameOverhead = 2 + 32
+
 	kdfC2S = `cli.`
 	kdfS2C = `srv.`
 
 	kdfCipherData = `dta.`
 	kdfMACData    = `grm.`
 	kdfMACConfirm = `bgn.`
-)
-
-const (
-	maxInFrameDataSize  = 65535
-	maxOutFrameDataSize = 127
 )
 
 type state int
@@ -43,6 +41,16 @@ const (
 	stateStreaming
 )
 
+type numberedGram struct {
+	seq  int64
+	data []byte
+}
+
+type Params struct {
+	// Maximum datagram size.
+	MTU int
+}
+
 // A Session holds state for a single secure channel.  There are two "sides" to a session: the outward-facing
 // side and the inward-facing side.  The outward-facing side transceives arbitrary-rate streams of uniform
 // bytes; the inward-facing side transceives a plaintext application protocol to be run over the secure
@@ -50,6 +58,8 @@ const (
 // the inward-facing side is accessed by the application via Write and Read.  The two sides communicate using
 // channels, but no more than one goroutine should access a side at a time.
 type Session struct {
+	Params
+
 	// Failed: we're using a bogus key to send, and received bytes are discarded.  HandshakeNoKey: we're
 	// reassembling the remote side's ephemeral public key.  HandshakeKey: we're searching for the
 	// confirmation code from the remote side.  Streaming: framed bytes can be sent and received.
@@ -67,41 +77,98 @@ type Session struct {
 	// Incoming data must be processed against this first, if set, before inCipher.  When HandshakeNoKey:
 	// reassembling an ephemeral public key.  When HandshakeKey: searching for the confirmation code from
 	// the remote side.
-	handshakeReassembly buf.Reassembly
+	inHandshake buf.Reassembly
 
 	// Set in HandshakeKey state.
 	inConfirmation prim.AuthValue
 
-	// Set in Streaming state.
+	// Set in Streaming state.  In other states, inCipher uses a random key.
 	inCipher   prim.Cipher
 	inMAC      prim.VerifyingMAC
 	inPosition uint64
 
-	// Decrypted data is reassembled into frames here.  The reassembly capacity is the maximum frame
-	// wire size.
-	dataReassembly buf.Reassembly
+	// Data is reassembled into frames here.  The reassembly capacity is the maximum frame wire size.
+	inStreaming buf.Reassembly
 
-	// Stream-oriented byte chunks are sent to inPlains from the outward-facing side of the crypto
-	// session.  The receiver owns the chunks.  inPlainHeld is controlled by the receiver methods from
-	// the inward-facing side, and is implicitly prepended to any receive from inPlains.
-	inPlainHeld []byte
-	inPlains    chan []byte
+	// Datagrams with sequence numbers are sent to inPlains from the outward-facing side of the crypto
+	// session.  The receiver owns the data chunks.  inSequence is the next sequence number to send from
+	// the outward-facing side.  inLast is the last sequence number successfully delivered by the
+	// inward-facing side, and inGramLeft buffers up to one datagram on the inward-facing side.  Sequence
+	// numbers for actual datagrams start at 1.
+	inGrams    chan numberedGram
+	inSequence int64
+	inLast     int64
+	inLossage  int64
+	inGramLeft numberedGram
 
 	// Implicitly prepended to any other outgoing data; these bytes are not encrypted before sending.
-	outCryptPending []byte
+	outCrypted buf.Reassembly
 
-	// Set in Streaming state, except outCipher is always set with a random key.
+	// Set in Streaming state.  In other states, outCipher uses a random key.
 	outCipher   prim.Cipher
 	outMAC      prim.GeneratingMAC
 	outPosition uint64
 
-	// Plaintext frames are sent to outFrames from the inward-facing side of the crypto session.  The
-	// receiver owns the chunks.  Space is allocated for an authenticator, but it is not computed yet, and
-	// nor is the frame encrypted.
-	outFrames chan frame
+	// Datagrams are sent to outPlains from the inward-facing side of the crypto session.  The receiver
+	// owns the chunks.
+	outPlains chan []byte
 }
 
-// TODO: inPosition, outPosition not used yet
+func (cs *Session) drainOutput() {
+	for {
+		select {
+		case _ = <-cs.outPlains:
+		default:
+			return
+		}
+	}
+}
+
+func (cs *Session) pullZero(p []byte) {
+	for i := 0; i < len(p); i++ {
+		p[i] = 0
+	}
+	cs.outCipher.XORKeyStream(p, p)
+	cs.outPosition += uint64(len(p))
+}
+
+func (cs *Session) pullData(p []byte) {
+	// Should have nothing in outCrypted to start with.
+	for len(p) > 0 {
+		if cs.outCrypted.ValidLen() > 0 {
+			panic("Dust/crypting: pullData with leftover crumbs in construction buffer")
+		}
+
+		var dgram []byte
+		select {
+		default:
+			cs.pullZero(p)
+			cs.outMAC.Write(p)
+			return
+		case dgram = <-cs.outPlains:
+		}
+
+		if len(dgram) > cs.MTU {
+			// This should have been handled by Write(), so something's meddling with our
+			// channels.
+			panic("Dust/crypting: datagram with len > MTU escaped across the boundary")
+		}
+
+		tLen := 256 + len(dgram)
+		header := []byte{uint8(tLen >> 8), uint8(tLen & 0xff)}
+		headerN := cs.outCrypted.TransformIn(header, cs.outCipher.XORKeyStream)
+		dgramN := cs.outCrypted.TransformIn(dgram, cs.outCipher.XORKeyStream)
+		cs.outMAC.Write(cs.outCrypted.Data())
+		macN := cs.outCrypted.TransformIn(cs.outMAC.Generate()[:], cs.outCipher.XORKeyStream)
+		if !(headerN == len(header) && dgramN == len(dgram) && macN == len(mac)) {
+			panic("Dust/crypting: somehow not enough space in output buffer")
+		}
+
+		cs.outPosition += uint64(headerN + dgramN + macN)
+		cs.outMAC.Reset(cs.outPosition)
+		cs.outCrypted.CopyOut(&p)
+	}
+}
 
 // PullWrite tries to pull post-encryption bytes into p, using in-band framing to intersperse any plain data
 // available to write with enough padding frames to completely fill p immediately.  In some handshake states,
@@ -111,86 +178,59 @@ type Session struct {
 func (cs *Session) PullWrite(p []byte) (n int, err error) {
 	log.Debug("-> pulling %d bytes", len(p))
 
-	n, err = 0, nil
-	for len(p) > 0 {
-		if len(cs.outCryptPending) > 0 {
-			n += buf.CopyAdvance(&p, &cs.outCryptPending)
-			continue
-		}
-
-		var frame frame
-
-		switch cs.state {
-		default:
-			panic("Dust/crypting: unhandled state!")
-
-		case stateStreaming:
-			select {
-			default:
-				frame = newPaddingFrame(len(p))
-			case frame = <-cs.outFrames:
-			}
-
-		case stateHandshakeKey:
-			// TODO: this avoids sending data until we have both confirmations.  Is that the correct
-			// approach?
-			frame = newPaddingFrame(len(p))
-
-		case stateFailed:
-			// TODO: do we have to drain cs.outFrames here?
-			frame = newPaddingFrame(len(p))
-
-		case stateHandshakeNoKey:
-			// Stream aligned 32-byte chunks from the randomly-keyed stream cipher.
-			for i, _ := range p {
-				p[i] = 0
-			}
-			cs.outCipher.XORKeyStream(p, p)
-
-			var leftover []byte
-			if len(p)%32 != 0 {
-				leftover = make([]byte, 32-len(p)%32)
-				cs.outCipher.XORKeyStream(leftover, leftover)
-				cs.outCryptPending = append(cs.outCryptPending, leftover...)
-			}
-
-			log.Debug("-> handshake interstitial %d bytes", len(p)+len(leftover))
-			n += len(p)
-			return n, err
-		}
-
-		if len(frame) < 32 {
-			panic("Dust/crypting: frame too small?!")
-		}
-
-		// We own frame forever now, and outCipher is valid.  Authenticate and encrypt in-place.
-		cs.outMAC.Reset(0)
-		frame.authenticateWith(&cs.outMAC)
-		frame.encryptWith(&cs.outCipher)
-		remaining := frame.slice()
-		n += buf.CopyAdvance(&p, &remaining)
-		if len(remaining) > 0 {
-			cs.outCryptPending = append(cs.outCryptPending, remaining...)
-		}
+	n, err = len(p), nil
+	if cs.outCrypted.ValidLen() > 0 {
+		cs.outCrypted.CopyOut(&p)
 	}
 
-	return n, err
+	if len(p) == 0 {
+		// This can be true from before the possible CopyOut above, too, so don't move it inside
+		// the above conditional.
+		return
+	}
+
+	switch cs.state {
+	default:
+		panic("Dust/crypting: unhandled state!")
+
+	case stateHandshakeNoKey:
+		// Handshake interstitial data must be aligned 32-byte chunks.
+		cs.pullZero(p)
+
+		if len(p)%32 != 0 {
+			cs.pullZero(cs.outCrypted.PreData(32 - len(p)%32))
+		}
+
+		log.Debug("-> handshake interstitial %d bytes", len(p))
+
+	case stateFailed:
+		cs.drainOutput()
+		cs.pullZero(p)
+
+	case stateStreaming, stateHandshakeKey:
+		// TODO: this starts potentially sending data even before the remote confirmation code
+		// has been received.  That might be important for reducing the number of round trips,
+		// but...
+		cs.pullData(p)
+	}
+
+	return
 }
 
 // Move from any state to the Failed state, setting a bogus session key and destroying any in-progress data.
 func (cs *Session) fail() {
 	log.Info("session failure")
 	cs.state = stateFailed
-	cs.handshakeReassembly = nil
-	cs.dataReassembly = nil
+	cs.inHandshake = nil
+	cs.inStreaming = nil
 	cs.outCipher.SetRandomKey()
-	cs.outCryptPending = nil
+	cs.outCrypted = nil
 }
 
 func (cs *Session) receivedEphemeralKey() {
 	var err error
 
-	received := cs.handshakeReassembly.Data()
+	received := cs.inHandshake.Data()
 	if len(received) != 32 {
 		panic("Dust/crypting: should not have gotten here without 32-byte handshake")
 	}
@@ -239,68 +279,131 @@ func (cs *Session) receivedEphemeralKey() {
 	secret := sd.Finish()
 
 	outConfirmation := prim.GenerateMAC(confInput, 0, secret.DeriveAuthKey(outKdfPrefix+kdfMACConfirm))
-	cs.outCryptPending = append(cs.outCryptPending, outConfirmation[:]...)
+	outCSlice := outConfirmation[:]
+	buf.CopyReassemble(&cs.outCrypted, &outCSlice)
 	log.Debug("-> send confirmation starting with %v", outConfirmation[:2])
 	cs.outCipher.SetKey(secret.DeriveCipherKey(outKdfPrefix + kdfCipherData))
 	cs.outMAC.SetKey(secret.DeriveAuthKey(outKdfPrefix + kdfMACData))
+	cs.outMAC.Reset(0)
 	cs.inConfirmation = prim.GenerateMAC(confInput, 0, secret.DeriveAuthKey(inKdfPrefix+kdfMACConfirm))
 	log.Debug("  <- expect confirmation starting with %v", cs.inConfirmation[:2])
 	cs.inCipher.SetKey(secret.DeriveCipherKey(inKdfPrefix + kdfCipherData))
 	cs.inMAC.SetKey(secret.DeriveAuthKey(inKdfPrefix + kdfMACData))
+	cs.inMAC.Reset(0)
 
-	cs.handshakeReassembly = buf.BeginReassembly(32)
+	cs.inHandshake = buf.BeginReassembly(32)
 	cs.state = stateHandshakeKey
 }
 
 // Change to the Streaming state if we've reassembled a correct confirmation code.  Otherwise, throw away
 // the 32-byte chunk and continue.
 func (cs *Session) checkConfirmation() {
-	if !cs.inConfirmation.Equal(cs.handshakeReassembly.Data()) {
+	if !cs.inConfirmation.Equal(cs.inHandshake.Data()) {
 		//log.Debug("<- discarding not-a-confirmation")
-		cs.handshakeReassembly.Reset()
+		cs.inHandshake.Reset()
 		return
 	}
 
-	log.Debug("  <- entering streaming state")
 	// We already set up all the derived keys when we received the ephemeral key.
-	cs.handshakeReassembly = nil
-	cs.dataReassembly = buf.BeginReassembly(maxInFrameDataSize + 35)
+	log.Debug("  <- entering streaming state")
+	cs.inHandshake = nil
+	cs.inStreaming = buf.BeginReassembly(cs.MTU + frameOverhead)
+	cs.inSequence = 1
+	cs.inPosition = 0
+	cs.outPosition = 0
 	cs.state = stateStreaming
 	return
 }
 
-// Attempt to decode exactly one plaintext frame and ship it out to the inward-facing side.
-func (cs *Session) decodeAndShipoutPlainFrame(p []byte) (consumed int, err error) {
-	// TODO: handle incoming MTU things
-	frame := incomingCryptoFrame(p)
-	switch {
-	case frame == nil:
-		return 0, ErrIncompleteFrame
-	case !frame.wellFormed():
-		return 0, ErrBadDecode
-	}
+func (cs *Session) continueUnframing(plain []byte, beforeCrypt int, crypt []byte) (n int) {
+	// Postcondition: as much of crypt as is relevant has already been fed to inMAC, and
+	// inPosition has been advanced past all of crypt.
 
-	// TIMING: Always check the authenticator, to minimize timing surface... at least unless the Go
-	// compiler decides to sink the VerifyAuthenticator down one of the branches.  Aaargh.
-	//
-	// TODO: fail entire stream if verification of any frame fails?  Not right now, because the spec says
-	// authenticators for padding frames are allowed to be blank.
-	cs.inMAC.Reset(0)
-	authenticated := frame.verifyAuthenticator(&cs.inMAC)
-	dataCarrying := frame.hasData()
-	log.Debug("  <- frame of wire size %d, auth %v, data %v", frame.wireSize(), authenticated, dataCarrying)
-	if dataCarrying && authenticated {
-		// If there isn't enough buffer space in the channel, just drop the frame.  We cannot afford
-		// to apply backpressure, as that would break the model.
-		select {
-		case cs.inPlains <- buf.CopyNew(frame.data()):
-			log.Debug("  <- delivered")
-		default:
-			log.Debug("  <- dropped (no space)")
+	advanceMAC := func(subn int) {
+		beforeCrypt -= subn
+		if beforeCrypt < 0 {
+			cs.inPosition += uint64(-beforeCrypt)
+			cs.inMAC.Write(crypt[:-beforeCrypt])
+			crypt = crypt[-beforeCrypt:]
+			beforeCrypt = 0
 		}
 	}
 
-	return frame.wireSize(), nil
+	consume := func(subn int) {
+		plain = plain[subn:]
+		n += subn
+	}
+
+	// Loop invariant: crypt[beforeCrypt:] has the same stream position as plain.
+	for len(plain) > 0 {
+		log.Debug("have %d plains, %d+%d crypts", len(plain), beforeCrypt, len(crypt))
+		if plain[0] == 0 {
+			k := 1
+			for k < len(plain) && plain[k] == 0 {
+				k++
+			}
+			advanceMAC(k)
+			consume(k)
+		} else if len(plain) < 2 {
+			advanceMAC(len(plain))
+			break
+		} else {
+			tLen := int(uint16(plain[0])<<8 | uint16(plain[1]))
+			dgramLen := tLen - 256
+			if dgramLen > cs.MTU {
+				log.Error("datagram received longer than MTU")
+				cs.fail()
+				return
+			}
+
+			macPos := 2 + dgramLen
+			if len(plain) < macPos {
+				advanceMAC(len(plain))
+				return
+			}
+
+			dgramPlain := plain[2:macPos]
+			advanceMAC(macPos)
+			// TODO: MAC length constant
+			endPos := macPos + 32
+			if len(plain) < endPos {
+				// Don't advance the MAC state past the beginning of the authenticator, but do
+				// advance the position.
+				cs.inPosition += uint64(len(plain) - macPos)
+				return
+			}
+
+			authenticated := cs.inMAC.Verify(plain[macPos:endPos])
+			cs.inPosition += 32
+			cs.inMAC.Reset(cs.inPosition)
+			if !authenticated {
+				log.Error("datagram failed authentication")
+				cs.fail()
+				return
+			}
+
+			ngram := numberedGram{cs.inSequence, buf.CopyNew(dgramPlain)}
+			cs.inSequence++
+			select {
+			case cs.inGrams <- ngram:
+			default:
+				// Inward-facing side not consuming these fast enough.  Drop the datagram on
+				// the floor.
+			}
+
+			consume(endPos)
+			beforeCrypt -= 32
+			if beforeCrypt < 0 {
+				crypt = crypt[-beforeCrypt:]
+				beforeCrypt = 0
+			}
+			if beforeCrypt > 0 {
+				panic("Dust/crypting: somehow lost the encrypted bytes needed for next MAC")
+			}
+		}
+	}
+
+	return
 }
 
 // PushRead processes new pre-decryption bytes in p, handling handshake completions and sending any usable
@@ -318,9 +421,9 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 			return n + len(p), err
 		}
 
-		if cs.handshakeReassembly != nil {
-			n += buf.CopyReassemble(&cs.handshakeReassembly, &p)
-			if cs.handshakeReassembly.FixedSizeComplete() {
+		if cs.inHandshake != nil {
+			n += buf.CopyReassemble(&cs.inHandshake, &p)
+			if cs.inHandshake.FixedSizeComplete() {
 				switch cs.state {
 				default:
 					panic("Dust/crypting: handshake reassembly in weird state")
@@ -331,28 +434,11 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 				}
 			}
 		} else {
-			n += buf.TransformReassemble(&cs.dataReassembly, &p, cs.inCipher.XORKeyStream)
-
-			possibleFrames := cs.dataReassembly.Data()
-		Frames:
-			for {
-				consumed, err := cs.decodeAndShipoutPlainFrame(possibleFrames)
-				switch {
-				case err == nil:
-					possibleFrames = possibleFrames[consumed:]
-				case err == ErrIncompleteFrame:
-					err = nil
-					fallthrough
-				default:
-					break Frames
-				}
-			}
-
-			cs.dataReassembly.Consume(cs.dataReassembly.ValidLen() - len(possibleFrames))
-			if err != nil {
-				cs.fail()
-				return n, err
-			}
+			p0 := p
+			subn := buf.TransformReassemble(&cs.inStreaming, &p, cs.inCipher.XORKeyStream)
+			n += subn
+			consumed := cs.continueUnframing(cs.inStreaming.Data(), cs.inStreaming.ValidLen()-subn, p0[:subn])
+			cs.inStreaming.Consume(consumed)
 		}
 	}
 
@@ -363,8 +449,8 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 	return n, err
 }
 
-// Read reads as much new plaintext data as is available from cs, blocking if and only if none would otherwise
-// be available.  The signature is that of io.Reader.Read.
+// Read reads a single datagram into p, blocking if none are available.  The signature is _mostly_ that of
+// io.Reader.Read.  TODO: doc rest of signature
 func (cs *Session) Read(p []byte) (n int, err error) {
 	if log.IsEnabledFor(logging.DEBUG) {
 		defer func() {
@@ -372,43 +458,36 @@ func (cs *Session) Read(p []byte) (n int, err error) {
 		}()
 	}
 
-	n, err = 0, nil
-	for len(p) > 0 {
-		var data []byte
-
-		if cs.inPlainHeld != nil {
-			data = cs.inPlainHeld
-			cs.inPlainHeld = nil
-		} else {
-			if n == 0 {
-				data = <-cs.inPlains
-			} else {
-				// Don't block if there's already anything to return.
-				select {
-				default:
-					data = nil
-				case data = <-cs.inPlains:
-				}
-			}
-		}
-
-		if data == nil {
-			if n == 0 {
-				err = io.EOF
-			}
-			return n, err
-		}
-
-		n += buf.CopyAdvance(&p, &data)
-		if len(data) > 0 {
-			cs.inPlainHeld = data
-		}
+	var ngram numberedGram
+	if cs.inGramLeft.seq != 0 {
+		ngram = cs.inGramLeft
+		cs.inGramLeft = numberedGram{}
+	} else {
+		ngram = <-cs.inGrams
 	}
 
+	cs.inLossage = 0
+	if ngram.seq == 0 {
+		return 0, io.EOF
+	} else if ngram.seq != cs.inLast+1 {
+		cs.inLossage = ngram.seq - (cs.inLast + 1)
+		cs.inLast = ngram.seq - 1
+		err = ErrSomeDatagramsLost
+	}
+
+	dgram := ngram.data
+	n = copy(p, dgram)
+	if n < len(dgram) {
+		err = io.ErrShortBuffer
+	}
 	return n, err
 }
 
-// Write queues the plaintext data p for transmission via cs, blocking if intermediary buffers are full.  The
+func (cs *Session) GetReadLossage() int {
+	return int(cs.inLossage)
+}
+
+// Write queues the datagram p for transmission via cs, blocking if intermediary buffers are full.  The
 // signature is that of io.Writer.Write.
 func (cs *Session) Write(p []byte) (n int, err error) {
 	if log.IsEnabledFor(logging.DEBUG) {
@@ -417,45 +496,36 @@ func (cs *Session) Write(p []byte) (n int, err error) {
 		}()
 	}
 
-	// TODO: should we really do the framing here?  Right now, maxOutFrameDataSize is a kludge to make sure
-	// very low-performance models don't get _too_ much delay from long frames.
-
-	n, err = 0, nil
-	for len(p) > 0 {
-		data := p
-		if len(data) > maxOutFrameDataSize {
-			data = data[:maxOutFrameDataSize]
-		}
-
-		// After the send, the frame is owned by the other side and all the actual crypto will happen at
-		// PullWrite time above.
-		cs.outFrames <- newPlainDataFrame(data)
-		p = p[len(data):]
-		n += len(data)
-	}
-
-	if len(p) > 0 && err == nil {
-		// Oops.
+	dgram := buf.CopyNew(p)
+	if len(dgram) > cs.MTU {
+		dgram = dgram[:cs.MTU]
 		err = io.ErrShortWrite
 	}
-	return n, err
+	cs.outPlains <- buf.CopyNew(dgram)
+	return len(dgram), err
 }
 
 func (cs *Session) Init(sinfo interface{}) error {
+	if !(1280 <= cs.MTU && cs.MTU <= 32000) {
+		return ErrBadMTU
+	}
+
 	cs.localPrivate = prim.NewPrivate()
 	cs.serverInfo = sinfo
-	cs.inPlains = make(chan []byte, 4)
-	cs.outFrames = make(chan frame, 4)
+	cs.inGrams = make(chan numberedGram, 4)
+	cs.outPlains = make(chan []byte, 4)
 	cs.inCipher.SetRandomKey()
 	cs.outCipher.SetRandomKey()
-	cs.outCryptPending = buf.CopyNew(cs.localPrivate.Public.Binary())
-	cs.handshakeReassembly = buf.BeginReassembly(32)
+	cs.outCrypted = buf.BeginReassembly(cs.MTU + 32 + frameOverhead)
+	startingData := cs.localPrivate.Public.Binary()
+	buf.CopyReassemble(&cs.outCrypted, &startingData)
+	cs.inHandshake = buf.BeginReassembly(32)
 	cs.state = stateHandshakeNoKey
 	return nil
 }
 
-func beginAny(sinfo interface{}) (*Session, error) {
-	cs := &Session{}
+func beginAny(sinfo interface{}, params Params) (*Session, error) {
+	cs := &Session{Params: params}
 	if err := cs.Init(sinfo); err != nil {
 		return nil, err
 	}
@@ -465,12 +535,12 @@ func beginAny(sinfo interface{}) (*Session, error) {
 
 // BeginClient starts a new crypting session from the client's perspective, given a server's public
 // cryptographic parameters.
-func BeginClient(pub *Public) (*Session, error) {
-	return beginAny(pub)
+func BeginClient(pub *Public, params Params) (*Session, error) {
+	return beginAny(pub, params)
 }
 
 // BeginServer starts a new crypting session from the server's perspective, given the server's private
 // cryptographic parameters.
-func BeginServer(priv *Private) (*Session, error) {
-	return beginAny(priv)
+func BeginServer(priv *Private, params Params) (*Session, error) {
+	return beginAny(priv, params)
 }

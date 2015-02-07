@@ -29,6 +29,7 @@ type Link struct {
 	heldError  error
 	panicAlloc *PanicError
 	thunk      func() error
+	LogError   func(error)
 	Req        chan interface{}
 	Rep        chan interface{}
 	Kill       chan interface{}
@@ -113,7 +114,11 @@ func (link *Link) reportError(cell *error) {
 		link.panicAlloc.Value = panicked
 		err = link.panicAlloc
 	}
+
 	link.heldError = err
+	if link.heldError != nil && link.LogError != nil {
+		link.LogError(link.heldError)
+	}
 }
 
 func (link *Link) Spawn() *Link {

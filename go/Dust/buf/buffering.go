@@ -32,6 +32,10 @@ func CopyReassemble(out *Reassembly, in *[]byte) int {
 	return n
 }
 
+func (reassembly *Reassembly) CopyIn(in []byte) int {
+	return CopyReassemble(reassembly, &in)
+}
+
 // TransformReassemble is like copyReassemble, but uses a transformation function from a slice to a slice of
 // equal length on the data.
 func TransformReassemble(
@@ -48,6 +52,10 @@ func TransformReassemble(
 	*in = (*in)[n:]
 	*out = (*out)[:len(*out)+n]
 	return n
+}
+
+func (reassembly *Reassembly) TransformIn(in []byte, transform func(dst []byte, src []byte)) int {
+	return TransformReassemble(reassembly, &in, transform)
 }
 
 // FixedSizeComplete returns true iff the reassembly buffer is completely full; it is assumed
@@ -80,6 +88,24 @@ func (reassembly *Reassembly) Consume(n int) {
 	}
 }
 
+func (reassembly *Reassembly) CopyOut(out *[]byte) {
+	n := copy(*out, *reassembly)
+	reassembly.Consume(n)
+	*out = (*out)[n:]
+}
+
+func (reassembly *Reassembly) PreData(n int) (fill []byte) {
+	avail := cap(*reassembly) - len(*reassembly)
+	if avail < n {
+		n = avail
+	}
+
+	newLen := len(*reassembly) + n
+	fill = (*reassembly)[len(*reassembly):newLen]
+	*reassembly = (*reassembly)[:newLen]
+	return
+}
+
 // Reset alters reassembly to contain no valid bytes, reusing the same underlying slice.
 func (reassembly *Reassembly) Reset() {
 	*reassembly = (*reassembly)[:0]
@@ -91,3 +117,5 @@ func CopyNew(slice []byte) []byte {
 	copy(out, slice)
 	return out
 }
+
+// TODO: versions of these funs that don't require addressable bits on the input side

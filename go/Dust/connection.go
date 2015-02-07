@@ -85,6 +85,11 @@ func (s *session) HardClose() error {
 	return err
 }
 
+var defCryptingParams = crypting.Params{
+	//MTU: 1280,
+	MTU: 16384,
+}
+
 // BeginClient initiates the client side of a Dust connection using the public key and model parameters
 // specified in spub.  Dust-level communication will occur in the background over socket, which is usually the
 // client side of a TCP connection and must be a stream-oriented I/O channel.  The Dust connection takes over
@@ -102,7 +107,7 @@ func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection
 		return
 	}
 
-	crypter, err := crypting.BeginClient(spub.cryptoPublic())
+	crypter, err := crypting.BeginClient(spub.cryptoPublic(), defCryptingParams)
 	if err != nil {
 		log.Error("BeginClient: starting crypting session: %v", err)
 		return
@@ -140,7 +145,7 @@ func BeginServer(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connecti
 		return
 	}
 
-	crypter, err := crypting.BeginServer(spriv.cryptoPrivate())
+	crypter, err := crypting.BeginServer(spriv.cryptoPrivate(), defCryptingParams)
 	if err != nil {
 		log.Error("BeginServer: starting crypting session: %v", err)
 		return
@@ -150,6 +155,14 @@ func BeginServer(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connecti
 	if err != nil {
 		log.Error("BeginServer: starting shaper: %v", err)
 		return
+	}
+
+	shaper.LogError = func(e error) {
+		// TODO: filter other errors
+		if e == io.EOF {
+			return
+		}
+		log.Error("shaper exited with %v", e)
 	}
 
 	shaper.Spawn()
