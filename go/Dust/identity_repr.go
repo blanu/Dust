@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/blanu/Dust/go/Dust/prim"
 	"github.com/blanu/Dust/go/Dust/crypting"
-	"github.com/blanu/Dust/go/Dust/cryptions"
 )
 
 var (
@@ -122,7 +122,7 @@ func LoadServerPublicBridgeLine(bline BridgeLine) (result *ServerPublic, err err
 	if !ok {
 		return nil, ErrNoPublicKey
 	}
-	longtermPublic, err := cryptions.LoadPublicKeyBase32(publicString)
+	longtermPublic, err := prim.LoadPublicText(publicString)
 	if err != nil {
 		return
 	}
@@ -145,7 +145,7 @@ func LoadServerPublicBridgeLine(bline BridgeLine) (result *ServerPublic, err err
 func (spub ServerPublic) BridgeLine() BridgeLine {
 	addrString := spub.tcpAddr.String()
 	params := map[string]string{
-		bridgeParamPublicKey: spub.longtermPublic.Base32(),
+		bridgeParamPublicKey: spub.longtermPublic.Text(),
 	}
 	insertModelSpec(&spub.modelSpec, params, "m")
 	return BridgeLine{spub.nickname, addrString, params}
@@ -201,14 +201,7 @@ func LoadServerPrivateFile(
 		return nil, scanErrorOr(ErrNoPrivateKey)
 	}
 	privateLine := lines.Text()
-
-	var keyPair cryptions.KeyPair
-	defer func() {
-		if result == nil && keyPair != nil {
-			keyPair.DestroyPrivate()
-		}
-	}()
-	keyPair, err = cryptions.LoadPrivateKeyBase32(privateLine)
+	private, err := prim.LoadPrivateText(privateLine)
 	if err != nil {
 		return
 	}
@@ -247,7 +240,7 @@ func LoadServerPrivateFile(
 			endpointAddress: *endpointAddress,
 			modelSpec:       *modelSpec,
 		},
-		longtermPair: keyPair,
+		longtermPrivate: private,
 	}
 	return
 }
@@ -259,7 +252,7 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 		magicLine,
 		spriv.nickname,
 		spriv.tcpAddr.String(),
-		spriv.longtermPair.PrivateBase32(),
+		spriv.longtermPrivate.PrivateText(),
 	}
 
 	for _, line := range headerLines {

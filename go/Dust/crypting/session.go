@@ -1,14 +1,14 @@
 package crypting
 
 import (
-	"crypto/cipher"
+	"bytes"
 	"errors"
 	"io"
 
 	"github.com/op/go-logging"
 
 	"github.com/blanu/Dust/go/Dust/bufman"
-	"github.com/blanu/Dust/go/Dust/cryptions"
+	"github.com/blanu/Dust/go/Dust/prim"
 )
 
 var log = logging.MustGetLogger("Dust/crypting")
@@ -21,12 +21,12 @@ var (
 )
 
 const (
-	kdfC2S = `c2s.`
-	kdfS2C = `s2c.`
+	kdfC2S = `cli.`
+	kdfS2C = `srv.`
 
-	kdfCipherData = `hide`
-	kdfMACData    = `chck`
-	kdfMACConfirm = `play`
+	kdfCipherData = `dta.`
+	kdfMACData    = `grm.`
+	kdfMACConfirm = `bgn.`
 )
 
 const (
@@ -59,10 +59,10 @@ type Session struct {
 	serverInfo interface{}
 
 	// These both correspond to ephemeral keys.  The server's long-term key or keypair will be
-	// stashed somewhere in serverInfo.  localPair is always set.  remotePublic is set if state is
+	// stashed somewhere in serverInfo.  localPrivate is always set.  remotePublic is set if state is
 	// HandshakeKey.
-	localPair    cryptions.KeyPair
-	remotePublic cryptions.PublicKey
+	localPrivate prim.Private
+	remotePublic prim.Public
 
 	// Incoming data must be processed against this first, if set, before inCipher.  When HandshakeNoKey:
 	// reassembling an ephemeral public key.  When HandshakeKey: searching for the confirmation code from
@@ -70,11 +70,12 @@ type Session struct {
 	handshakeReassembly bufman.Reassembly
 
 	// Set in HandshakeKey state.
-	inConfirmation cryptions.SecretBytes
+	inConfirmation prim.AuthValue
 
 	// Set in Streaming state.
-	inCipher cipher.Stream
-	inMAC    cryptions.MAC
+	inCipher   prim.Cipher
+	inMAC      prim.VerifyingMAC
+	inPosition uint64
 
 	// Decrypted data is reassembled into frames here.  The reassembly capacity is the maximum frame
 	// wire size.
@@ -89,17 +90,18 @@ type Session struct {
 	// Implicitly prepended to any other outgoing data; these bytes are not encrypted before sending.
 	outCryptPending []byte
 
-	// Always set.  For any state except Streaming, uses a random key.
-	outCipher cipher.Stream
-
-	// Set in Streaming state.
-	outMAC cryptions.MAC
+	// Set in Streaming state, except outCipher is always set with a random key.
+	outCipher   prim.Cipher
+	outMAC      prim.GeneratingMAC
+	outPosition uint64
 
 	// Plaintext frames are sent to outFrames from the inward-facing side of the crypto session.  The
 	// receiver owns the chunks.  Space is allocated for an authenticator, but it is not computed yet, and
 	// nor is the frame encrypted.
 	outFrames chan frame
 }
+
+// TODO: inPosition, outPosition not used yet
 
 // PullWrite tries to pull post-encryption bytes into p, using in-band framing to intersperse any plain data
 // available to write with enough padding frames to completely fill p immediately.  In some handshake states,
@@ -162,9 +164,9 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 		}
 
 		// We own frame forever now, and outCipher is valid.  Authenticate and encrypt in-place.
-		cs.outMAC.Reset()
-		frame.authenticateWith(cs.outMAC)
-		frame.encryptWith(cs.outCipher)
+		cs.outMAC.Reset(0)
+		frame.authenticateWith(&cs.outMAC)
+		frame.encryptWith(&cs.outCipher)
 		remaining := frame.slice()
 		n += bufman.CopyAdvance(&p, &remaining)
 		if len(remaining) > 0 {
@@ -181,17 +183,8 @@ func (cs *Session) fail() {
 	cs.state = stateFailed
 	cs.handshakeReassembly = nil
 	cs.dataReassembly = nil
-
-	bogusKey := cryptions.NewSecretBytes()
-	if err := cryptions.RandomizeSecretBytes(bogusKey); err != nil {
-		// TODO: steal some extra entropy earlier to prevent this case.  (We do actually have to
-		// panic in the absence of that because otherwise we start emitting predictable-ish bytes.)
-		panic("Dust/crypting: Nooooo what happened to my entropy source, oh god")
-	}
-
-	cs.outCipher = cryptions.NewStreamCipher(bogusKey, [32]byte{})
+	cs.outCipher.SetRandomKey()
 	cs.outCryptPending = nil
-	cs.outMAC = nil
 }
 
 func (cs *Session) receivedEphemeralKey() {
@@ -202,19 +195,19 @@ func (cs *Session) receivedEphemeralKey() {
 		panic("Dust/crypting: should not have gotten here without 32-byte handshake")
 	}
 
-	cs.remotePublic, err = cryptions.LoadPublicKeyUniform(received)
+	cs.remotePublic, err = prim.LoadPublicBinary(received)
 	if err != nil {
 		panic("Dust/crypting: should always be able to load public key here")
 	}
 
 	log.Debug("  <- received ephemeral key")
 
-	rawDH := cryptions.NewSecretBytes()
-	sk := cryptions.NewDigest()
-	cs.localPair.ECDH(cs.remotePublic, rawDH)
-	sk.WriteSecret(rawDH)
-
+	var sd prim.SecretDigest
+	sd.Init()
+	sd.WriteSecret(cs.localPrivate.SharedSecret(cs.remotePublic))
 	var inKdfPrefix, outKdfPrefix string
+	var confInput []byte
+
 	switch sinfo := cs.serverInfo.(type) {
 	default:
 		panic("Dust/crypting: bad serverInfo type")
@@ -222,47 +215,38 @@ func (cs *Session) receivedEphemeralKey() {
 	case *Public:
 		inKdfPrefix = kdfS2C
 		outKdfPrefix = kdfC2S
-		cs.localPair.ECDH(sinfo.LongtermPublic, rawDH)
-		sk.WriteSecret(rawDH)
-		sk.Write(sinfo.IdBytes)
-		sk.Write(cs.localPair.Public().Bytes())
-		sk.Write(cs.remotePublic.Bytes())
+		sd.WriteSecret(cs.localPrivate.SharedSecret(sinfo.Key))
+		confInput = bytes.Join([][]byte{
+			sinfo.Id,
+			sinfo.Key.Binary(),
+			cs.localPrivate.Public.Binary(),
+			cs.remotePublic.Binary(),
+		}, []byte{})
 
 	case *Private:
 		inKdfPrefix = kdfC2S
 		outKdfPrefix = kdfS2C
-		sinfo.LongtermPair.ECDH(cs.remotePublic, rawDH)
-		sk.WriteSecret(rawDH)
-		sk.Write(sinfo.IdBytes)
-		sk.Write(cs.remotePublic.Bytes())
-		sk.Write(cs.localPair.Public().Bytes())
+		sd.WriteSecret(sinfo.Key.SharedSecret(cs.remotePublic))
+		confInput = bytes.Join([][]byte{
+			sinfo.Id,
+			sinfo.Key.Public.Binary(),
+			cs.remotePublic.Binary(),
+			cs.localPrivate.Public.Binary(),
+		}, []byte{})
 	}
 
-	sk.Write([]byte(`ntor`))
+	sd.Write(confInput)
+	secret := sd.Finish()
 
-	sessionSecret := cryptions.NewSecretBytes()
-	sk.SumSecret(sessionSecret)
-
-	// TODO: security proof or revision for confirmation code generation with new KDF structure.
-	rawKey := cryptions.NewSecretBytes()
-	cryptions.DeriveKey(sessionSecret, outKdfPrefix+kdfMACConfirm, rawKey)
-	cs.outCryptPending = cryptions.NewMAC(rawKey).Sum(cs.outCryptPending)
-	// TODO: add a logx thing for hex bytes?
-	log.Debug("-> send confirmation starting with %v", cs.outCryptPending[len(cs.outCryptPending)-32:len(cs.outCryptPending)-28])
-	cryptions.DeriveKey(sessionSecret, outKdfPrefix+kdfCipherData, rawKey)
-	cs.outCipher = cryptions.NewStreamCipher(rawKey, [32]byte{})
-	cryptions.DeriveKey(sessionSecret, outKdfPrefix+kdfMACData, rawKey)
-	cs.outMAC = cryptions.NewMAC(rawKey)
-
-	// TODO: maybe only set these after checkConfirmation, for better defensive coding.
-	cs.inConfirmation = cryptions.NewSecretBytes()
-	cryptions.DeriveKey(sessionSecret, inKdfPrefix+kdfMACConfirm, rawKey)
-	cryptions.NewMAC(rawKey).SumSecret(cs.inConfirmation)
-	log.Debug("  <- want confirmation starting with %v", cs.inConfirmation.Slice()[0:4])
-	cryptions.DeriveKey(sessionSecret, inKdfPrefix+kdfCipherData, rawKey)
-	cs.inCipher = cryptions.NewStreamCipher(rawKey, [32]byte{})
-	cryptions.DeriveKey(sessionSecret, inKdfPrefix+kdfMACData, rawKey)
-	cs.inMAC = cryptions.NewMAC(rawKey)
+	outConfirmation := prim.GenerateMAC(confInput, 0, secret.DeriveAuthKey(outKdfPrefix+kdfMACConfirm))
+	cs.outCryptPending = append(cs.outCryptPending, outConfirmation[:]...)
+	log.Debug("-> send confirmation starting with %v", outConfirmation[:2])
+	cs.outCipher.SetKey(secret.DeriveCipherKey(outKdfPrefix+kdfCipherData))
+	cs.outMAC.SetKey(secret.DeriveAuthKey(outKdfPrefix+kdfMACData))
+	cs.inConfirmation = prim.GenerateMAC(confInput, 0, secret.DeriveAuthKey(inKdfPrefix+kdfMACConfirm))
+	log.Debug("  <- expect confirmation starting with %v", cs.inConfirmation[:2])
+	cs.inCipher.SetKey(secret.DeriveCipherKey(inKdfPrefix+kdfCipherData))
+	cs.inMAC.SetKey(secret.DeriveAuthKey(inKdfPrefix+kdfMACData))
 
 	cs.handshakeReassembly = bufman.BeginReassembly(32)
 	cs.state = stateHandshakeKey
@@ -280,7 +264,6 @@ func (cs *Session) checkConfirmation() {
 	log.Debug("  <- entering streaming state")
 	// We already set up all the derived keys when we received the ephemeral key.
 	cs.handshakeReassembly = nil
-	cs.inConfirmation = nil
 	cs.dataReassembly = bufman.BeginReassembly(maxInFrameDataSize + 35)
 	cs.state = stateStreaming
 	return
@@ -302,8 +285,8 @@ func (cs *Session) decodeAndShipoutPlainFrame(p []byte) (consumed int, err error
 	//
 	// TODO: fail entire stream if verification of any frame fails?  Not right now, because the spec says
 	// authenticators for padding frames are allowed to be blank.
-	cs.inMAC.Reset()
-	authenticated := frame.verifyAuthenticator(cs.inMAC)
+	cs.inMAC.Reset(0)
+	authenticated := frame.verifyAuthenticator(&cs.inMAC)
 	dataCarrying := frame.hasData()
 	log.Debug("  <- frame of wire size %d, auth %v, data %v", frame.wireSize(), authenticated, dataCarrying)
 	if dataCarrying && authenticated {
@@ -347,11 +330,6 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 					cs.checkConfirmation()
 				}
 			}
-		} else if cs.inCipher == nil {
-			// If we were in a handshake or streaming no-IV state, we did a handshake reassembly
-			// cycle above and shouldn't be here.  If we were in a failed state, we've already
-			// returned.  So this isn't a valid state.
-			panic("Dust/crypting: should not have gotten here without incoming cipher")
 		} else {
 			n += bufman.TransformReassemble(&cs.dataReassembly, &p, cs.inCipher.XORKeyStream)
 
@@ -464,23 +442,15 @@ func (cs *Session) Write(p []byte) (n int, err error) {
 }
 
 func (cs *Session) Init(sinfo interface{}) error {
-	var err error
-	if cs.localPair, err = cryptions.NewKeyPair(); err != nil {
-		return err
-	}
-
-	bogusKey := cryptions.NewSecretBytes()
-	if err := cryptions.RandomizeSecretBytes(bogusKey); err != nil {
-		return err
-	}
-
-	cs.state = stateHandshakeNoKey
+	cs.localPrivate = prim.NewPrivate()
 	cs.serverInfo = sinfo
 	cs.inPlains = make(chan []byte, 4)
 	cs.outFrames = make(chan frame, 4)
-	cs.outCipher = cryptions.NewStreamCipher(bogusKey, [32]byte{})
-	cs.outCryptPending = bufman.CopyNew(cs.localPair.Public().UniformBytes())
+	cs.inCipher.SetRandomKey()
+	cs.outCipher.SetRandomKey()
+	cs.outCryptPending = bufman.CopyNew(cs.localPrivate.Public.Binary())
 	cs.handshakeReassembly = bufman.BeginReassembly(32)
+	cs.state = stateHandshakeNoKey
 	return nil
 }
 

@@ -8,23 +8,19 @@ import (
 	"errors"
 	"net"
 
-	"github.com/blanu/Dust/go/Dust/cryptions"
+	"github.com/blanu/Dust/go/Dust/prim"
 )
 
 // Public holds the longterm public key and shared identifier for a server.
 type Public struct {
-	IdBytes        []byte
-	LongtermPublic cryptions.PublicKey
+	Id  []byte
+	Key prim.Public
 }
 
 // Private holds the longterm private key and shared identifier for a server.
 type Private struct {
-	IdBytes      []byte
-	LongtermPair cryptions.KeyPair
-}
-
-func (priv *Private) Destroy() {
-	priv.LongtermPair.DestroyPrivate()
+	Id  []byte
+	Key prim.Private
 }
 
 var (

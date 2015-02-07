@@ -1,9 +1,7 @@
 package crypting
 
 import (
-	"crypto/cipher"
-
-	"github.com/blanu/Dust/go/Dust/cryptions"
+	"github.com/blanu/Dust/go/Dust/prim"
 )
 
 // A frame represents a plaintext frame at the Dust crypto session layer as a slice of bytes.  Except
@@ -81,15 +79,14 @@ func (frame frame) wellFormed() bool {
 
 // authenticateWith mutates a frame to contain a valid authenticator given a starting MAC state, which may
 // be destroyed.
-func (frame frame) authenticateWith(mac cryptions.MAC) {
+func (frame frame) authenticateWith(mac *prim.GeneratingMAC) {
 	mac.Write(frame[:len(frame)-32])
-	outputArea := frame[len(frame)-32:]
-	copy(frame[len(frame)-32:], mac.Sum(outputArea[:0]))
+	copy(frame[len(frame)-32:], mac.Generate().Slice())
 }
 
 // verifyAuthenticator returns true iff the frame's authenticator is valid given a starting MAC state, which
 // may be destroyed.
-func (frame frame) verifyAuthenticator(mac cryptions.MAC) bool {
+func (frame frame) verifyAuthenticator(mac *prim.VerifyingMAC) bool {
 	mac.Write(frame[:len(frame)-32])
 	return mac.Verify(frame[len(frame)-32:])
 }
@@ -106,9 +103,9 @@ func (frame frame) data() []byte {
 }
 
 // encryptWith applies streamCipher to the frame in-place.
-func (frame frame) encryptWith(streamCipher cipher.Stream) {
+func (frame frame) encryptWith(cipher *prim.Cipher) {
 	// TODO: use a different API for this so frame stays plaintext frames only
-	streamCipher.XORKeyStream(frame, frame)
+	cipher.XORKeyStream(frame, frame)
 }
 
 // slice returns a slice which may or may not alias the frame contents.

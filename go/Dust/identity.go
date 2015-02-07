@@ -4,8 +4,8 @@ import (
 	"net"
 	"strings"
 
+	"github.com/blanu/Dust/go/Dust/prim"
 	"github.com/blanu/Dust/go/Dust/crypting"
-	"github.com/blanu/Dust/go/Dust/cryptions"
 )
 
 const (
@@ -44,15 +44,15 @@ type BridgeLine struct {
 type ServerPublic struct {
 	endpointConfig
 	nickname       string
-	longtermPublic cryptions.PublicKey
+	longtermPublic prim.Public
 }
 
 // ServerPrivate represents a server private identity, comprising a private key, model parameters, and network
 // address.
 type ServerPrivate struct {
 	endpointConfig
-	nickname     string
-	longtermPair cryptions.KeyPair
+	nickname        string
+	longtermPrivate prim.Private
 }
 
 func (ms modelSpec) ReifyModel() (ShapingModel, error) {
@@ -79,8 +79,8 @@ func CheckUnackedParams(params map[string]string, ackedParams map[string]bool) e
 
 func (spub ServerPublic) cryptoPublic() *crypting.Public {
 	return &crypting.Public{
-		IdBytes:        spub.endpointAddress.idBytes,
-		LongtermPublic: spub.longtermPublic,
+		Id:  spub.endpointAddress.idBytes,
+		Key: spub.longtermPublic,
 	}
 }
 
@@ -89,14 +89,14 @@ func (spriv ServerPrivate) Public() ServerPublic {
 	return ServerPublic{
 		nickname:       spriv.nickname,
 		endpointConfig: spriv.endpointConfig,
-		longtermPublic: spriv.longtermPair.Public(),
+		longtermPublic: spriv.longtermPrivate.Public,
 	}
 }
 
 func (spriv ServerPrivate) cryptoPrivate() *crypting.Private {
 	return &crypting.Private{
-		IdBytes:      spriv.endpointAddress.idBytes,
-		LongtermPair: spriv.longtermPair,
+		Id:  spriv.endpointAddress.idBytes,
+		Key: spriv.longtermPrivate,
 	}
 }
 
@@ -125,15 +125,11 @@ func NewServerPrivateBridgeLine(bline BridgeLine) (result *ServerPrivate, err er
 		return
 	}
 
-	keyPair, err := cryptions.NewKeyPair()
-	if err != nil {
-		return
-	}
-
+	private := prim.NewPrivate()
 	result = &ServerPrivate{
-		nickname:       bline.Nickname,
-		endpointConfig: *endpointConfig,
-		longtermPair:   keyPair,
+		nickname:        bline.Nickname,
+		endpointConfig:  *endpointConfig,
+		longtermPrivate: private,
 	}
 	return
 }
