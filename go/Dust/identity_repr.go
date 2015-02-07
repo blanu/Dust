@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/blanu/Dust/go/Dust/prim"
 	"github.com/blanu/Dust/go/Dust/crypting"
+	"github.com/blanu/Dust/go/Dust/prim"
 )
 
 var (

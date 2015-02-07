@@ -9,7 +9,7 @@ import (
 
 var (
 	ErrBadPrivateKey = errors.New("Dust/prim: bad private key")
-	ErrBadPublicKey = errors.New("Dust/prim: bad public key")
+	ErrBadPublicKey  = errors.New("Dust/prim: bad public key")
 )
 
 type Public struct {
@@ -46,7 +46,7 @@ func NewPrivate() (result Private) {
 	for tries := 0; !acceptable && tries < 256; {
 		result.private = RandomCValue()
 		maskPrivate(&result.private)
-		acceptable = result.recompute() == nil 
+		acceptable = result.recompute() == nil
 	}
 
 	if !acceptable {

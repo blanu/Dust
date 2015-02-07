@@ -28,9 +28,9 @@ func (d *SecretDigest) Finish() (result Secret) {
 	return
 }
 
-func (s Secret) deriveRaw(id string) CValue { 
+func (s Secret) deriveRaw(id string) CValue {
 	args := skein.Args{
-		Key: s[:],
+		Key:   s[:],
 		KeyId: []byte(id),
 	}
 

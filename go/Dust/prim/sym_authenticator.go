@@ -53,7 +53,7 @@ func (av AuthValue) Slice() []byte {
 type VerifyingMAC struct {
 	MAC
 	verifyEqual AuthValue
-}	
+}
 
 func (m *VerifyingMAC) Verify(in []byte) bool {
 	if m.args.Nonce == nil {

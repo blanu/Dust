@@ -154,7 +154,7 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 				cs.outCryptPending = append(cs.outCryptPending, leftover...)
 			}
 
-			log.Debug("-> handshake interstitial %d bytes", len(p) + len(leftover))
+			log.Debug("-> handshake interstitial %d bytes", len(p)+len(leftover))
 			n += len(p)
 			return n, err
 		}
@@ -241,12 +241,12 @@ func (cs *Session) receivedEphemeralKey() {
 	outConfirmation := prim.GenerateMAC(confInput, 0, secret.DeriveAuthKey(outKdfPrefix+kdfMACConfirm))
 	cs.outCryptPending = append(cs.outCryptPending, outConfirmation[:]...)
 	log.Debug("-> send confirmation starting with %v", outConfirmation[:2])
-	cs.outCipher.SetKey(secret.DeriveCipherKey(outKdfPrefix+kdfCipherData))
-	cs.outMAC.SetKey(secret.DeriveAuthKey(outKdfPrefix+kdfMACData))
+	cs.outCipher.SetKey(secret.DeriveCipherKey(outKdfPrefix + kdfCipherData))
+	cs.outMAC.SetKey(secret.DeriveAuthKey(outKdfPrefix + kdfMACData))
 	cs.inConfirmation = prim.GenerateMAC(confInput, 0, secret.DeriveAuthKey(inKdfPrefix+kdfMACConfirm))
 	log.Debug("  <- expect confirmation starting with %v", cs.inConfirmation[:2])
-	cs.inCipher.SetKey(secret.DeriveCipherKey(inKdfPrefix+kdfCipherData))
-	cs.inMAC.SetKey(secret.DeriveAuthKey(inKdfPrefix+kdfMACData))
+	cs.inCipher.SetKey(secret.DeriveCipherKey(inKdfPrefix + kdfCipherData))
+	cs.inMAC.SetKey(secret.DeriveAuthKey(inKdfPrefix + kdfMACData))
 
 	cs.handshakeReassembly = buf.BeginReassembly(32)
 	cs.state = stateHandshakeKey
