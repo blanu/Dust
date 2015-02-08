@@ -159,7 +159,8 @@ func (cs *Session) pullData(p []byte) {
 		headerN := cs.outCrypted.TransformIn(header, cs.outCipher.XORKeyStream)
 		dgramN := cs.outCrypted.TransformIn(dgram, cs.outCipher.XORKeyStream)
 		cs.outMAC.Write(cs.outCrypted.Data())
-		macN := cs.outCrypted.TransformIn(cs.outMAC.Generate()[:], cs.outCipher.XORKeyStream)
+		mac := cs.outMAC.Generate()
+		macN := cs.outCrypted.TransformIn(mac[:], cs.outCipher.XORKeyStream)
 		if !(headerN == len(header) && dgramN == len(dgram) && macN == len(mac)) {
 			panic("Dust/crypting: somehow not enough space in output buffer")
 		}
