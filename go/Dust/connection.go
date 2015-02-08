@@ -36,14 +36,14 @@ type Connection interface {
 	HardClose() error
 }
 
-type session struct {
+type singleConnection struct {
 	socket  io.ReadWriteCloser
 	crypter *crypting.Session
 	shaper  *shaping.Shaper
 	closed  bool
 }
 
-func (s *session) Read(p []byte) (n int, err error) {
+func (s *singleConnection) Read(p []byte) (n int, err error) {
 	if s.closed {
 		return 0, ErrClosed
 	}
@@ -51,7 +51,7 @@ func (s *session) Read(p []byte) (n int, err error) {
 	return s.crypter.Read(p)
 }
 
-func (s *session) Write(p []byte) (n int, err error) {
+func (s *singleConnection) Write(p []byte) (n int, err error) {
 	if s.closed {
 		return 0, ErrClosed
 	}
@@ -59,7 +59,7 @@ func (s *session) Write(p []byte) (n int, err error) {
 	return s.crypter.Write(p)
 }
 
-func (s *session) Close() error {
+func (s *singleConnection) Close() error {
 	if s.closed {
 		return ErrClosed
 	}
@@ -72,7 +72,7 @@ func (s *session) Close() error {
 	return nil
 }
 
-func (s *session) HardClose() error {
+func (s *singleConnection) HardClose() error {
 	if s.socket == nil {
 		return ErrClosed
 	}
@@ -120,7 +120,7 @@ func BeginClientConnection(socket io.ReadWriteCloser, spub *ServerPublic) (conn 
 	}
 
 	shaper.Spawn()
-	conn = &session{
+	conn = &singleConnection{
 		socket:  socket,
 		crypter: crypter,
 		shaper:  shaper,
@@ -166,7 +166,7 @@ func BeginServerConnection(socket io.ReadWriteCloser, spriv *ServerPrivate) (con
 	}
 
 	shaper.Spawn()
-	conn = &session{
+	conn = &singleConnection{
 		socket:  socket,
 		crypter: crypter,
 		shaper:  shaper,
