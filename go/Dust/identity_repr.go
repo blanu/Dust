@@ -12,6 +12,15 @@ import (
 	"github.com/blanu/Dust/go/Dust/prim"
 )
 
+const (
+	bridgeParamPublicKey      string = "p"
+	bridgeParamModel          string = "m"
+	bridgeParamOptionalSuffix string = "?"
+	bridgeParamMTU            string = "mtu"
+
+	magicLine = "!!Dust-Server-Private!!"
+)
+
 var (
 	ErrNoMagic          = &ParameterError{ParameterMissing, "magic line", ""}
 	ErrNoAddress        = &ParameterError{ParameterMissing, "network address", ""}

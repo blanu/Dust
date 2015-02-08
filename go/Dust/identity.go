@@ -8,15 +8,6 @@ import (
 	"github.com/blanu/Dust/go/Dust/prim"
 )
 
-const (
-	bridgeParamPublicKey      string = "p"
-	bridgeParamModel          string = "m"
-	bridgeParamOptionalSuffix string = "?"
-	bridgeParamMTU            string = "mtu"
-
-	magicLine = "!!Dust-Server-Private!!"
-)
-
 type endpointAddress struct {
 	tcpAddr *net.TCPAddr
 	idBytes []byte
