@@ -27,16 +27,15 @@ type numberedGram struct {
 type InvertingFront struct {
 	Params
 
-	// Datagrams with sequence numbers are sent to inPlains from the outward-facing side of the crypto
+	// Datagrams with sequence numbers are sent to inGrams from the outward-facing side of the crypto
 	// session.  The receiver owns the data chunks.  inSequence is the next sequence number to send from
-	// the outward-facing side.  inLast is the last sequence number successfully delivered by the
-	// inward-facing side, and inGramLeft buffers up to one datagram on the inward-facing side.  Sequence
-	// numbers for actual datagrams start at 1.
+	// the outward-facing side, starting from 1.  inLast is the last sequence number successfully
+	// delivered by the inward-facing side, and inLossage is set by Read to indicate how many sequence
+	// numbers were dropped.
 	inGrams    chan numberedGram
 	inSequence int64
 	inLast     int64
 	inLossage  int64
-	inGramLeft numberedGram
 
 	// Datagrams are sent to outPlains from the inward-facing side of the crypto session.  The receiver
 	// owns the chunks.
@@ -96,21 +95,17 @@ func (inv *InvertingFront) Read(p []byte) (n int, err error) {
 		}()
 	}
 
-	var ngram numberedGram
-	if inv.inGramLeft.seq != 0 {
-		ngram = inv.inGramLeft
-		inv.inGramLeft = numberedGram{}
-	} else {
-		ngram = <-inv.inGrams
-	}
-
-	inv.inLossage = 0
+	ngram := <-inv.inGrams
 	if ngram.seq == 0 {
+		inv.inLossage = 0
 		return 0, io.EOF
 	} else if ngram.seq != inv.inLast+1 {
 		inv.inLossage = ngram.seq - (inv.inLast + 1)
-		inv.inLast = ngram.seq - 1
+		inv.inLast = ngram.seq
 		err = ErrSomeDatagramsLost
+	} else {
+		inv.inLossage = 0
+		inv.inLast = ngram.seq
 	}
 
 	dgram := ngram.data
