@@ -39,6 +39,7 @@ type Connection interface {
 type singleConnection struct {
 	socket  io.ReadWriteCloser
 	crypter *crypting.Session
+	front   *crypting.InvertingFront
 	shaper  *shaping.Shaper
 	closed  bool
 }
@@ -48,7 +49,7 @@ func (s *singleConnection) Read(p []byte) (n int, err error) {
 		return 0, ErrClosed
 	}
 
-	return s.crypter.Read(p)
+	return s.front.Read(p)
 }
 
 func (s *singleConnection) Write(p []byte) (n int, err error) {
@@ -56,7 +57,7 @@ func (s *singleConnection) Write(p []byte) (n int, err error) {
 		return 0, ErrClosed
 	}
 
-	return s.crypter.Write(p)
+	return s.front.Write(p)
 }
 
 func (s *singleConnection) Close() error {
@@ -107,7 +108,8 @@ func BeginClientConnection(socket io.ReadWriteCloser, spub *ServerPublic) (conn 
 		return
 	}
 
-	crypter, err := crypting.BeginClient(spub.cryptoPublic(), spub.cryptingParams)
+	front := crypting.NewInvertingFront(spub.cryptingParams)
+	crypter, err := crypting.BeginClient(spub.cryptoPublic(), front, spub.cryptingParams)
 	if err != nil {
 		log.Error("BeginClient: starting crypting session: %v", err)
 		return
@@ -123,6 +125,7 @@ func BeginClientConnection(socket io.ReadWriteCloser, spub *ServerPublic) (conn 
 	conn = &singleConnection{
 		socket:  socket,
 		crypter: crypter,
+		front:   front,
 		shaper:  shaper,
 	}
 	return
@@ -145,7 +148,8 @@ func BeginServerConnection(socket io.ReadWriteCloser, spriv *ServerPrivate) (con
 		return
 	}
 
-	crypter, err := crypting.BeginServer(spriv.cryptoPrivate(), spriv.cryptingParams)
+	front := crypting.NewInvertingFront(spriv.cryptingParams)
+	crypter, err := crypting.BeginServer(spriv.cryptoPrivate(), front, spriv.cryptingParams)
 	if err != nil {
 		log.Error("BeginServer: starting crypting session: %v", err)
 		return
@@ -169,6 +173,7 @@ func BeginServerConnection(socket io.ReadWriteCloser, spriv *ServerPrivate) (con
 	conn = &singleConnection{
 		socket:  socket,
 		crypter: crypter,
+		front:   front,
 		shaper:  shaper,
 	}
 	return

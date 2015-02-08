@@ -1,22 +1,8 @@
 package crypting
 
 import (
-	"io"
-
-	"github.com/op/go-logging"
-
 	"github.com/blanu/Dust/go/Dust/buf"
 )
-
-func (cs *Session) drainOutput() {
-	for {
-		select {
-		case _ = <-cs.outPlains:
-		default:
-			return
-		}
-	}
-}
 
 func (cs *Session) pullZero(p []byte) {
 	for i := 0; i < len(p); i++ {
@@ -34,19 +20,27 @@ func (cs *Session) pullData(p []byte) {
 		}
 
 		var dgram []byte
-		select {
-		default:
+		setDgram := func(p []byte, mayRetain bool) {
+			if len(p) > cs.MTU {
+				p = p[:cs.MTU]
+			}
+
+			if mayRetain {
+				dgram = p
+			} else {
+				dgram = buf.CopyNew(p)
+			}
+		}
+
+		log.Debug("pull gram")
+		cs.front.PullGram(setDgram)
+		if dgram == nil {
+			log.Debug("no gram")
 			cs.pullZero(p)
 			cs.outMAC.Write(p)
 			return
-		case dgram = <-cs.outPlains:
 		}
-
-		if len(dgram) > cs.MTU {
-			// This should have been handled by Write(), so something's meddling with our
-			// channels.
-			panic("Dust/crypting: datagram with len > MTU escaped across the boundary")
-		}
+		log.Debug("gram len %d", len(dgram))
 
 		tLen := 256 + len(dgram)
 		header := []byte{uint8(tLen >> 8), uint8(tLen & 0xff)}
@@ -99,7 +93,7 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 		log.Debug("-> handshake interstitial %d bytes", len(p))
 
 	case stateFailed:
-		cs.drainOutput()
+		cs.front.DrainOutput()
 		cs.pullZero(p)
 
 	case stateStreaming, stateHandshakeKey:
@@ -112,20 +106,3 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 	return
 }
 
-// Write queues the datagram p for transmission via cs, blocking if intermediary buffers are full.  The
-// signature is that of io.Writer.Write.
-func (cs *Session) Write(p []byte) (n int, err error) {
-	if log.IsEnabledFor(logging.DEBUG) {
-		defer func() {
-			log.Debug("-> %d plain bytes", n)
-		}()
-	}
-
-	dgram := buf.CopyNew(p)
-	if len(dgram) > cs.MTU {
-		dgram = dgram[:cs.MTU]
-		err = io.ErrShortWrite
-	}
-	cs.outPlains <- buf.CopyNew(dgram)
-	return len(dgram), err
-}

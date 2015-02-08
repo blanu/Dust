@@ -3,8 +3,6 @@ package crypting
 import (
 	"io"
 
-	"github.com/op/go-logging"
-
 	"github.com/blanu/Dust/go/Dust/buf"
 )
 
@@ -75,14 +73,7 @@ func (cs *Session) continueUnframing(plain []byte, beforeCrypt int, crypt []byte
 				return
 			}
 
-			ngram := numberedGram{cs.inSequence, buf.CopyNew(dgramPlain)}
-			cs.inSequence++
-			select {
-			case cs.inGrams <- ngram:
-			default:
-				// Inward-facing side not consuming these fast enough.  Drop the datagram on
-				// the floor.
-			}
+			cs.front.PushGram(dgramPlain, false)
 
 			consume(endPos)
 			beforeCrypt -= 32
@@ -140,42 +131,4 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 		err = io.ErrShortWrite
 	}
 	return n, err
-}
-
-// Read reads a single datagram into p, blocking if none are available.  The signature is _mostly_ that of
-// io.Reader.Read.  TODO: doc rest of signature
-func (cs *Session) Read(p []byte) (n int, err error) {
-	if log.IsEnabledFor(logging.DEBUG) {
-		defer func() {
-			log.Debug("  <- %d plain bytes", n)
-		}()
-	}
-
-	var ngram numberedGram
-	if cs.inGramLeft.seq != 0 {
-		ngram = cs.inGramLeft
-		cs.inGramLeft = numberedGram{}
-	} else {
-		ngram = <-cs.inGrams
-	}
-
-	cs.inLossage = 0
-	if ngram.seq == 0 {
-		return 0, io.EOF
-	} else if ngram.seq != cs.inLast+1 {
-		cs.inLossage = ngram.seq - (cs.inLast + 1)
-		cs.inLast = ngram.seq - 1
-		err = ErrSomeDatagramsLost
-	}
-
-	dgram := ngram.data
-	n = copy(p, dgram)
-	if n < len(dgram) {
-		err = io.ErrShortBuffer
-	}
-	return n, err
-}
-
-func (cs *Session) GetReadLossage() int {
-	return int(cs.inLossage)
 }

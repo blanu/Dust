@@ -88,7 +88,6 @@ func (cs *Session) checkConfirmation() {
 	log.Debug("  <- entering streaming state")
 	cs.inHandshake = nil
 	cs.inStreaming = buf.BeginReassembly(cs.MTU + frameOverhead)
-	cs.inSequence = 1
 	cs.inPosition = 0
 	cs.outPosition = 0
 	cs.state = stateStreaming

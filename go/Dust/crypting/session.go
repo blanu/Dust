@@ -15,7 +15,6 @@ var (
 	ErrBadHandshake      = errors.New("Dust/crypting: bad handshake")
 	ErrBadDecode         = errors.New("Dust/crypting: bad decode")
 	ErrDatagramTooLarge  = errors.New("Dust/crypting: datagram too large")
-	ErrSomeDatagramsLost = errors.New("Dust/crypting: some datagrams lost")
 )
 
 const (
@@ -38,11 +37,6 @@ const (
 	stateStreaming
 )
 
-type numberedGram struct {
-	seq  int64
-	data []byte
-}
-
 // A Session holds state for a single secure channel.  There are two "sides" to a session: the outward-facing
 // side and the inward-facing side.  The outward-facing side transceives arbitrary-rate streams of uniform
 // bytes; the inward-facing side transceives a plaintext application protocol to be run over the secure
@@ -51,6 +45,8 @@ type numberedGram struct {
 // channels, but no more than one goroutine should access a side at a time.
 type Session struct {
 	Params
+
+	front Front
 
 	// Failed: we're using a bogus key to send, and received bytes are discarded.  HandshakeNoKey: we're
 	// reassembling the remote side's ephemeral public key.  HandshakeKey: we're searching for the
@@ -82,17 +78,6 @@ type Session struct {
 	// Data is reassembled into frames here.  The reassembly capacity is the maximum frame wire size.
 	inStreaming buf.Reassembly
 
-	// Datagrams with sequence numbers are sent to inPlains from the outward-facing side of the crypto
-	// session.  The receiver owns the data chunks.  inSequence is the next sequence number to send from
-	// the outward-facing side.  inLast is the last sequence number successfully delivered by the
-	// inward-facing side, and inGramLeft buffers up to one datagram on the inward-facing side.  Sequence
-	// numbers for actual datagrams start at 1.
-	inGrams    chan numberedGram
-	inSequence int64
-	inLast     int64
-	inLossage  int64
-	inGramLeft numberedGram
-
 	// Implicitly prepended to any other outgoing data; these bytes are not encrypted before sending.
 	outCrypted buf.Reassembly
 
@@ -100,10 +85,6 @@ type Session struct {
 	outCipher   prim.Cipher
 	outMAC      prim.GeneratingMAC
 	outPosition uint64
-
-	// Datagrams are sent to outPlains from the inward-facing side of the crypto session.  The receiver
-	// owns the chunks.
-	outPlains chan []byte
 }
 
 // Move from any state to the Failed state, setting a bogus session key and destroying any in-progress data.
@@ -116,7 +97,7 @@ func (cs *Session) fail() {
 	cs.outCrypted = nil
 }
 
-func (cs *Session) Init(sinfo interface{}) error {
+func (cs *Session) Init() error {
 	if err := ValidateParams(cs.Params); err != nil {
 		return err
 	}
@@ -126,9 +107,6 @@ func (cs *Session) Init(sinfo interface{}) error {
 	}
 
 	cs.localPrivate = prim.NewPrivate()
-	cs.serverInfo = sinfo
-	cs.inGrams = make(chan numberedGram, 4)
-	cs.outPlains = make(chan []byte, 4)
 	cs.inCipher.SetRandomKey()
 	cs.outCipher.SetRandomKey()
 	cs.outCrypted = buf.BeginReassembly(cs.MTU + 32 + frameOverhead)
@@ -139,9 +117,13 @@ func (cs *Session) Init(sinfo interface{}) error {
 	return nil
 }
 
-func beginAny(sinfo interface{}, params Params) (*Session, error) {
-	cs := &Session{Params: params}
-	if err := cs.Init(sinfo); err != nil {
+func beginAny(sinfo interface{}, front Front, params Params) (*Session, error) {
+	cs := &Session{
+		Params: params,
+		front: front,
+		serverInfo: sinfo,
+	}
+	if err := cs.Init(); err != nil {
 		return nil, err
 	}
 
@@ -150,12 +132,12 @@ func beginAny(sinfo interface{}, params Params) (*Session, error) {
 
 // BeginClient starts a new crypting session from the client's perspective, given a server's public
 // cryptographic parameters.
-func BeginClient(pub *Public, params Params) (*Session, error) {
-	return beginAny(pub, params)
+func BeginClient(pub *Public, front Front, params Params) (*Session, error) {
+	return beginAny(pub, front, params)
 }
 
 // BeginServer starts a new crypting session from the server's perspective, given the server's private
 // cryptographic parameters.
-func BeginServer(priv *Private, params Params) (*Session, error) {
-	return beginAny(priv, params)
+func BeginServer(priv *Private, front Front, params Params) (*Session, error) {
+	return beginAny(priv, front, params)
 }
