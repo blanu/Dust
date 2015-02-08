@@ -29,6 +29,7 @@ type modelSpec struct {
 type endpointConfig struct {
 	endpointAddress
 	modelSpec
+	cryptingParams crypting.Params
 }
 
 // BridgeLine represents a Tor-style bridge line in parsed-text form, with strings corresponding to opaque

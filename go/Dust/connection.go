@@ -107,7 +107,7 @@ func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection
 		return
 	}
 
-	crypter, err := crypting.BeginClient(spub.cryptoPublic(), defCryptingParams)
+	crypter, err := crypting.BeginClient(spub.cryptoPublic(), spub.cryptingParams)
 	if err != nil {
 		log.Error("BeginClient: starting crypting session: %v", err)
 		return
@@ -145,7 +145,7 @@ func BeginServer(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connecti
 		return
 	}
 
-	crypter, err := crypting.BeginServer(spriv.cryptoPrivate(), defCryptingParams)
+	crypter, err := crypting.BeginServer(spriv.cryptoPrivate(), spriv.cryptingParams)
 	if err != nil {
 		log.Error("BeginServer: starting crypting session: %v", err)
 		return

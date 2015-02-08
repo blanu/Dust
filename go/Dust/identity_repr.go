@@ -106,6 +106,7 @@ func loadEndpointConfigBridgeLine(
 	result = &endpointConfig{
 		endpointAddress: *endpointAddress,
 		modelSpec:       *modelSpec,
+		cryptingParams:  defCryptingParams,
 	}
 	return
 }
@@ -239,6 +240,7 @@ func LoadServerPrivateFile(
 		endpointConfig: endpointConfig{
 			endpointAddress: *endpointAddress,
 			modelSpec:       *modelSpec,
+			cryptingParams:  defCryptingParams,
 		},
 		longtermPrivate: private,
 	}
