@@ -10,7 +10,7 @@ type CValue [CValueSize]byte
 
 var zeroCValue CValue
 
-var skeinPersonalization = []byte(`tag:blanu.net,2015:Dust2015/skein-personalization`)
+var skeinPersonalization = []byte(``)
 
 func ZeroCValue() CValue {
 	return zeroCValue

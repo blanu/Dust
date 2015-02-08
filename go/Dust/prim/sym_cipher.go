@@ -16,7 +16,7 @@ type Cipher struct {
 
 var _ cipher.Stream = (*Cipher)(nil)
 
-var cipherNonce = []byte(`tag:blanu.net,2015:Dust2015/skein-cipher`)
+var cipherNonce = []byte(``)
 
 func (c *Cipher) SetKey(key CipherKey) {
 	c.Stream = skein.NewStream(key[:], cipherNonce)
