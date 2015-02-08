@@ -1,5 +1,5 @@
 #+TITLE: Notes on Dust Go implementation
-Updated: [2015-02-02 Mon]
+Updated: [2015-02-08 Sun]
 
 * State
 ** Packaging
@@ -12,14 +12,16 @@ Copyright/licensing information:
     its own LICENSE file which may not have been copied; it claims to be BSD-style.
 
 ** Crypto primitives
-The cryptions package needs something of an interface rework, and some things need to be locked down re
-Skein-native MAC/KDF versus HMAC/HKDF and such.  The SecretBytes API should be split up and have its
-Destroy functionality removed along the way.
+The prim package now has a reasonable interface, but the choice of the non-asymmetric primitives has yet to be
+locked down (in particular there is a probable conversation to be had re "native" Skein MAC/KDF versus
+HMAC/HKDF).
 
 ** Crypto/framing layer
-Much of this works now, but the protocol is being revised to address various flaws and this isn't documented
-yet.  There is no ensemble layer on top of this, which means it's not actually completely usable for
-bidirectional streams yet; that needs to be added.
+A revised crypting protocol is in the works in the docs directory.  The ensemble part still isn't implemented,
+but crypting sessions now operate on datagrams with revised framing.
+
+The encrypt-then-MAC-then-encrypt currently in play is ambiguous and should possibly be replaced with
+encrypt-then-MAC-then-nothing at the expense of complicating the implementation.
 
 ** Shaping layer
 The interface for models is mostly stable now.  A silly pseudo-model is available which has loopback
@@ -40,17 +42,7 @@ environmental characteristics; possibly need to ask the Tor people about this.
 
 * Tasks
 ** Protocol: hash out re-ensembling, including MTU situation
-** Redo exported types in cryptions subpackage
-Use all concrete exported types.  Use the type system to help constrain key usage.
-** Drop destroy signals for SecretBytes etc.
-None of the mainline Go crypto packages use early-destroy semantics, and there's too
-much sensitive material floating around---we just have to assume the process's entire
-address space is safe for all relevant secrets.
-
-Maybe in a few decades we'll have a compiler that lets us do this better.
 ** Minor/specific cleanups
-*** Rename newPlainDataFrame -> newDataFrame
-*** Get needed entropy earlier in CryptoSession initialization to avoid later failures
 *** Use more generic network address types
 *** Consider whether to use Google's "contexts" mechanism instead of current procman.Link
 ** Documentation
