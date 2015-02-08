@@ -14,7 +14,6 @@ import (
 var log = logging.MustGetLogger("Dust/crypting")
 
 var (
-	ErrBadMTU            = errors.New("Dust/crypting: bad MTU")
 	ErrBadHandshake      = errors.New("Dust/crypting: bad handshake")
 	ErrBadDecode         = errors.New("Dust/crypting: bad decode")
 	ErrDatagramTooLarge  = errors.New("Dust/crypting: datagram too large")
@@ -44,11 +43,6 @@ const (
 type numberedGram struct {
 	seq  int64
 	data []byte
-}
-
-type Params struct {
-	// Maximum datagram size.
-	MTU int
 }
 
 // A Session holds state for a single secure channel.  There are two "sides" to a session: the outward-facing
@@ -507,7 +501,11 @@ func (cs *Session) Write(p []byte) (n int, err error) {
 }
 
 func (cs *Session) Init(sinfo interface{}) error {
-	if !(1280 <= cs.MTU && cs.MTU <= 32000) {
+	if err := ValidateParams(cs.Params); err != nil {
+		return err
+	}
+
+	if !(MinMTU <= cs.MTU && cs.MTU <= MaxMTU) {
 		return ErrBadMTU
 	}
 

@@ -89,6 +89,26 @@ func insertModelSpec(ms *modelSpec, params map[string]string, topKey string) {
 	}
 }
 
+func loadCryptingParams(
+	params map[string]string,
+	ackedParams map[string]bool,
+) (result crypting.Params, err error) {
+	result = defCryptingParams
+
+	if mtuStr, present := params[bridgeParamMTU]; present {
+		var mtu uint64
+		if mtu, err = strconv.ParseUint(mtuStr, 10, 0); err != nil {
+			return
+		}
+
+		ackedParams[bridgeParamMTU] = true
+		result.MTU = int(mtu)
+	}
+
+	err = crypting.ValidateParams(result)
+	return
+}
+
 func loadEndpointConfigBridgeLine(
 	bline BridgeLine,
 	ackedParams map[string]bool,
@@ -103,10 +123,15 @@ func loadEndpointConfigBridgeLine(
 		return
 	}
 
+	cryptingParams, err := loadCryptingParams(bline.Params, ackedParams)
+	if err != nil {
+		return
+	}
+
 	result = &endpointConfig{
 		endpointAddress: *endpointAddress,
 		modelSpec:       *modelSpec,
-		cryptingParams:  defCryptingParams,
+		cryptingParams:  cryptingParams,
 	}
 	return
 }
@@ -148,6 +173,11 @@ func (spub ServerPublic) BridgeLine() BridgeLine {
 	params := map[string]string{
 		bridgeParamPublicKey: spub.longtermPublic.Text(),
 	}
+
+	if mtu := spub.cryptingParams.MTU; mtu != defCryptingParams.MTU {
+		params[bridgeParamMTU] = strconv.FormatUint(uint64(mtu), 10)
+	}
+
 	insertModelSpec(&spub.modelSpec, params, "m")
 	return BridgeLine{spub.nickname, addrString, params}
 }
@@ -230,6 +260,11 @@ func LoadServerPrivateFile(
 		return
 	}
 
+	cryptingParams, err := loadCryptingParams(params, ackedParams)
+	if err != nil {
+		return
+	}
+
 	err = CheckUnackedParams(params, ackedParams)
 	if err != nil {
 		return
@@ -240,7 +275,7 @@ func LoadServerPrivateFile(
 		endpointConfig: endpointConfig{
 			endpointAddress: *endpointAddress,
 			modelSpec:       *modelSpec,
-			cryptingParams:  defCryptingParams,
+			cryptingParams:  cryptingParams,
 		},
 		longtermPrivate: private,
 	}

@@ -3,10 +3,10 @@ Package Dust implements the main Dust protocol codec for TCP/IP.
 
 At initialization time, use RegisterModel to associate model names with model constructors.
 
-To use this library, use LoadServerPublicBridgeLine or LoadServerPrivateFile to acquire the
-public or private side of a server identifier, respectively.  For each connection desired, use BeginClient or
-BeginServer to establish a new session, which you may use to exchange streams of octets.  Dust sessions will
-normally continue running in the background for the duration provided by the model encoder.
+To use this library, use LoadServerPublicBridgeLine or LoadServerPrivateFile to acquire the public or private
+side of a server identifier, respectively.  For each connection desired, use BeginClientConnection or
+BeginServerConnection to establish a new connection, which you may use to exchange streams of datagrams.  Dust
+connections will normally continue running in the background for the duration provided by the model encoder.
 */
 package Dust
 
@@ -26,10 +26,11 @@ var (
 
 var log = logging.MustGetLogger("Dust")
 
-// Connection acts as a stream-oriented I/O channel.  However, closing it does not necessarily close the
-// backing channel, as Dust connections normally have a predetermined duration.  The HardClose method is
-// specified if the backing channel must also be immediately closed for some reason; this should be avoided
-// as it may cause the Dust connection to be more easily detectable by an intermediary.
+// Connection acts mostly as a datagram-oriented I/O channel.  However, closing it does not necessarily close
+// the backing channel, as Dust connections normally have a predetermined duration.  The HardClose method is
+// specified if the backing channel must also be immediately closed for some reason; this should be avoided as
+// it may cause the Dust connection to be more easily detectable by an intermediary.  (TODO: doc variance between
+// this and a "pure" datagram-oriented I/O channel)
 type Connection interface {
 	io.ReadWriteCloser
 	HardClose() error
@@ -86,15 +87,14 @@ func (s *session) HardClose() error {
 }
 
 var defCryptingParams = crypting.Params{
-	//MTU: 1280,
-	MTU: 16384,
+	MTU: 1500,
 }
 
-// BeginClient initiates the client side of a Dust connection using the public key and model parameters
-// specified in spub.  Dust-level communication will occur in the background over socket, which is usually the
-// client side of a TCP connection and must be a stream-oriented I/O channel.  The Dust connection takes over
-// responsibility for closing socket.
-func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection, err error) {
+// BeginClientConnection initiates the client side of a Dust connection using the public key and model
+// parameters specified in spub.  Dust-level communication will occur in the background over socket, which is
+// usually the client side of a TCP connection and must be a stream-oriented I/O channel.  The Dust connection
+// takes over responsibility for closing socket.
+func BeginClientConnection(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection, err error) {
 	model, err := spub.ReifyModel()
 	if err != nil {
 		log.Error("BeginClient: retrieving model: %v", err)
@@ -128,11 +128,11 @@ func BeginClient(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection
 	return
 }
 
-// BeginServer initiates the server side of a Dust connection using the private key and model parameters
-// specified in spriv.  Dust-level communication will occur in the background over socket, which is usually
-// an accepted TCP connection and must be a stream-oriented I/O channel.  The Dust connection takes over
-// responsibility for closing socket.
-func BeginServer(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connection, err error) {
+// BeginServerConnection initiates the server side of a Dust connection using the private key and model
+// parameters specified in spriv.  Dust-level communication will occur in the background over socket, which is
+// usually an accepted TCP connection and must be a stream-oriented I/O channel.  The Dust connection takes
+// over responsibility for closing socket.
+func BeginServerConnection(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connection, err error) {
 	model, err := spriv.ReifyModel()
 	if err != nil {
 		log.Error("BeginServer: retrieving model: %v", err)

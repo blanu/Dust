@@ -191,7 +191,7 @@ func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
 func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) error {
 	log.Notice("listening for Dusts on %v, will dial plains on %v", listenAddr, dialAddr)
 	eachConn := func(in *net.TCPConn) error {
-		dconn, err := Dust.BeginServer(in, spriv)
+		dconn, err := Dust.BeginServerConnection(in, spriv)
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err
@@ -271,7 +271,7 @@ func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) err
 		// so that there's less risk of dialing visibly and then getting hosed on some other part of
 		// initialization.
 
-		dconn, err := Dust.BeginClient(out, spub)
+		dconn, err := Dust.BeginClientConnection(out, spub)
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err

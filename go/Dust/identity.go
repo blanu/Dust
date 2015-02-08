@@ -12,6 +12,7 @@ const (
 	bridgeParamPublicKey      string = "p"
 	bridgeParamModel          string = "m"
 	bridgeParamOptionalSuffix string = "?"
+	bridgeParamMTU            string = "mtu"
 
 	magicLine = "!!Dust-Server-Private!!"
 )
