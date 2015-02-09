@@ -1,13 +1,3 @@
-/*
-Package Dust implements the main Dust protocol codec for TCP/IP.
-
-At initialization time, use RegisterModel to associate model names with model constructors.
-
-To use this library, use LoadServerPublicBridgeLine or LoadServerPrivateFile to acquire the public or private
-side of a server identifier, respectively.  For each connection desired, use BeginClientConnection or
-BeginServerConnection to establish a new connection, which you may use to exchange streams of datagrams.  Dust
-connections will normally continue running in the background for the duration provided by the model encoder.
-*/
 package Dust
 
 import (
@@ -20,48 +10,38 @@ import (
 	"github.com/blanu/Dust/go/Dust/shaping"
 )
 
+var log = logging.MustGetLogger("Dust")
+
 var (
 	ErrClosed = errors.New("Dust: connection closed")
 )
 
-var log = logging.MustGetLogger("Dust")
-
-// Connection acts mostly as a datagram-oriented I/O channel.  However, closing it does not necessarily close
-// the backing channel, as Dust connections normally have a predetermined duration.  The HardClose method is
-// specified if the backing channel must also be immediately closed for some reason; this should be avoided as
-// it may cause the Dust connection to be more easily detectable by an intermediary.  (TODO: doc variance between
-// this and a "pure" datagram-oriented I/O channel)
-type Connection interface {
+// Socket provides the underlying "visible" transport for a single Dust connection.  Currently, it must be a
+// stream-oriented socket, generally a TCP socket.  It must support having at least one read and one write
+// simultaneously in-flight from different goroutines, and it must support being closed from any goroutine
+// simultaneously with any other operations, which should cause all pending reads and writes to return as soon
+// as possible.
+type Socket interface {
 	io.ReadWriteCloser
-	HardClose() error
 }
 
-type singleConnection struct {
-	socket  io.ReadWriteCloser
+// connection holds the combination of crypting, shaping, and backend socket state for a single underlying
+// Dust connection.  It can be used with different fronts to handle the different modes of the Dust stack.
+type connection struct {
+	socket  Socket
 	crypter *crypting.Session
-	front   *crypting.InvertingFront
+	front   crypting.Front
 	shaper  *shaping.Shaper
 	closed  bool
+
+	enc ShapingEncoder
+	dec ShapingDecoder
+
+	local, remote LinkAddr
 }
 
-func (s *singleConnection) Read(p []byte) (n int, err error) {
-	if s.closed {
-		return 0, ErrClosed
-	}
-
-	return s.front.Read(p)
-}
-
-func (s *singleConnection) Write(p []byte) (n int, err error) {
-	if s.closed {
-		return 0, ErrClosed
-	}
-
-	return s.front.Write(p)
-}
-
-func (s *singleConnection) Close() error {
-	if s.closed {
+func (c *connection) Close() error {
+	if c.closed {
 		return ErrClosed
 	}
 
@@ -69,112 +49,84 @@ func (s *singleConnection) Close() error {
 	// It'll exit when its designated interval elapses.  The crypter already has backpressure relief, so
 	// it'll automatically be draining any further real data frames into the bit bucket (maybe a bit
 	// inefficiently).  The shaper has responsibility for closing the socket too.
-	s.closed = true
+	c.closed = true
 	return nil
 }
 
-func (s *singleConnection) HardClose() error {
-	if s.socket == nil {
+func (c *connection) HardClose() error {
+	if c.socket == nil {
 		return ErrClosed
 	}
 
 	// Make the shaper exit as soon as it can, and close the socket immediately.  Can't do much beyond
 	// that.
-	err := s.socket.Close()
-	s.socket = nil
-	s.shaper.CloseDetach()
-	s.closed = true
+	err := c.socket.Close()
+	c.socket = nil
+	c.shaper.CloseDetach()
+	c.closed = true
 	return err
 }
 
-var defCryptingParams = crypting.Params{
-	MTU: 1500,
+func (c *connection) initAny(front crypting.Front) {
+	c.local = genLinkAddr()
+	c.remote = genLinkAddr()
+	c.front = front
 }
 
-// BeginClientConnection initiates the client side of a Dust connection using the public key and model
-// parameters specified in spub.  Dust-level communication will occur in the background over socket, which is
-// usually the client side of a TCP connection and must be a stream-oriented I/O channel.  The Dust connection
-// takes over responsibility for closing socket.
-func BeginClientConnection(socket io.ReadWriteCloser, spub *ServerPublic) (conn Connection, err error) {
+func (c *connection) initClient(spub *ServerPublic, front crypting.Front) (err error) {
+	c.initAny(front)
+
 	model, err := spub.ReifyModel()
 	if err != nil {
-		log.Error("BeginClient: retrieving model: %v", err)
+		log.Error("initClient: retrieving model: %v", err)
 		return
 	}
 
-	enc, dec, err := model.MakeClientPair()
+	c.enc, c.dec, err = model.MakeClientPair()
 	if err != nil {
-		log.Error("BeginClient: constructing codec: %v", err)
+		log.Error("initClient: constructing codec: %v", err)
 		return
 	}
 
-	front := crypting.NewInvertingFront(spub.cryptingParams)
-	crypter, err := crypting.BeginClient(spub.cryptoPublic(), front, spub.cryptingParams)
+	c.crypter, err = crypting.BeginClient(spub.cryptoPublic(), c.front, spub.cryptingParams)
 	if err != nil {
-		log.Error("BeginClient: starting crypting session: %v", err)
+		log.Error("initClient: starting crypting session: %v", err)
 		return
-	}
-
-	shaper, err := shaping.NewShaper(crypter, socket, dec, socket, enc, socket)
-	if err != nil {
-		log.Error("BeginClient: starting shaper: %v", err)
-		return
-	}
-
-	shaper.Spawn()
-	conn = &singleConnection{
-		socket:  socket,
-		crypter: crypter,
-		front:   front,
-		shaper:  shaper,
 	}
 	return
 }
 
-// BeginServerConnection initiates the server side of a Dust connection using the private key and model
-// parameters specified in spriv.  Dust-level communication will occur in the background over socket, which is
-// usually an accepted TCP connection and must be a stream-oriented I/O channel.  The Dust connection takes
-// over responsibility for closing socket.
-func BeginServerConnection(socket io.ReadWriteCloser, spriv *ServerPrivate) (conn Connection, err error) {
+func (c *connection) initServer(spriv *ServerPrivate, front crypting.Front) (err error) {
+	c.initAny(front)
+
 	model, err := spriv.ReifyModel()
 	if err != nil {
-		log.Error("BeginServer: retrieving model: %v", err)
+		log.Error("initServer: retrieving model: %v", err)
 		return
 	}
 
-	enc, dec, err := model.MakeServerPair()
+	c.enc, c.dec, err = model.MakeServerPair()
 	if err != nil {
-		log.Error("BeginServer: constructing codec: %v", err)
+		log.Error("initServer: constructing codec: %v", err)
 		return
 	}
 
-	front := crypting.NewInvertingFront(spriv.cryptingParams)
-	crypter, err := crypting.BeginServer(spriv.cryptoPrivate(), front, spriv.cryptingParams)
+	c.crypter, err = crypting.BeginServer(spriv.cryptoPrivate(), c.front, spriv.cryptingParams)
 	if err != nil {
-		log.Error("BeginServer: starting crypting session: %v", err)
+		log.Error("initServer: starting crypting session: %v", err)
 		return
 	}
+	return
+}
 
-	shaper, err := shaping.NewShaper(crypter, socket, dec, socket, enc, socket)
+func (c *connection) spawn(socket Socket) (err error) {
+	c.socket = socket
+
+	c.shaper, err = shaping.NewShaper(c.crypter, c.socket, c.dec, c.socket, c.enc, c.socket)
 	if err != nil {
-		log.Error("BeginServer: starting shaper: %v", err)
+		log.Error("Spawn: starting shaper: %v", err)
 		return
 	}
-
-	shaper.LogError = func(e error) {
-		// TODO: filter other errors
-		if e == io.EOF {
-			return
-		}
-		log.Error("shaper exited with %v", e)
-	}
-
-	shaper.Spawn()
-	conn = &singleConnection{
-		socket:  socket,
-		crypter: crypter,
-		front:   front,
-		shaper:  shaper,
-	}
+	c.shaper.Spawn()
 	return
 }

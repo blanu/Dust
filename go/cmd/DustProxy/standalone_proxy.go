@@ -149,10 +149,24 @@ func parseRestrictAddr(relativeTo *net.TCPAddr) error {
 	return nil
 }
 
-func dustProxy(dustSide Dust.Connection, plainSide *net.TCPConn) error {
+func mtuCopy(dst io.Writer, src io.Reader, mtu int) error {
+	log.Info("MTU is %d", mtu)
+	buf := make([]byte, mtu)
+	for {
+		n, err := src.Read(buf)
+		if n > 0 {
+			dst.Write(buf[:n])
+		}
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func dustProxy(dustSide *Dust.RawConn, plainSide *net.TCPConn) error {
 	// TODO: re-add process management here when connection-close is handled more effectively.
 	go io.Copy(plainSide, dustSide)
-	go io.Copy(dustSide, plainSide)
+	go mtuCopy(dustSide, plainSide, dustSide.MTU())
 	return nil
 }
 
@@ -191,7 +205,7 @@ func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
 func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) error {
 	log.Notice("listening for Dusts on %v, will dial plains on %v", listenAddr, dialAddr)
 	eachConn := func(in *net.TCPConn) error {
-		dconn, err := Dust.BeginServerConnection(in, spriv)
+		dconn, err := Dust.BeginRawServer(in, spriv, Dust.RawParams{})
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err
@@ -203,7 +217,7 @@ func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) e
 			return err
 		}
 
-		log.Info("proxying from %v-> to %v->", in.RemoteAddr(), out.LocalAddr())
+		log.Info("proxying {Dust %v->} :: {plain %v->}", in.RemoteAddr(), out.LocalAddr())
 		return dustProxy(dconn, out)
 	}
 
@@ -271,13 +285,13 @@ func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) err
 		// so that there's less risk of dialing visibly and then getting hosed on some other part of
 		// initialization.
 
-		dconn, err := Dust.BeginClientConnection(out, spub)
+		dconn, err := Dust.BeginRawClient(out, spub, Dust.RawParams{})
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err
 		}
 
-		log.Info("proxying from %v-> to %v->", in.RemoteAddr(), out.LocalAddr())
+		log.Info("proxying {plain %v->} :: {Dust %v->}", in.RemoteAddr(), out.LocalAddr())
 		return dustProxy(dconn, in)
 	}
 

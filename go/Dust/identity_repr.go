@@ -32,6 +32,10 @@ var (
 	ErrSyntax           = errors.New("Dust: bad identity record syntax")
 )
 
+var defCryptingParams = crypting.Params{
+	MTU: 1500,
+}
+
 func parseEndpointAddress(addrString string) (*endpointAddress, error) {
 	// Do all the splitting manually, because we really don't want to accidentally take a DNS lookup here.
 	// Unfortunately, there's no net.ParseTCPAddr, only net.ResolveTCPAddr.
