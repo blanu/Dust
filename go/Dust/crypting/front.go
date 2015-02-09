@@ -64,7 +64,7 @@ func (inv *InvertingFront) Write(p []byte) (n int, err error) {
 		}()
 	}
 
-	dgram := buf.CopyNew(p)
+	dgram := p
 	if len(dgram) > inv.MTU {
 		dgram = dgram[:inv.MTU]
 		err = io.ErrShortWrite
