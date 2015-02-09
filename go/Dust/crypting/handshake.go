@@ -89,7 +89,8 @@ func (cs *Session) checkConfirmation() {
 	cs.inHandshake = nil
 	cs.inStreaming = buf.BeginReassembly(cs.MTU + frameOverhead)
 	cs.inPosition = 0
-	cs.outPosition = 0
+	// Do not reset outPosition here; we may already have been streaming on the output side.
+	cs.inFrameStart = 0
 	cs.state = stateStreaming
 	return
 }

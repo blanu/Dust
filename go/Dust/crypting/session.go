@@ -70,13 +70,17 @@ type Session struct {
 	// Set in HandshakeKey state.
 	inConfirmation prim.AuthValue
 
-	// Set in Streaming state.  In other states, inCipher uses a random key.
+	// Set in Streaming state.  In other states, inCipher uses a random key.  inPosition refers to the
+	// position of the MAC for incoming data.
 	inCipher   prim.Cipher
 	inMAC      prim.VerifyingMAC
 	inPosition uint64
 
-	// Data is reassembled into frames here.  The reassembly capacity is the maximum frame wire size.
-	inStreaming buf.Reassembly
+	// Data is reassembled into frames here.  The reassembly capacity is the maximum frame wire size.  The
+	// earliest byte of inStreaming is at inFrameStart of the stream, and this is measured against
+	// inPosition to determine how far the MAC has been advanced.
+	inStreaming  buf.Reassembly
+	inFrameStart uint64
 
 	// Implicitly prepended to any other outgoing data; these bytes are not encrypted before sending.
 	outCrypted buf.Reassembly
@@ -85,6 +89,9 @@ type Session struct {
 	outCipher   prim.Cipher
 	outMAC      prim.GeneratingMAC
 	outPosition uint64
+
+	// Used for advancing the stream cipher when copying MAC bytes; must be exactly one MAC-length long.
+	outGarbage []byte
 }
 
 // Move from any state to the Failed state, setting a bogus session key and destroying any in-progress data.
@@ -110,6 +117,7 @@ func (cs *Session) Init() error {
 	cs.inCipher.SetRandomKey()
 	cs.outCipher.SetRandomKey()
 	cs.outCrypted = buf.BeginReassembly(cs.MTU + 32 + frameOverhead)
+	cs.outGarbage = make([]byte, 32)
 	startingData := cs.localPrivate.Public.Binary()
 	buf.CopyReassemble(&cs.outCrypted, &startingData)
 	cs.inHandshake = buf.BeginReassembly(32)

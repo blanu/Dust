@@ -9,7 +9,6 @@ func (cs *Session) pullZero(p []byte) {
 		p[i] = 0
 	}
 	cs.outCipher.XORKeyStream(p, p)
-	cs.outPosition += uint64(len(p))
 }
 
 func (cs *Session) pullData(p []byte) {
@@ -35,9 +34,10 @@ func (cs *Session) pullData(p []byte) {
 		log.Debug("pull gram")
 		cs.front.PullGram(setDgram)
 		if dgram == nil {
-			log.Debug("no gram")
+			log.Debug("no gram; write %d zeros", len(p))
 			cs.pullZero(p)
 			cs.outMAC.Write(p)
+			cs.outPosition += uint64(len(p))
 			return
 		}
 		log.Debug("gram len %d", len(dgram))
@@ -48,13 +48,17 @@ func (cs *Session) pullData(p []byte) {
 		dgramN := cs.outCrypted.TransformIn(dgram, cs.outCipher.XORKeyStream)
 		cs.outMAC.Write(cs.outCrypted.Data())
 		mac := cs.outMAC.Generate()
-		macN := cs.outCrypted.TransformIn(mac[:], cs.outCipher.XORKeyStream)
+		macN := cs.outCrypted.CopyIn(mac[:])
+		// Advance the key stream by the MAC length even though we weren't XORing it while copying the
+		// MAC.
+		cs.outCipher.XORKeyStream(cs.outGarbage, cs.outGarbage)
 		if !(headerN == len(header) && dgramN == len(dgram) && macN == len(mac)) {
 			panic("Dust/crypting: somehow not enough space in output buffer")
 		}
 
 		cs.outPosition += uint64(headerN + dgramN + macN)
 		cs.outMAC.Reset(cs.outPosition)
+		log.Debug("output MAC reset at %d", cs.outPosition)
 		cs.outCrypted.CopyOut(&p)
 	}
 }

@@ -6,38 +6,74 @@ import (
 	"github.com/blanu/Dust/go/Dust/buf"
 )
 
-func (cs *Session) continueUnframing(plain []byte, beforeCrypt int, crypt []byte) (n int) {
-	// Postcondition: as much of crypt as is relevant has already been fed to inMAC, and
-	// inPosition has been advanced past all of crypt.
+// decodeFrames continues decoding frames.  The earliest byte of inStreaming must be in padding or at the
+// start of a frame.
+func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
+	// Invariant: plain starts at absolute position plainStart.  crypt starts at cryptOffset from plain.
+	plain := cs.inStreaming.Data()
+	plainStart := cs.inFrameStart
+	defer func() {
+		log.Debug("consuming %d bytes", int(plainStart - cs.inFrameStart))
+		cs.inStreaming.Consume(int(plainStart - cs.inFrameStart))
+		cs.inFrameStart = plainStart
+	}()
 
-	advanceMAC := func(subn int) {
-		beforeCrypt -= subn
-		if beforeCrypt < 0 {
-			cs.inPosition += uint64(-beforeCrypt)
-			cs.inMAC.Write(crypt[:-beforeCrypt])
-			crypt = crypt[-beforeCrypt:]
-			beforeCrypt = 0
+	// Ensure the MAC is advanced to at least plainStart+relPos.
+	advanceData := func(relPos int) {
+		log.Debug("advanceData(%d)", relPos)
+		absPos := plainStart + uint64(relPos)
+		if cs.inPosition < absPos {
+			needed := int(absPos - cs.inPosition)
+			if relPos - needed - cryptOffset < 0 {
+				panic("Dust/crypting: somehow lost the bytes we needed for the MAC")
+			}
+
+			cs.inMAC.Write(crypt[relPos-needed-cryptOffset:relPos-cryptOffset])
+			cs.inPosition += uint64(needed)
 		}
 	}
 
-	consume := func(subn int) {
-		plain = plain[subn:]
-		n += subn
+	// Overwrite plaintext bytes with encrypted bytes between relFrom and relTo, assuming that
+	// any bytes earlier than in crypt were already so overwritten.  Do not write them to the MAC
+	// or advance the input position.
+	advanceNoCipher := func(relFrom, relTo int) {
+		log.Debug("advanceNoCipher(%d, %d)", relFrom, relTo)
+		if relFrom < cryptOffset {
+			relFrom = cryptOffset
+		}
+		copy(plain[relFrom:relTo], crypt[relFrom-cryptOffset:relTo-cryptOffset])
 	}
 
-	// Loop invariant: crypt[beforeCrypt:] has the same stream position as plain.
+	// Consume n bytes, advancing plain and crypt.
+	consume := func(n int) {
+		log.Debug("consume(%d)", n)
+		plain = plain[n:]
+		if len(plain) >= 2 {
+			log.Debug("plain starts with %v", plain[:2])
+		}
+		plainStart += uint64(n)
+		cryptOffset -= n
+		if cryptOffset < 0 {
+			crypt = crypt[-cryptOffset:]
+			cryptOffset = 0
+		}
+	}
+	
+	// Postcondition: as much of crypt as is relevant has already been fed to inMAC, and
+	// inPosition has been advanced past all of crypt.
+
 	for len(plain) > 0 {
-		log.Debug("have %d plains, %d+%d crypts", len(plain), beforeCrypt, len(crypt))
+		log.Debug("have %d plains, %d+%d crypts", len(plain), cryptOffset, len(crypt))
 		if plain[0] == 0 {
 			k := 1
 			for k < len(plain) && plain[k] == 0 {
 				k++
 			}
-			advanceMAC(k)
+			advanceData(k)
 			consume(k)
 		} else if len(plain) < 2 {
-			advanceMAC(len(plain))
-			break
+			advanceData(len(plain))
+			return
 		} else {
 			tLen := int(uint16(plain[0])<<8 | uint16(plain[1]))
 			dgramLen := tLen - 256
@@ -49,24 +85,24 @@ func (cs *Session) continueUnframing(plain []byte, beforeCrypt int, crypt []byte
 
 			macPos := 2 + dgramLen
 			if len(plain) < macPos {
-				advanceMAC(len(plain))
+				advanceData(len(plain))
 				return
 			}
 
 			dgramPlain := plain[2:macPos]
-			advanceMAC(macPos)
+			advanceData(macPos)
 			// TODO: MAC length constant
 			endPos := macPos + 32
 			if len(plain) < endPos {
-				// Don't advance the MAC state past the beginning of the authenticator, but do
-				// advance the position.
-				cs.inPosition += uint64(len(plain) - macPos)
+				advanceNoCipher(macPos, len(plain))
 				return
 			}
 
+			advanceNoCipher(macPos, endPos)
 			authenticated := cs.inMAC.Verify(plain[macPos:endPos])
 			cs.inPosition += 32
 			cs.inMAC.Reset(cs.inPosition)
+			log.Debug("input MAC reset at %d", cs.inPosition)
 			if !authenticated {
 				log.Error("datagram failed authentication")
 				cs.fail()
@@ -74,19 +110,9 @@ func (cs *Session) continueUnframing(plain []byte, beforeCrypt int, crypt []byte
 			}
 
 			cs.front.PushGram(dgramPlain, false)
-
 			consume(endPos)
-			beforeCrypt -= 32
-			if beforeCrypt < 0 {
-				crypt = crypt[-beforeCrypt:]
-				beforeCrypt = 0
-			}
-			if beforeCrypt > 0 {
-				panic("Dust/crypting: somehow lost the encrypted bytes needed for next MAC")
-			}
 		}
 	}
-
 	return
 }
 
@@ -118,11 +144,12 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 				}
 			}
 		} else {
-			p0 := p
-			subn := buf.TransformReassemble(&cs.inStreaming, &p, cs.inCipher.XORKeyStream)
+			subn := cs.inStreaming.TransformIn(p, cs.inCipher.XORKeyStream)
 			n += subn
-			consumed := cs.continueUnframing(cs.inStreaming.Data(), cs.inStreaming.ValidLen()-subn, p0[:subn])
+			consumed := cs.decodeFrames(p[:subn], cs.inStreaming.ValidLen()-subn)
 			cs.inStreaming.Consume(consumed)
+			cs.inFrameStart += uint64(consumed)
+			p = p[subn:]
 		}
 	}
 
