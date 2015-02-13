@@ -1,7 +1,0 @@
-package $packageBase
-
-import (
-  #foreach($model in $models)
-  _ "$packageName/$model"
-  #end
-)
