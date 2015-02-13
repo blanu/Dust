@@ -27,6 +27,27 @@ var clampUint16 = function(n)
   }
 };
 
+// From http://www.protonfish.com/random.shtml
+function rnd_snd() {
+  return (Math.random()*2-1)+(Math.random()*2-1)+(Math.random()*2-1);
+}
+
+// From http://www.protonfish.com/random.shtml
+function randomNormal(mean, stdev) {
+  return Math.round(rnd_snd()*stdev+mean);
+}
+
+function boundedIntegerRandomNormal(mean, stdev, lower, upper)
+{
+  var result=0;
+  while(result<=0)
+  {
+    result=randomNormal(mean, stdev);
+  }
+
+  return Math.round(result);
+}
+
 var $model_type = function()
 {
   /*
@@ -37,10 +58,10 @@ var $model_type = function()
 var $codec_type = function()
 {
   $duration.data
+  $packet_sleep.data
+  $packet_length.data
 
   /*
-  $packet_sleep.decl
-  $packet_length.decl
   $encode.decl
   $decode.decl
   */
@@ -53,7 +74,7 @@ ${model_type}.prototype.computeModel = function()
   /*
   var err error
   result = &$model_type{}
-  $huffman.body
+  ##$huffman.body
   return
   */
 };
@@ -112,23 +133,17 @@ ${codec_type}.prototype.WholeStreamDuration = function()
 
 ${codec_type}.prototype.MaxPacketLength = function()
 {
-  /*
   return 65535
-  */
 };
 
 ${codec_type}.prototype.NextPacketLength = function()
 {
-  /*
-  return $packet_length.expr
-  */
+  return $packet_length.expr;
 };
 
 ${codec_type}.prototype.NextPacketSleep = function()
 {
-  /*
-  return time.Duration($packet_sleep.expr) * time.Millisecond
-  */
+  return $packet_sleep.expr;
 };
 
 ${codec_type}.prototype.ShapeBytes = function(dst, src)

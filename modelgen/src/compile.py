@@ -35,7 +35,7 @@ def convertModel(name, data, lang):
   model['model_type']=name+'Model'
   model['codec_type']=name+'Codec'
   model['duration']=genDuration(data['duration']['dist'], data['duration']['params'], lang)
-  model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'])
+  model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], lang)
   model['packet_sleep']=genITA(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], lang)
   model['huffman']=genHuffman(data['incomingModel']['huffman'])
   model['encode']=genEncoder()
@@ -66,19 +66,27 @@ def genExponential(varname, param, lang):
   else:
     return {}
 
-def genLength(dist, params):
+def genLength(dist, params, lang):
   if dist=='normal':
-    return genNormal("lengthDist", params[0], params[1])
+    return genNormal("lengthDist", params[0], params[1], lang)
   else:
     print('Unknown length dist %s' % dist)
     return None
 
-def genNormal(varname, mu, sigma):
-  return {
-    'decl': "%s dist.Normal" % (varname),
-    'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu, sigma),
-    'expr': "clampUint16(self.%s.Rand())" % (varname)
-  }
+def genNormal(varname, mu, sigma, lang):
+  if lang=='go':
+    return {
+      'decl': "%s dist.Normal" % (varname),
+      'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu, sigma),
+      'expr': "clampUint16(self.%s.Rand())" % (varname)
+    }
+  elif lang=='js':
+    return {
+      'data': "this.%s=[%f, %f]" % (varname, mu, sigma),
+      'expr': "boundedIntegerRandomNormal(this.%s[0], this.%s[1], 1, this.MaxPacketLength())" % (varname, varname)
+    }
+  else:
+    return {}
 
 def genITA(dist, params, lang):
   if dist=='poisson':
