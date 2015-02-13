@@ -1,0 +1,18 @@
+Dust/go contains a compiler for the Dust statistical model specification to Go
+Though the output is a Go library, the compiler is written in Python.
+You therefore need both Go 1.4 and Python 2.7.6 in order to run the compiler.
+
+An important thing to understand is that there is no one single Dust library
+for Go. You use the Dust compiler to generate a custom Dust library for your
+specific models.
+
+Therefore in order to use Dust you must provide your own models.
+Once you have compiled your models you will have a custom Dust library.
+No executable binaries are produced, only a library.
+In order to use this library you will need to integrate it into an application.
+
+This is not proxy software. It is not suitable for use by end users.
+It is a tool for developers to use to create new filtering circumvention tools.
+
+If you would like to use your custom Dust library in an application, please do
+so. If you would like advice on doing this, feel free to contact us.

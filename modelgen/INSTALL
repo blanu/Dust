@@ -1,0 +1,12 @@
+Requirements: Go 1.4, Python 2.7.6, PyYAML
+
+Put your model files in a dedicated directory.
+You cannot build without model files.
+You must provide your own model files!
+
+Run ./build.sh [language] [model-directory] [go-package-path] [corresponding-code-directory]
+
+Example: ./build.sh go ~/foo-models/ foo.example/our_models ~/go/src/foo.example/our_models
+
+For testing with DustProxy with the privmodels option, use the following package path:
+  caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels

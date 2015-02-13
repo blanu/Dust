@@ -1,0 +1,9 @@
+#foreach($model in $models)
+var $model=require("$packageName/${model}.js")
+#end
+
+#foreach($model in $models)
+var ${model}Instance=${model}()
+var ${model}Result=${model}Instance.WholeStreamDuration()
+console.log(${model}Result);
+#end
