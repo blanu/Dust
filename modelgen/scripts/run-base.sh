@@ -1,5 +1,5 @@
 #!/bin/bash
-export PROTOCOL=https
+export PROTOCOL=http
 export DUSTIP=`ifconfig eth0 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}'`
 export DESTINATION=google.com:80
 

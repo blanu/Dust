@@ -1,0 +1,12 @@
+var $packagename=require("./${packagename}.js");
+var instance=new ${packagename}.${packagename}Codec();
+console.log(instance);
+
+var duration=instance.WholeStreamDuration();
+console.log(duration);
+
+var ita=instance.NextPacketSleep();
+console.log(ita);
+
+var len=instance.NextPacketLength();
+console.log(len);

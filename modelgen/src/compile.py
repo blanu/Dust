@@ -28,52 +28,69 @@ def save(data, filename):
   f.write(data)
   f.close()
 
-def convertModel(name, data):
+def convertModel(name, data, lang):
   model={}
   model['packagename']=name
   model['name']=name
   model['model_type']=name+'Model'
   model['codec_type']=name+'Codec'
-  model['duration']=genDuration(data['duration']['dist'], data['duration']['params'])
-  model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'])
-  model['packet_sleep']=genITA(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'])
+  model['duration']=genDuration(data['duration']['dist'], data['duration']['params'], lang)
+  model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], lang)
+  model['packet_sleep']=genITA(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], lang)
   model['huffman']=genHuffman(data['incomingModel']['huffman'])
   model['encode']=genEncoder()
   model['decode']=genDecoder()
 
   return model
 
-def genDuration(dist, params):
+def genDuration(dist, params, lang):
   if dist=='exponential':
-    return genExponential("durationDist", params[0])
+    return genExponential("durationDist", params[0], lang)
   else:
     print('Unknown duration dist %s' % dist)
     return None
 
-def genExponential(varname, param):
-  return {
-    'decl': "%s dist.Exponential" % (varname),
-    'data': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param),
-    'expr': "clampUint16(self.%s.Rand())" % (varname)
-  }
+def genExponential(varname, param, lang):
+  if lang=='go':
+    return {
+      'decl': "%s dist.Exponential" % (varname),
+      'data': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param),
+      'expr': "clampUint16(self.%s.Rand())" % (varname)
+    }
+  elif lang=='js':
+    return {
+      'decl': "this.%s=null;" % (varname),
+      'data': "this.%s=%s;" % (varname, param),
+      'expr': "clampUint16(randomExponential(this.%s))" % (varname)
+    }
+  else:
+    return {}
 
-def genLength(dist, params):
+def genLength(dist, params, lang):
   if dist=='normal':
-    return genNormal("lengthDist", params[0], params[1])
+    return genNormal("lengthDist", params[0], params[1], lang)
   else:
     print('Unknown length dist %s' % dist)
     return None
 
-def genNormal(varname, mu, sigma):
-  return {
-    'decl': "%s dist.Normal" % (varname),
-    'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu, sigma),
-    'expr': "clampUint16(self.%s.Rand())" % (varname)
-  }
+def genNormal(varname, mu, sigma, lang):
+  if lang=='go':
+    return {
+      'decl': "%s dist.Normal" % (varname),
+      'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu, sigma),
+      'expr': "clampUint16(self.%s.Rand())" % (varname)
+    }
+  elif lang=='js':
+    return {
+      'data': "this.%s=[%f, %f]" % (varname, mu, sigma),
+      'expr': "boundedIntegerRandomNormal(this.%s[0], this.%s[1], 1, this.MaxPacketLength())" % (varname, varname)
+    }
+  else:
+    return {}
 
-def genITA(dist, params):
+def genITA(dist, params, lang):
   if dist=='poisson':
-    return genExponential("sleepDist", params[0])
+    return genExponential("sleepDist", params[0], lang)
   else:
     print('Unknown flow dist %s' % dist)
     return None
@@ -132,20 +149,31 @@ def packBytes(arr):
     bs[-1]|=arr[i]<<(7-(i%8))
   return bs
 
-templateName='model.go.airspeed'
-testTemplateName='test.go.airspeed'
-loader = CachingFileLoader('templates')
-
 def looksLikeModelFile(name):
   return re.search(r'\.(?:yaml|json)\Z', name)
 
-modelDir=sys.argv[1]
-packageName=sys.argv[2]
-packageDir=sys.argv[3]
+lang=sys.argv[1]
+modelDir=sys.argv[2]
+packageName=sys.argv[3]
+packageDir=sys.argv[4]
 packageBase=packageName.split('/')[-1]
+
+templateName='model.%s.airspeed' % (lang)
+testTemplateName='test.%s.airspeed' % (lang)
+loader = CachingFileLoader('templates')
 
 if not os.path.exists(packageDir):
   os.mkdir(packageDir)
+
+def formatCode(filename, lang):
+  if lang=='go':
+    print("Formatting %s" % (filename))
+    subprocess.call(['gofmt', '-s=true', '-w=true', filename])
+  elif lang=='js':
+    print("Formatting %s" % (filename))
+    subprocess.call(['jshint', '--config', 'lib/jshintrc', filename])
+  else:
+    print('No formatter for %s...' % (lang))
 
 models=filter(looksLikeModelFile, os.listdir(modelDir))
 modelBases=[]
@@ -157,33 +185,34 @@ for modelName in models:
   outputDir=packageDir+'/'+modelBasename
   if not os.path.exists(outputDir):
     os.mkdir(outputDir)
-  outputName=outputDir+'/'+modelBasename+'.go'
-  testOutputName=outputDir+'/'+modelBasename+'_test.go'
+  outputName=outputDir+'/'+modelBasename+'.'+lang
+  testOutputName=outputDir+'/'+modelBasename+'_test.'+lang
 
   model=parse(modelFilename)
-  context=convertModel(modelBasename, model)
+  context=convertModel(modelBasename, model, lang)
 
-  print("Generating %s" % (modelBasename+'.go'))
+  print("Generating %s" % (modelBasename+'.'+lang))
   template = loader.load_template(templateName)
   body=template.merge(context, loader=loader)
   save(body, outputName)
-  print("Formatting %s" % (modelBasename+'.go'))
-  subprocess.call(['gofmt', '-s=true', '-w=true', outputName])
+  print("Formatting %s" % (modelBasename+'.'+lang))
+  formatCode(outputName, lang)
 
-  print("Generating %s" % (modelBasename+'_test.go'))
+  print("Generating test %s" % (modelBasename+'_test.'+lang))
   template = loader.load_template(testTemplateName)
   body=template.merge(context, loader=loader)
   save(body, testOutputName)
-  print("Formatting %s" % (modelBasename+'_test.go'))
-  subprocess.call(['gofmt', '-s=true', '-w=true', testOutputName])
+  print("Formatting test %s" % (modelBasename+'_test.'+lang))
+  formatCode(testOutputName, lang)
 
-context={'models': modelBases, 'packageName': packageName, 'packageBase': packageBase}
-print("Generating models.go")
-template = loader.load_template("models.go.airspeed")
-body=template.merge(context, loader=loader)
-save(body, packageDir+'/'+"models.go")
-print("Formatting models.go")
-subprocess.call(['gofmt', '-s=true', '-w=true', packageDir+'/'+"models.go"])
+if lang=='go':
+  context={'models': modelBases, 'packageName': packageName, 'packageBase': packageBase}
+  print("Generating models.go")
+  template = loader.load_template("models.%s.airspeed" % (lang))
+  body=template.merge(context, loader=loader)
+  save(body, packageDir+'/'+"models."+lang)
+  print("Formatting models."+lang)
+  formatCode(packageDir+'/'+"models.go", lang)
 
 #context={'models': modelBases, 'packageName': packageName, 'packageBase': packageBase}
 #print("Generating models_test.go")

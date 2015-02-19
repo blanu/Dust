@@ -10,6 +10,7 @@ Dust-command/*.json
 Dust-command/*.commands
 Dust-command/*.commands2
 Dust-command/*.py
-go-modelgen/models/generated
-go-modelgen/models/data/http.json
-go-modelgen/models/data/https.json
+modelgen/models/generated
+modelgen/models/data/http.json
+modelgen/models/data/https.json
+modelgen/node_modules

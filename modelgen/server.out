@@ -1,0 +1,1700 @@
+mkdir: cannot create directory ‘/home/brandon/go/src/caolta3iaejox3z4madc5wmp4z.uuid’: File exists
+http.json
+Parsing ../go/models/http.json
+Generating http.go
+Saving /home/brandon/go/src/caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels/http/http.go
+Formatting http.go
+Generating http_test.go
+Saving /home/brandon/go/src/caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels/http/http_test.go
+Formatting http_test.go
+https.json
+Parsing ../go/models/https.json
+Generating https.go
+Saving /home/brandon/go/src/caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels/https/https.go
+Formatting https.go
+Generating https_test.go
+Saving /home/brandon/go/src/caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels/https/https_test.go
+Formatting https_test.go
+Generating models.go
+Saving /home/brandon/go/src/caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels/models.go
+Formatting models.go
+~/go/src/github.com/blanu/Dust/go/cmd/DustTool ~/Dust/go-modelgen
+~/Dust/go-modelgen
+~/go/src/github.com/blanu/Dust/go/cmd/DustProxy ~/Dust/go-modelgen
+~/Dust/go-modelgen
+Launching 166.78.129.122 p=MAAZZD5FWKL3LLJ6IFQWBYI4PWE4I7WRGHMLONTM7K6WRCOE3ZJA
+DustProxy:   NOTICE DustProxy            | listening for Dusts on 166.78.129.122:16667, will dial plains on 127.0.0.1:80
+DustProxy:     INFO DustProxy            | proxying from 99.55.143.22:62193-> to 127.0.0.1:34376->
+DustProxy:    DEBUG Dust/shaper          | -> expected total duration: 10s
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 134 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 134 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- received ephemeral key
+DustProxy:    DEBUG Dust/crypting        | -> send confirmation starting with [11 73 46 86]
+DustProxy:    DEBUG Dust/crypting        |   <- want confirmation starting with [203 172 17 54]
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/crypting        | -> pulling 400 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 336 reqd, actual wire size 336
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 135 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 193 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 194 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 194 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 212 from 72 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 588 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 588 reqd, actual wire size 588
+DustProxy:    DEBUG Dust/shaper          | -> shaped 588 from 201 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 272 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 272 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- entering streaming state
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 114, auth true, data true
+DustProxy:    DEBUG Dust/crypting        |   <- delivered
+DustProxy:    DEBUG Dust/crypting        |   <- 79 plain bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 348 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 348 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 348 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 117 from 39 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 83 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 83 reqd, actual wire size 83
+DustProxy:    DEBUG Dust/shaper          | -> shaped 83 from 29 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 69 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 69 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 426, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 148 from 54 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 252 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 252 reqd, actual wire size 252
+DustProxy:    DEBUG Dust/shaper          | -> shaped 252 from 89 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 142 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 142 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 83, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 475 from 163 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 125 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 125 reqd, actual wire size 125
+DustProxy:    DEBUG Dust/shaper          | -> shaped 125 from 42 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 206 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 206 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 252, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 251 from 83 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 549 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 549 reqd, actual wire size 549
+DustProxy:    DEBUG Dust/shaper          | -> shaped 549 from 176 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 259 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 259 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 125, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 334 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 333 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 333 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 116 from 39 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 84 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 84 reqd, actual wire size 84
+DustProxy:    DEBUG Dust/shaper          | -> shaped 84 from 30 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 159 from 54 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 241 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 241 reqd, actual wire size 241
+DustProxy:    DEBUG Dust/shaper          | -> shaped 241 from 84 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 463 from 157 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 137 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 137 reqd, actual wire size 137
+DustProxy:    DEBUG Dust/shaper          | -> shaped 137 from 44 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 251 from 93 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 549 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 549 reqd, actual wire size 549
+DustProxy:    DEBUG Dust/shaper          | -> shaped 549 from 194 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 333 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 68 from 22 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 132 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 132 reqd, actual wire size 132
+DustProxy:    DEBUG Dust/shaper          | -> shaped 132 from 43 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 261 from 89 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 139 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 139 reqd, actual wire size 139
+DustProxy:    DEBUG Dust/shaper          | -> shaped 139 from 48 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 268 from 91 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 332 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 332 reqd, actual wire size 332
+DustProxy:    DEBUG Dust/shaper          | -> shaped 332 from 109 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 699 from 223 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 101 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 101 reqd, actual wire size 101
+DustProxy:    DEBUG Dust/shaper          | -> shaped 101 from 35 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 205 from 66 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 795 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 795 reqd, actual wire size 795
+DustProxy:    DEBUG Dust/shaper          | -> shaped 795 from 271 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 353 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 353 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 549, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 84, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 357 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 357 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 241, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 137, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 342 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 342 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 549, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 179 from 528 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 179 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 132, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 62 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 335 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 335 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 139, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 138 from 424 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 138 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 332, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 321 from 952 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 321 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 101, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 62 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 62 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 130 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 131 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 131 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 211 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 210 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 210 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 367 from 121 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 433 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 433 reqd, actual wire size 433
+DustProxy:    DEBUG Dust/shaper          | -> shaped 433 from 138 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 260 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 260 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 795, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 876 from 295 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 124 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 124 reqd, actual wire size 124
+DustProxy:    DEBUG Dust/shaper          | -> shaped 124 from 45 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 340 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 340 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 433, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 65 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 64 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 64 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 41 from 14 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 359 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 359 reqd, actual wire size 359
+DustProxy:    DEBUG Dust/shaper          | -> shaped 359 from 120 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 134 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 134 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 124, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 204 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 113 from 35 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 687 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 687 reqd, actual wire size 687
+DustProxy:    DEBUG Dust/shaper          | -> shaped 687 from 218 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 204 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 204 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 326 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 253 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 253 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 359, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 326 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 326 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 69 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 223 from 74 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 177 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 177 reqd, actual wire size 177
+DustProxy:    DEBUG Dust/shaper          | -> shaped 177 from 58 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 357 from 119 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 243 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 243 reqd, actual wire size 243
+DustProxy:    DEBUG Dust/shaper          | -> shaped 243 from 82 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 513 from 161 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 287 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 287 reqd, actual wire size 287
+DustProxy:    DEBUG Dust/shaper          | -> shaped 287 from 98 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 565 from 189 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 435 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 435 reqd, actual wire size 435
+DustProxy:    DEBUG Dust/shaper          | -> shaped 435 from 152 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 66 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 128 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 288 from 89 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 312 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 312 reqd, actual wire size 312
+DustProxy:    DEBUG Dust/shaper          | -> shaped 312 from 97 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 642 from 215 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 158 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 158 reqd, actual wire size 158
+DustProxy:    DEBUG Dust/shaper          | -> shaped 158 from 51 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 319 from 107 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 681 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 681 reqd, actual wire size 681
+DustProxy:    DEBUG Dust/shaper          | -> shaped 681 from 225 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 70 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 343 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 343 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 687, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 177, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 335 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 335 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 243, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 348 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 348 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 287, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 325 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 325 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 435, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 338 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 338 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 312, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 292 from 880 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 292 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 158, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 70 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 70 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 130 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 203 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 129 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 129 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 148 from 53 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 652 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 652 reqd, actual wire size 652
+DustProxy:    DEBUG Dust/shaper          | -> shaped 652 from 205 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 204 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 204 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 368 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 257 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 257 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 681, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 70 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 29 from 9 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 371 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 371 reqd, actual wire size 371
+DustProxy:    DEBUG Dust/shaper          | -> shaped 371 from 124 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 192 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 174 from 55 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 626 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 626 reqd, actual wire size 626
+DustProxy:    DEBUG Dust/shaper          | -> shaped 626 from 208 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 317 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 68 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 101 from 33 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 299 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 299 reqd, actual wire size 299
+DustProxy:    DEBUG Dust/shaper          | -> shaped 299 from 103 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 194 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 6 from 2 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 794 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 794 reqd, actual wire size 794
+DustProxy:    DEBUG Dust/shaper          | -> shaped 794 from 289 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 330 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 377 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 377 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 339 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 339 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 652, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 334 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 334 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 371, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 326 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 326 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 340 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 340 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 626, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 317 from 880 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 317 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 299, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 65 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 330 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 330 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 333 from 110 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 67 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 67 reqd, actual wire size 67
+DustProxy:    DEBUG Dust/shaper          | -> shaped 67 from 24 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 128 from 43 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 472 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 472 reqd, actual wire size 472
+DustProxy:    DEBUG Dust/shaper          | -> shaped 472 from 167 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 64 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 64 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 800 from 266 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 134 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 134 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 794, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 126 from 39 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 874 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 874 reqd, actual wire size 874
+DustProxy:    DEBUG Dust/shaper          | -> shaped 874 from 289 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 69 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 134 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 201 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 508 from 181 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 292 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 292 reqd, actual wire size 292
+DustProxy:    DEBUG Dust/shaper          | -> shaped 292 from 102 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 525 from 190 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 475 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 475 reqd, actual wire size 475
+DustProxy:    DEBUG Dust/shaper          | -> shaped 475 from 170 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 63 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 125 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 352 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 352 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 67, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 336 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 336 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 472, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 345 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 345 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 176 from 528 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 176 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 282 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 282 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 874, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 351 from 117 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 249 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 249 reqd, actual wire size 249
+DustProxy:    DEBUG Dust/shaper          | -> shaped 249 from 82 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 252 from 696 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 252 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 292, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 171 from 504 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 171 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 126 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 126 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 521 from 167 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 279 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 279 reqd, actual wire size 279
+DustProxy:    DEBUG Dust/shaper          | -> shaped 279 from 94 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 198 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 198 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 475, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 579 from 185 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 421 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 421 reqd, actual wire size 421
+DustProxy:    DEBUG Dust/shaper          | -> shaped 421 from 150 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 64 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 262 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 262 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 249, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 130 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 231 from 77 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 369 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 369 reqd, actual wire size 369
+DustProxy:    DEBUG Dust/shaper          | -> shaped 369 from 123 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 335 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 335 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 279, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 64 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 64 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 706 from 246 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 94 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 94 reqd, actual wire size 94
+DustProxy:    DEBUG Dust/shaper          | -> shaped 94 from 29 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 129 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 129 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 191 from 65 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 809 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 809 reqd, actual wire size 809
+DustProxy:    DEBUG Dust/shaper          | -> shaped 809 from 295 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 201 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 201 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 421, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 67 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 274 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 274 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 369, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 360 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 360 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 94, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 131 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 198 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 67 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 67 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 345 from 118 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 455 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 455 reqd, actual wire size 455
+DustProxy:    DEBUG Dust/shaper          | -> shaped 455 from 145 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 911 from 310 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 89 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 89 reqd, actual wire size 89
+DustProxy:    DEBUG Dust/shaper          | -> shaped 89 from 32 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 132 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 132 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 158 from 57 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 42 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 42 reqd, actual wire size 42
+DustProxy:    DEBUG Dust/shaper          | -> shaped 42 from 14 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 198 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 198 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 262 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 262 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 809, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 88 from 28 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 312 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 312 reqd, actual wire size 312
+DustProxy:    DEBUG Dust/shaper          | -> shaped 312 from 108 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 342 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 342 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 455, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 597 from 204 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 3 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 3 reqd, actual wire size 35
+DustProxy:    DEBUG Dust/shaper          | -> shaped 3 from 1 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 72 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 72 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 89, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 6 from 2 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 794 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 762 reqd, actual wire size 762
+DustProxy:    DEBUG Dust/shaper          | -> shaped 794 from 273 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 135 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 135 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 42, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 352 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 63 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 206 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 206 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 312, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 314 from 106 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 86 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 86 reqd, actual wire size 86
+DustProxy:    DEBUG Dust/shaper          | -> shaped 86 from 30 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 275 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 275 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 35, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 177 from 56 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 423 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 423 reqd, actual wire size 423
+DustProxy:    DEBUG Dust/shaper          | -> shaped 423 from 140 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 800 from 273 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 30 from 10 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 970 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 970 reqd, actual wire size 970
+DustProxy:    DEBUG Dust/shaper          | -> shaped 970 from 326 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 63 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 138 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 358 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 358 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 337 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 337 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 762, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 86, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 324 from 952 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 324 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 200 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 337 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 337 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 423, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 759 from 243 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 41 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 41 reqd, actual wire size 41
+DustProxy:    DEBUG Dust/shaper          | -> shaped 41 from 13 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 80 from 28 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 920 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 920 reqd, actual wire size 920
+DustProxy:    DEBUG Dust/shaper          | -> shaped 920 from 309 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 63 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 63 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 138 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 138 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 65 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 200 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 200 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 131 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 256 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 256 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 970, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 337 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 337 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 41, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 198 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 658 from 217 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 142 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 142 reqd, actual wire size 142
+DustProxy:    DEBUG Dust/shaper          | -> shaped 142 from 48 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 65 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 65 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 271 from 94 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 729 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 729 reqd, actual wire size 729
+DustProxy:    DEBUG Dust/shaper          | -> shaped 729 from 225 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 130 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 130 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 66 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 132 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 199 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 199 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 192 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 265 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 265 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 920, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 318 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 318 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 142, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 358 from 114 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 442 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 442 reqd, actual wire size 442
+DustProxy:    DEBUG Dust/shaper          | -> shaped 442 from 152 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 67 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 67 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 131 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 131 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 806 from 290 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 194 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 194 reqd, actual wire size 194
+DustProxy:    DEBUG Dust/shaper          | -> shaped 194 from 66 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 64 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 192 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 192 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 197 from 64 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 203 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 203 reqd, actual wire size 203
+DustProxy:    DEBUG Dust/shaper          | -> shaped 203 from 68 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 427 from 135 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 173 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 173 reqd, actual wire size 173
+DustProxy:    DEBUG Dust/shaper          | -> shaped 173 from 62 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 267 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 267 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 729, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 321 from 111 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 479 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 479 reqd, actual wire size 479
+DustProxy:    DEBUG Dust/shaper          | -> shaped 479 from 165 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 926 from 314 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 74 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 74 reqd, actual wire size 74
+DustProxy:    DEBUG Dust/shaper          | -> shaped 74 from 24 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 154 from 50 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 46 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 46 reqd, actual wire size 46
+DustProxy:    DEBUG Dust/shaper          | -> shaped 46 from 17 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 84 from 29 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 316 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 316 reqd, actual wire size 316
+DustProxy:    DEBUG Dust/shaper          | -> shaped 316 from 110 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 363 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 363 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 442, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 331 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 331 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 194, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 203, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 54 from 152 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 54 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 276 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 276 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 173, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 596 from 206 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 4 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 4 reqd, actual wire size 35
+DustProxy:    DEBUG Dust/shaper          | -> shaped 4 from 1 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 338 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 338 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 479, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 7 from 3 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 793 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 762 reqd, actual wire size 762
+DustProxy:    DEBUG Dust/shaper          | -> shaped 793 from 279 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 316 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 67 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 67 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 74, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 65 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 139 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 139 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 46, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 127 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 208 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 208 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 316, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 281 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 281 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 35, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 20 from 6 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 580 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 580 reqd, actual wire size 580
+DustProxy:    DEBUG Dust/shaper          | -> shaped 580 from 191 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 317 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 317 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 800 from 275 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 369 from 114 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 631 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 631 reqd, actual wire size 631
+DustProxy:    DEBUG Dust/shaper          | -> shaped 631 from 205 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 65 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 65 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 68 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 126 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 126 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 144 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 198 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 198 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 762, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 598 from 214 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 2 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 2 reqd, actual wire size 35
+DustProxy:    DEBUG Dust/shaper          | -> shaped 2 from 1 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 5 from 1 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 795 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 762 reqd, actual wire size 762
+DustProxy:    DEBUG Dust/shaper          | -> shaped 795 from 266 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 274 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 274 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 319 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 319 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 580, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 336 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 69 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 69 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 144 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 144 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 67 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 396 from 126 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 4 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 4 reqd, actual wire size 35
+DustProxy:    DEBUG Dust/shaper          | -> shaped 4 from 2 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 214 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 214 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 631, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 6 from 2 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 594 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 563 reqd, actual wire size 563
+DustProxy:    DEBUG Dust/shaper          | -> shaped 594 from 207 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 267 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 267 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 35, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 800 from 244 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 395 from 143 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 605 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 605 reqd, actual wire size 605
+DustProxy:    DEBUG Dust/shaper          | -> shaped 605 from 218 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 336 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 336 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 62 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 135 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 584 from 190 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 16 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 16 reqd, actual wire size 35
+DustProxy:    DEBUG Dust/shaper          | -> shaped 16 from 6 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 32 from 10 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 768 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 749 reqd, actual wire size 749
+DustProxy:    DEBUG Dust/shaper          | -> shaped 768 from 290 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 343 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 343 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 762, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 35, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 306 from 976 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 306 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 360 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 360 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 563, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 333 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 67 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 62 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 62 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 234 from 78 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 166 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 166 reqd, actual wire size 166
+DustProxy:    DEBUG Dust/shaper          | -> shaped 166 from 55 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 136 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 136 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 327 from 111 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 273 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 273 reqd, actual wire size 273
+DustProxy:    DEBUG Dust/shaper          | -> shaped 273 from 93 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 195 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 195 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 605, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 542 from 180 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 258 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 258 reqd, actual wire size 258
+DustProxy:    DEBUG Dust/shaper          | -> shaped 258 from 90 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 300 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 300 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 35, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 333 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 333 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 539 from 168 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 461 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 461 reqd, actual wire size 461
+DustProxy:    DEBUG Dust/shaper          | -> shaped 461 from 155 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 67 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 67 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 60 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 134 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 134 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 749, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 128 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 361 from 118 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 239 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 239 reqd, actual wire size 239
+DustProxy:    DEBUG Dust/shaper          | -> shaped 239 from 75 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 204 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 204 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 166, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 524 from 164 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 276 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 276 reqd, actual wire size 276
+DustProxy:    DEBUG Dust/shaper          | -> shaped 276 from 85 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 270 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 270 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 273, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 592 from 191 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 408 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 408 reqd, actual wire size 408
+DustProxy:    DEBUG Dust/shaper          | -> shaped 408 from 140 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 322 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 322 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 258, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 69 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 61 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 61 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 128 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 128 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 134 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 192 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 192 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 461, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 65 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 400 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 400 reqd, actual wire size 400
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 135 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 777 from 265 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 23 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 23 reqd, actual wire size 35
+DustProxy:    DEBUG Dust/shaper          | -> shaped 23 from 8 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 250 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 250 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 239, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 43 from 15 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 957 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 945 reqd, actual wire size 945
+DustProxy:    DEBUG Dust/shaper          | -> shaped 957 from 352 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 331 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 331 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 276, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 72 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 69 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 69 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 142 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 203 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 577 from 188 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 223 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 223 reqd, actual wire size 223
+DustProxy:    DEBUG Dust/shaper          | -> shaped 223 from 75 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 452 from 148 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 548 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 548 reqd, actual wire size 548
+DustProxy:    DEBUG Dust/shaper          | -> shaped 548 from 176 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 74 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 342 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 342 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 408, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 354 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 354 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 400, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 35, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 278 from 752 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 278 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 72 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 72 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 132 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 142 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 142 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 493 from 166 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 107 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 107 reqd, actual wire size 107
+DustProxy:    DEBUG Dust/shaper          | -> shaped 107 from 35 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 202 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 202 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 218 from 72 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 582 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 582 reqd, actual wire size 582
+DustProxy:    DEBUG Dust/shaper          | -> shaped 582 from 182 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 355 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 129 from 45 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 71 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 71 reqd, actual wire size 71
+DustProxy:    DEBUG Dust/shaper          | -> shaped 71 from 24 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 142 from 47 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 258 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 258 reqd, actual wire size 258
+DustProxy:    DEBUG Dust/shaper          | -> shaped 258 from 89 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 485 from 169 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 115 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 115 reqd, actual wire size 115
+DustProxy:    DEBUG Dust/shaper          | -> shaped 115 from 36 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 337 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 337 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 945, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 341 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 341 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 223, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 116 from 352 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 116 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 201 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 201 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 548, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 247 from 79 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 553 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 553 reqd, actual wire size 553
+DustProxy:    DEBUG Dust/shaper          | -> shaped 553 from 185 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 326 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 254 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 254 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 107, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 116 from 42 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 84 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 84 reqd, actual wire size 84
+DustProxy:    DEBUG Dust/shaper          | -> shaped 84 from 32 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 355 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 355 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 155 from 52 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 245 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 245 reqd, actual wire size 245
+DustProxy:    DEBUG Dust/shaper          | -> shaped 245 from 80 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 486 from 165 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 114 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 114 reqd, actual wire size 114
+DustProxy:    DEBUG Dust/shaper          | -> shaped 114 from 36 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 231 from 78 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 569 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 569 reqd, actual wire size 569
+DustProxy:    DEBUG Dust/shaper          | -> shaped 569 from 186 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 330 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 175 from 53 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 25 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 25 reqd, actual wire size 35
+DustProxy:    DEBUG Dust/shaper          | -> shaped 25 from 8 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 352 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 352 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 582, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 71, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 321 from 976 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 321 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 258, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 115, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 50 from 17 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 350 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 340 reqd, actual wire size 340
+DustProxy:    DEBUG Dust/shaper          | -> shaped 350 from 115 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 200 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 95 from 35 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 705 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 705 reqd, actual wire size 705
+DustProxy:    DEBUG Dust/shaper          | -> shaped 705 from 254 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 336 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 336 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 197 from 576 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 197 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 553, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 84, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 201 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 201 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 245, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 264 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 264 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 114, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 329 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 329 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 329 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 70 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 62 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 62 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 569, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 155 from 52 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 245 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 245 reqd, actual wire size 245
+DustProxy:    DEBUG Dust/shaper          | -> shaped 245 from 80 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 510 from 165 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 90 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 90 reqd, actual wire size 90
+DustProxy:    DEBUG Dust/shaper          | -> shaped 90 from 30 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 131 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 131 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 35, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 184 from 60 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 616 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 616 reqd, actual wire size 616
+DustProxy:    DEBUG Dust/shaper          | -> shaped 616 from 217 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 201 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 201 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 359 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 288 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 288 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 340, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 118 from 40 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 82 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 82 reqd, actual wire size 82
+DustProxy:    DEBUG Dust/shaper          | -> shaped 82 from 29 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 170 from 53 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 230 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 230 reqd, actual wire size 230
+DustProxy:    DEBUG Dust/shaper          | -> shaped 230 from 77 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 457 from 153 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 143 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 143 reqd, actual wire size 143
+DustProxy:    DEBUG Dust/shaper          | -> shaped 143 from 49 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 291 from 94 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 509 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 509 reqd, actual wire size 509
+DustProxy:    DEBUG Dust/shaper          | -> shaped 509 from 171 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 314 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 338 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 338 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 339 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 339 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 705, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 49 from 152 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 49 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 245, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 277 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 277 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 90, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 67 from 24 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 133 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 133 reqd, actual wire size 133
+DustProxy:    DEBUG Dust/shaper          | -> shaped 133 from 49 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 359 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 359 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 246 from 84 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 154 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 154 reqd, actual wire size 154
+DustProxy:    DEBUG Dust/shaper          | -> shaped 154 from 55 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 69 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 69 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 616, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 299 from 99 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 301 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 301 reqd, actual wire size 301
+DustProxy:    DEBUG Dust/shaper          | -> shaped 301 from 104 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 131 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 131 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 82, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 570 from 197 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 230 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 230 reqd, actual wire size 230
+DustProxy:    DEBUG Dust/shaper          | -> shaped 230 from 74 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 201 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 201 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 230, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 494 from 156 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 506 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 506 reqd, actual wire size 506
+DustProxy:    DEBUG Dust/shaper          | -> shaped 506 from 167 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 266 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 266 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 143, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 64 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 313 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 313 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 140 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 74 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 74 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 509, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 135 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 200 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 200 reqd, actual wire size 200
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 73 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 139 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 139 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 133, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 375 from 127 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 425 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 425 reqd, actual wire size 425
+DustProxy:    DEBUG Dust/shaper          | -> shaped 425 from 139 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 203 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 203 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 154, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 841 from 286 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 159 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 159 reqd, actual wire size 159
+DustProxy:    DEBUG Dust/shaper          | -> shaped 159 from 51 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 271 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 271 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 301, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 65 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 136 from 43 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 264 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 264 reqd, actual wire size 264
+DustProxy:    DEBUG Dust/shaper          | -> shaped 264 from 84 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 323 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 323 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 230, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 64 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 64 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 177 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 10 from 3 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 790 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 790 reqd, actual wire size 790
+DustProxy:    DEBUG Dust/shaper          | -> shaped 790 from 272 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 139 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 139 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 360 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 208 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 208 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 506, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 66 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 267 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 267 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 200, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 268 from 92 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 132 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 132 reqd, actual wire size 132
+DustProxy:    DEBUG Dust/shaper          | -> shaped 132 from 46 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 336 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 336 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 425, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 255 from 86 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 345 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 345 reqd, actual wire size 345
+DustProxy:    DEBUG Dust/shaper          | -> shaped 345 from 129 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 66 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 66 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 656 from 216 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 144 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 144 reqd, actual wire size 144
+DustProxy:    DEBUG Dust/shaper          | -> shaped 144 from 51 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 126 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 126 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 159, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 272 from 93 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 728 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 728 reqd, actual wire size 728
+DustProxy:    DEBUG Dust/shaper          | -> shaped 728 from 245 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 177 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 177 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 69 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 276 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 276 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 264, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 127 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 360 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 360 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 203 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 65 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 65 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 230 from 84 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 570 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 570 reqd, actual wire size 570
+DustProxy:    DEBUG Dust/shaper          | -> shaped 570 from 195 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 138 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 138 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 790, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 334 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 124 from 41 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 76 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 76 reqd, actual wire size 76
+DustProxy:    DEBUG Dust/shaper          | -> shaped 76 from 27 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 355 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 355 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 132, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 128 from 376 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 128 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 345, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 149 from 49 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 251 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 251 reqd, actual wire size 251
+DustProxy:    DEBUG Dust/shaper          | -> shaped 251 from 85 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 338 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 338 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 144, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 500 from 166 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 100 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 100 reqd, actual wire size 100
+DustProxy:    DEBUG Dust/shaper          | -> shaped 100 from 36 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 68 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 68 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 191 from 64 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 609 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 609 reqd, actual wire size 609
+DustProxy:    DEBUG Dust/shaper          | -> shaped 609 from 197 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 127 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 127 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 347 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 204 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 204 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 194 from 65 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 6 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 6 reqd, actual wire size 35
+DustProxy:    DEBUG Dust/shaper          | -> shaped 6 from 3 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 279 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 279 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 728, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 12 from 3 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 388 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 359 reqd, actual wire size 359
+DustProxy:    DEBUG Dust/shaper          | -> shaped 388 from 122 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 210 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 333 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 333 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 167 from 56 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 633 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 633 reqd, actual wire size 633
+DustProxy:    DEBUG Dust/shaper          | -> shaped 633 from 220 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 68 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 68 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 570, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 331 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 135 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 135 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 76, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 71 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 201 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 201 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 251, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 262 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 262 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 100, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 33 from 11 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 367 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 367 reqd, actual wire size 367
+DustProxy:    DEBUG Dust/shaper          | -> shaped 367 from 119 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 347 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 347 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 211 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 67 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 67 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 609, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 112 from 37 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 688 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 688 reqd, actual wire size 688
+DustProxy:    DEBUG Dust/shaper          | -> shaped 688 from 210 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 332 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 126 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 126 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 35, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 62 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 209 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 209 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 251 from 84 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 149 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 149 reqd, actual wire size 149
+DustProxy:    DEBUG Dust/shaper          | -> shaped 149 from 50 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 277 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 277 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 359, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 291 from 99 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 309 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 309 reqd, actual wire size 309
+DustProxy:    DEBUG Dust/shaper          | -> shaped 309 from 110 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 331 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 331 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 643 from 199 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 157 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 157 reqd, actual wire size 157
+DustProxy:    DEBUG Dust/shaper          | -> shaped 157 from 50 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 71 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 71 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 129 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 129 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 633, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 342 from 107 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 658 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 658 reqd, actual wire size 658
+DustProxy:    DEBUG Dust/shaper          | -> shaped 658 from 226 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 212 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 212 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 66 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 142 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 201 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 247 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 247 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 367, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 331 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 331 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 71 from 23 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 729 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 729 reqd, actual wire size 729
+DustProxy:    DEBUG Dust/shaper          | -> shaped 729 from 259 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 63 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 63 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 1000 from 330 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 134 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 134 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 688, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 65 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 209 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 209 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 149, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 214 from 75 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 186 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 186 reqd, actual wire size 186
+DustProxy:    DEBUG Dust/shaper          | -> shaped 186 from 66 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 249 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 249 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 309, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 341 from 120 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 259 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 259 reqd, actual wire size 259
+DustProxy:    DEBUG Dust/shaper          | -> shaped 259 from 84 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 333 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 333 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 157, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 477 from 175 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 323 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 323 reqd, actual wire size 323
+DustProxy:    DEBUG Dust/shaper          | -> shaped 323 from 105 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 682 from 218 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 318 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 318 reqd, actual wire size 318
+DustProxy:    DEBUG Dust/shaper          | -> shaped 318 from 101 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 66 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 66 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 68 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 141 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 141 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 202 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 202 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 136 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 281 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 281 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 658, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 39 from 13 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 561 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 561 reqd, actual wire size 561
+DustProxy:    DEBUG Dust/shaper          | -> shaped 561 from 191 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 331 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 331 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 800 from 294 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 65 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 65 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 213 from 76 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 787 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 787 reqd, actual wire size 787
+DustProxy:    DEBUG Dust/shaper          | -> shaped 787 from 293 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 69 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 134 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 202 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 266 from 89 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 534 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 534 reqd, actual wire size 534
+DustProxy:    DEBUG Dust/shaper          | -> shaped 534 from 192 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 984 from 342 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 16 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 16 reqd, actual wire size 35
+DustProxy:    DEBUG Dust/shaper          | -> shaped 16 from 5 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 353 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 353 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 729, auth true, data false
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 186, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 351 from 1024 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 351 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 259, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 307 from 952 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 307 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 323, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 136 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 136 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 34 from 11 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 166 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 147 reqd, actual wire size 147
+DustProxy:    DEBUG Dust/shaper          | -> shaped 166 from 56 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 205 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 205 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 318, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 347 from 110 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 53 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 53 reqd, actual wire size 53
+DustProxy:    DEBUG Dust/shaper          | -> shaped 53 from 18 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 104 from 35 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 496 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 496 reqd, actual wire size 496
+DustProxy:    DEBUG Dust/shaper          | -> shaped 496 from 164 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 293 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 293 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 800 from 259 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 220 from 73 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 780 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 780 reqd, actual wire size 780
+DustProxy:    DEBUG Dust/shaper          | -> shaped 780 from 265 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 369 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 369 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 561, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 70 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 70 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 68 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 133 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 133 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 126 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 203 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 203 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 212 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 281 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 281 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 787, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 318 from 109 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 482 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 482 reqd, actual wire size 482
+DustProxy:    DEBUG Dust/shaper          | -> shaped 482 from 159 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 347 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 347 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 534, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 948 from 323 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 52 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 52 reqd, actual wire size 52
+DustProxy:    DEBUG Dust/shaper          | -> shaped 52 from 18 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 96 from 34 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 104 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 104 reqd, actual wire size 104
+DustProxy:    DEBUG Dust/shaper          | -> shaped 104 from 38 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 66 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 66 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 35, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 193 from 66 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 207 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 207 reqd, actual wire size 207
+DustProxy:    DEBUG Dust/shaper          | -> shaped 207 from 73 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 128 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 128 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 147, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 378 from 134 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 222 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 222 reqd, actual wire size 222
+DustProxy:    DEBUG Dust/shaper          | -> shaped 222 from 71 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 199 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 199 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 53, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 438 from 151 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 362 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 362 reqd, actual wire size 362
+DustProxy:    DEBUG Dust/shaper          | -> shaped 362 from 118 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 259 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 259 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 339 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 339 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 496, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 719 from 244 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 281 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 281 reqd, actual wire size 281
+DustProxy:    DEBUG Dust/shaper          | -> shaped 281 from 91 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 68 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 68 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 76 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 125 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 125 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 325 from 114 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 75 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 75 reqd, actual wire size 75
+DustProxy:    DEBUG Dust/shaper          | -> shaped 75 from 25 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 151 from 50 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 449 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 449 reqd, actual wire size 449
+DustProxy:    DEBUG Dust/shaper          | -> shaped 449 from 146 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 212 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 212 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 800 from 272 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 93 from 31 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 907 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 907 reqd, actual wire size 907
+DustProxy:    DEBUG Dust/shaper          | -> shaped 907 from 303 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 269 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 269 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 780, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 341 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 341 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 482, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 67 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 72 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 72 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 52, auth true, data false
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 138 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 138 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 104, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 50ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 124 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 206 from 600 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 206 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 207, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 20ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 200 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 25ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 613 from 213 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 187 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 187 reqd, actual wire size 187
+DustProxy:    DEBUG Dust/shaper          | -> shaped 187 from 65 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 268 from 800 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 268 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 222, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 30ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 371 from 122 bytes
+DustProxy:    DEBUG Dust/crypting        | -> pulling 629 bytes
+DustProxy:    DEBUG Dust/crypting        | padding of size 629 reqd, actual wire size 629
+DustProxy:    DEBUG Dust/shaper          | -> shaped 629 from 198 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 336 from 1000 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 336 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 362, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 35ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 200 from 66 bytes
+DustProxy:    DEBUG Dust/shaper          | -> waiting 40ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 400 from 134 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 76 from 200 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 76 bytes
+DustProxy:    DEBUG Dust/shaper          |   <- unshaped 138 from 400 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- pushing 138 bytes
+DustProxy:    DEBUG Dust/crypting        |   <- frame of wire size 281, auth true, data false
+DustProxy:    DEBUG Dust/shaper          | -> waiting 45ms
+DustProxy:    DEBUG Dust/shaper          | -> shaped 600 from 192 bytes
+DustProxy:    DEBUG Dust/shaper          | shaper exiting

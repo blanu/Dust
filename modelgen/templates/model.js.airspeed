@@ -1,0 +1,163 @@
+/*jshint strict:false */
+
+var randomExponential = function(rate) {
+  // From https://gist.github.com/nicolashery/5885280
+  // Derived from http://en.wikipedia.org/wiki/Exponential_distribution#Generating_exponential_variates
+  rate = rate || 1;
+
+  var U = Math.random();
+
+  return -Math.log(U)/rate;
+};
+
+var clampUint16 = function(n)
+{
+  // Use positive test for in-range to handle NaN properly, just in case.
+  if(0.0 <= n && n <= 65535.0)
+  {
+    return n;
+  }
+  else if(65535.0 < n)
+  {
+    return 65535;
+  }
+  else
+  {
+    return 0;
+  }
+};
+
+// From http://www.protonfish.com/random.shtml
+function rnd_snd() {
+  return (Math.random()*2-1)+(Math.random()*2-1)+(Math.random()*2-1);
+}
+
+// From http://www.protonfish.com/random.shtml
+function randomNormal(mean, stdev) {
+  return Math.round(rnd_snd()*stdev+mean);
+}
+
+function boundedIntegerRandomNormal(mean, stdev, lower, upper)
+{
+  var result=0;
+  while(result<=0)
+  {
+    result=randomNormal(mean, stdev);
+  }
+
+  return Math.round(result);
+}
+
+var $model_type = function()
+{
+  /*
+  $huffman.decl
+  */
+};
+
+var $codec_type = function()
+{
+  $duration.data
+  $packet_sleep.data
+  $packet_length.data
+
+  /*
+  $encode.decl
+  $decode.decl
+  */
+
+  return this;
+};
+
+${model_type}.prototype.computeModel = function()
+{
+  /*
+  var err error
+  result = &$model_type{}
+  ##$huffman.body
+  return
+  */
+};
+
+${model_type}.prototype.newCodec = function()
+{
+  /*
+  // TODO: is this the best choice of source to use?
+  prng := csrand.Rand
+  result = &$codec_type{
+    $duration.data
+    $packet_sleep.data
+    $packet_length.data
+    $encode.data
+    $decode.data}
+  return
+  */
+};
+
+${model_type}.prototype.MakeClientPair = function()
+{
+  /*
+  codec, err := model.newCodec()
+  return codec, codec, err
+  */
+};
+
+${model_type}.prototype.MakeServerPair=function()
+{
+  /*
+  codec, err := model.newCodec()
+  return codec, codec, err
+  */
+};
+
+var init = function()
+{
+  /*
+  model := computeModel()
+  constructor := func(params map[string]string) (Dust.ShapingModel, error) {
+    if err := Dust.CheckUnackedParams(params, nil); err != nil {
+      return nil, err
+    }
+
+    return model, nil
+  }
+
+  Dust.RegisterModel("$name", constructor)
+  */
+};
+
+${codec_type}.prototype.WholeStreamDuration = function()
+{
+  return $duration.expr;
+};
+
+${codec_type}.prototype.MaxPacketLength = function()
+{
+  return 65535
+};
+
+${codec_type}.prototype.NextPacketLength = function()
+{
+  return $packet_length.expr;
+};
+
+${codec_type}.prototype.NextPacketSleep = function()
+{
+  return $packet_sleep.expr;
+};
+
+${codec_type}.prototype.ShapeBytes = function(dst, src)
+{
+  /*
+  $decode.body
+  */
+};
+
+${codec_type}.prototype.UnshapeBytes = function(dst, src)
+{
+  /*
+  $encode.body
+  */
+};
+
+exports.$codec_type=$codec_type;
