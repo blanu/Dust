@@ -44,14 +44,19 @@ type groupedConnection struct {
 
 	// Incoming datagrams are delivered to the funnel inAnyGrams.  Outgoing datagrams come from any
 	// combination of the shared channel outAnyGrams and the connection-specific funnel outExactGrams.
-	// inAnyGrams and outAnyGrams are set by the connection group when adding the connection.
-	inAnyGrams, outAnyGrams chan addressedGram
-	outExactGrams           chan addressedGram
+	// All of these are set by the connection group when adding the connection.
+	inAnyGrams    chan addressedGram
+	outAnyGrams   chan addressedGram
+	outExactGrams chan addressedGram
 
 	// sigStart is triggered after the groupedConnection is fully added to the group, all the channel
 	// values above are prepared, and any connection-specific processes can begin using the
 	// groupedConnection as a crypting.Front.
 	sigStart chan struct{}
+
+	// graveChan is where the groupedConnection sends itself when it's closed.  The group couples this to
+	// the group's shared deadConns chan when adding the connection.
+	graveChan chan *groupedConnection
 }
 
 func (gconn *groupedConnection) PullGram(write func(p []byte, mayRetain bool)) {
@@ -89,6 +94,7 @@ func (gconn *groupedConnection) drainAll() {
 
 func (gconn *groupedConnection) Closed() {
 	go gconn.drainAll()
+	gconn.graveChan <- gconn
 }
 
 func (gconn *groupedConnection) DrainOutput() {
@@ -104,11 +110,33 @@ func (gconn *groupedConnection) DrainOutput() {
 
 func (gconn *groupedConnection) initGroupedConnection() {
 	gconn.sigStart = make(chan struct{}, 1)
+	gconn.graveChan = make(chan *groupedConnection, 1)
+}
+
+// groupDiscipline determines how a group handles connections.  Each group has one of these.
+type groupDiscipline interface {
+	newConnection() *groupedConnection
+	noConnections()
+}
+
+// zeroGroupDiscipline is the most trivial group discipline.  It is incapable of making new connections, and
+// does nothing when any connection-related events occur.
+type zeroGroupDiscipline struct{}
+
+func (_ zeroGroupDiscipline) newConnection() *groupedConnection {
+	// No way of making new connections.
+	return nil
+}
+
+func (_ zeroGroupDiscipline) noConnections() {
+	// No need to do anything when no connections are present.
 }
 
 // group holds zero or more underlying Dust connections that should be treated together.
 type group struct {
 	groupLink proc.Link
+
+	hardClose bool
 
 	// Maps from remote token to connection.  We only ever transact with library clients regarding remote
 	// addresses, really; the local addresses are mostly dummy tokens to allow comparison.
@@ -123,25 +151,12 @@ type group struct {
 	inAnyGrams                             chan addressedGram
 	outAnyGrams, outDispatch, outBroadcast chan addressedGram
 
-	// inConnections receives new connections to be added to the group.  deadConnections receives
-	// connections that have terminated and should be removed from the group.  When a new connection is
-	// actively wanted, newConnectionCallback is called from the group controller; it may return nil to
-	// indicate the unavailability of new connections.  When the set of active connections transitions
-	// from nonempty to empty, noConnectionsCallback is called from the group controller
-	inConnections         chan *groupedConnection
-	deadConnections       chan *groupedConnection
-	newConnectionCallback func() *groupedConnection
-	noConnectionsCallback func()
-}
-
-// Used as a default newConnectionCallback.
-func noMakingNewConnections() *groupedConnection {
-	return nil
-}
-
-// Used as a default noConnectionsCallback.
-func noNeedForConnections() {
-	// Which does nothing.
+	// inConns receives new connections to be added to the group.  deadConns receives connections that
+	// have terminated and should be removed from the group.  discipline determines how various connection
+	// states should be handled; it receives callbacks from the group controller.
+	inConns    chan *groupedConnection
+	deadConns  chan *groupedConnection
+	discipline groupDiscipline
 }
 
 func (g *group) initGroup() {
@@ -150,10 +165,9 @@ func (g *group) initGroup() {
 	g.outAnyGrams = make(chan addressedGram, 4)
 	g.outDispatch = make(chan addressedGram, 4)
 	g.outBroadcast = make(chan addressedGram, 4)
-	g.inConnections = make(chan *groupedConnection, 1)
-	g.deadConnections = make(chan *groupedConnection, 1)
-	g.newConnectionCallback = noMakingNewConnections
-	g.noConnectionsCallback = noNeedForConnections
+	g.inConns = make(chan *groupedConnection, 1)
+	g.deadConns = make(chan *groupedConnection, 1)
+	g.discipline = new(zeroGroupDiscipline)
 	g.groupLink.InitLink(g.runGroup)
 }
 
@@ -162,16 +176,18 @@ func (g *group) addConnection(gconn *groupedConnection) {
 		panic("Dust: adding connection to group twice")
 	}
 
-	g.byRemote[gconn.remote] = gconn
-	g.count++
 	gconn.inAnyGrams = g.inAnyGrams
 	gconn.outAnyGrams = g.outAnyGrams
 	gconn.outExactGrams = make(chan addressedGram, 1)
+	go func() { g.deadConns <- <-gconn.graveChan }()
+
+	g.byRemote[gconn.remote] = gconn
+	g.count++
 	gconn.sigStart <- struct{}{}
 }
 
 func (g *group) addNewConnection() (gconn *groupedConnection) {
-	gconn = g.newConnectionCallback()
+	gconn = g.discipline.newConnection()
 	if gconn != nil {
 		g.addConnection(gconn)
 	}
@@ -186,8 +202,10 @@ func (g *group) removeConnection(gconn *groupedConnection) {
 	delete(g.byRemote, gconn.remote)
 	g.count--
 	if g.count == 0 {
-		g.noConnectionsCallback()
+		g.discipline.noConnections()
 	}
+
+	close(gconn.outExactGrams)
 }
 
 func (g *group) findConnection(addr LinkAddr) *groupedConnection {
@@ -222,17 +240,33 @@ func (g *group) runGroup() error {
 	for {
 		select {
 		case _ = <-g.groupLink.Kill:
-			return nil
+			var err error
+			if g.hardClose {
+				for _, gconn := range g.byRemote {
+					gconn.HardClose()
+				}
+			}
+			return err
+
 		case agram := <-g.outDispatch:
 			g.dispatch(agram)
 		case agram := <-g.outBroadcast:
 			g.broadcast(agram)
-		case gconn := <-g.inConnections:
+		case gconn := <-g.inConns:
 			g.addConnection(gconn)
-		case gconn := <-g.deadConnections:
+		case gconn := <-g.deadConns:
 			g.removeConnection(gconn)
 		}
 	}
+}
+
+func (g *group) Close() error {
+	return g.groupLink.CloseWait()
+}
+
+func (g *group) HardClose() error {
+	g.hardClose = true
+	return g.groupLink.CloseWait()
 }
 
 func (g *group) ReadFromDust(p []byte) (n int, addr LinkAddr, err error) {
@@ -254,6 +288,11 @@ func (g *group) ReadFromDust(p []byte) (n int, addr LinkAddr, err error) {
 func (g *group) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
 	n, addrVal, err := g.ReadFromDust(p)
 	addr = &addrVal
+	return
+}
+
+func (g *group) Read(p []byte) (n int, err error) {
+	n, _, err = g.ReadFromDust(p)
 	return
 }
 
@@ -303,4 +342,9 @@ func (g *group) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 	}
 
 	return g.WriteToDust(p, linkAddr)
+}
+
+func (g *group) Write(p []byte) (n int, err error) {
+	err = ErrUnreachable
+	return
 }

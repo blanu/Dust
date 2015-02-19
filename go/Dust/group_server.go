@@ -24,6 +24,7 @@ func (sg *serverGroup) initServerGroup(spriv *ServerPrivate, listener ServerList
 	sg.srvLink.InitLink(sg.runAccepting)
 	sg.spriv = spriv
 	sg.listener = listener
+	// No need to set sg.discipline; the null discipline is fine.
 }
 
 func (sg *serverGroup) runAccepting() error {
@@ -33,13 +34,15 @@ func (sg *serverGroup) runAccepting() error {
 
 		err := gconn.initServer(sg.spriv, gconn)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		sock, err := sg.listener.Accept()
 		if err != nil {
 			return err
 		}
+
+		sg.inConns <- gconn
 
 		go func() {
 			started := false
@@ -60,4 +63,9 @@ func (sg *serverGroup) runAccepting() error {
 			started = err == nil
 		}()
 	}
+}
+
+func (sg *serverGroup) spawn() {
+	sg.groupLink.Spawn()
+	sg.srvLink.Spawn()
 }

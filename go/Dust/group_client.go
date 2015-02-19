@@ -29,9 +29,9 @@ func (cg *clientGroup) initClientGroup(spub *ServerPublic, dialer ClientDialer) 
 	cg.cliLink.InitLink(cg.runDialing)
 	cg.spub = spub
 	cg.dialer = dialer
-	cg.newConnectionCallback = cg.newConnection
-	cg.noConnectionsCallback = cg.noConnections
+	cg.discipline = cg
 	cg.ackQuiescent = make(chan struct{}, 1)
+	cg.sigNoConnections = make(chan struct{}, 1)
 }
 
 func (cg *clientGroup) newConnection() *groupedConnection {
@@ -109,4 +109,9 @@ func (cg *clientGroup) runDialing() error {
 			}
 		}
 	}
+}
+
+func (cg *clientGroup) spawn() {
+	cg.groupLink.Spawn()
+	cg.cliLink.Spawn()
 }
