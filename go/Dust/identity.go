@@ -6,6 +6,7 @@ import (
 
 	"github.com/blanu/Dust/go/Dust/crypting"
 	"github.com/blanu/Dust/go/Dust/prim"
+	"github.com/blanu/Dust/go/Dust/shaping"
 )
 
 type endpointAddress struct {
@@ -21,6 +22,7 @@ type modelSpec struct {
 type endpointConfig struct {
 	endpointAddress
 	modelSpec
+	shapingParams  shaping.Params
 	cryptingParams crypting.Params
 }
 

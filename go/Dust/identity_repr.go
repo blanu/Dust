@@ -10,6 +10,7 @@ import (
 
 	"github.com/blanu/Dust/go/Dust/crypting"
 	"github.com/blanu/Dust/go/Dust/prim"
+	"github.com/blanu/Dust/go/Dust/shaping"
 )
 
 const (
@@ -34,6 +35,10 @@ var (
 
 var defCryptingParams = crypting.Params{
 	MTU: 1500,
+}
+
+var defShapingParams = shaping.Params{
+	IgnoreDuration: true,
 }
 
 func parseEndpointAddress(addrString string) (*endpointAddress, error) {
@@ -145,6 +150,7 @@ func loadEndpointConfigBridgeLine(
 		endpointAddress: *endpointAddress,
 		modelSpec:       *modelSpec,
 		cryptingParams:  cryptingParams,
+		shapingParams:   defShapingParams,
 	}
 	return
 }
@@ -289,6 +295,7 @@ func LoadServerPrivateFile(
 			endpointAddress: *endpointAddress,
 			modelSpec:       *modelSpec,
 			cryptingParams:  cryptingParams,
+			shapingParams:   defShapingParams,
 		},
 		longtermPrivate: private,
 	}

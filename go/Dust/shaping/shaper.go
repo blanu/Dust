@@ -55,6 +55,7 @@ type shaperTimer struct {
 	proc.Link
 
 	maxDuration time.Duration
+	useDuration bool
 }
 
 func newShaperTimer() *shaperTimer {
@@ -66,6 +67,7 @@ func newShaperTimer() *shaperTimer {
 func (st *shaperTimer) setDuration(dur time.Duration) {
 	log.Debug("-> expected total duration: %v", dur)
 	st.maxDuration = dur
+	st.useDuration = true
 }
 
 func (st *shaperTimer) run() (err error) {
@@ -77,14 +79,14 @@ func (st *shaperTimer) run() (err error) {
 		dur := req.(time.Duration)
 		beforeSleep := time.Now()
 		reqEndTime := beforeSleep.Add(dur)
-		if reqEndTime.After(fixedEndTime) {
+		if st.useDuration && reqEndTime.After(fixedEndTime) {
 			dur = fixedEndTime.Sub(beforeSleep)
 		}
 
 		//log.Debug("sleeping for %v", dur)
 		time.Sleep(dur)
 		afterSleep := time.Now()
-		if afterSleep.After(fixedEndTime) {
+		if st.useDuration && afterSleep.After(fixedEndTime) {
 			break
 		}
 		st.PutReply(afterSleep)
@@ -98,10 +100,16 @@ func (st *shaperTimer) cycle(dur time.Duration) {
 	st.PutRequest(dur)
 }
 
+// Params represents globally applicable options for the shaper itself.  The zero value is the default.
+type Params struct {
+	IgnoreDuration bool
+}
+
 // Shaper represents a process mediating between a shaped channel and a Dust crypting session.  It can be
 // managed through its proc.Link structure.
 type Shaper struct {
 	proc.Link
+	Params
 
 	crypter   *crypting.Session
 	shapedIn  io.Reader
@@ -186,7 +194,9 @@ func (sh *Shaper) run() (err error) {
 	defer sh.reader.CloseDetach()
 	sh.reader.Spawn()
 	defer sh.timer.CloseDetach()
-	sh.timer.setDuration(sh.encoder.WholeStreamDuration())
+	if !sh.IgnoreDuration {
+		sh.timer.setDuration(sh.encoder.WholeStreamDuration())
+	}
 	sh.timer.Spawn()
 	sh.reader.cycle(0)
 	sh.timer.cycle(sh.encoder.NextPacketSleep())
@@ -233,8 +243,11 @@ func NewShaper(
 	out io.Writer,
 	encoder Encoder,
 	closer io.Closer,
+	params Params,
 ) (*Shaper, error) {
 	sh := &Shaper{
+		Params: params,
+
 		crypter:   crypter,
 		shapedIn:  in,
 		shapedOut: out,

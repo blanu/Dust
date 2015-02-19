@@ -34,13 +34,25 @@ type connection struct {
 	shaper  *shaping.Shaper
 	closed  bool
 
+	shapingParams   shaping.Params
+	alwaysHardClose bool
+
 	enc ShapingEncoder
 	dec ShapingDecoder
 
 	local, remote LinkAddr
 }
 
+func (c *connection) setShapingParams(params shaping.Params) {
+	c.shapingParams = params
+	c.alwaysHardClose = !params.IgnoreDuration
+}
+
 func (c *connection) Close() error {
+	if c.alwaysHardClose {
+		return c.HardClose()
+	}
+
 	if c.closed {
 		return ErrClosed
 	}
@@ -57,6 +69,8 @@ func (c *connection) HardClose() error {
 	if c.socket == nil {
 		return ErrClosed
 	}
+
+	log.Info("hard-closing %v <-> %v", c.local, c.remote)
 
 	// Make the shaper exit as soon as it can, and close the socket immediately.  Can't do much beyond
 	// that.
@@ -93,6 +107,8 @@ func (c *connection) initClient(spub *ServerPublic, front crypting.Front) (err e
 		log.Error("initClient: starting crypting session: %v", err)
 		return
 	}
+
+	c.setShapingParams(spub.shapingParams)
 	return
 }
 
@@ -116,17 +132,21 @@ func (c *connection) initServer(spriv *ServerPrivate, front crypting.Front) (err
 		log.Error("initServer: starting crypting session: %v", err)
 		return
 	}
+
+	c.setShapingParams(spriv.shapingParams)
 	return
 }
 
 func (c *connection) spawn(socket Socket) (err error) {
 	c.socket = socket
 
-	c.shaper, err = shaping.NewShaper(c.crypter, c.socket, c.dec, c.socket, c.enc, c.socket)
+	c.shaper, err = shaping.NewShaper(c.crypter, c.socket, c.dec, c.socket, c.enc, c.socket, c.shapingParams)
 	if err != nil {
-		log.Error("Spawn: starting shaper: %v", err)
+		log.Error("spawn: starting shaper: %v", err)
 		return
 	}
 	c.shaper.Spawn()
+
+	log.Info("started %v <-> %v", c.local, c.remote)
 	return
 }
