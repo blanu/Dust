@@ -45,11 +45,6 @@ func (rconn *RawConn) RemoteAddrDust() LinkAddr {
 }
 
 func (rconn *RawConn) Read(p []byte) (n int, err error) {
-	if rconn.closed {
-		err = ErrClosed
-		return
-	}
-
 	return rconn.invFront.Read(p)
 }
 
@@ -66,11 +61,6 @@ func (rconn *RawConn) ReadFromDust(p []byte) (n int, addr LinkAddr, err error) {
 }
 
 func (rconn *RawConn) Write(p []byte) (n int, err error) {
-	if rconn.closed {
-		err = ErrClosed
-		return
-	}
-
 	return rconn.invFront.Write(p)
 }
 
@@ -114,25 +104,32 @@ func (rconn *RawConn) MTU() int {
 	return rconn.connection.crypter.MTU
 }
 
-func BeginRawClient(socket Socket, spub *ServerPublic, params RawParams) (conn *RawConn, err error) {
-	conn = &RawConn{RawParams: params}
-	conn.invFront = crypting.NewInvertingFront(spub.cryptingParams)
-	if err = conn.initClient(spub, conn.invFront); err != nil {
+func newRawConn(params *RawParams, cryptingParams *crypting.Params) (rconn *RawConn) {
+	rconn = &RawConn{}
+	if params != nil {
+		rconn.RawParams = *params
+	}
+	rconn.invFront = crypting.NewInvertingFront(*cryptingParams)
+	return
+}
+
+func BeginRawClient(socket Socket, spub *ServerPublic, params *RawParams) (rconn *RawConn, err error) {
+	rconn = newRawConn(params, &spub.cryptingParams)
+	if err = rconn.initClient(spub, rconn.invFront); err != nil {
 		return
 	}
-	if err = conn.spawn(socket); err != nil {
+	if err = rconn.spawn(socket); err != nil {
 		return
 	}
 	return
 }
 
-func BeginRawServer(socket Socket, spriv *ServerPrivate, params RawParams) (conn *RawConn, err error) {
-	conn = &RawConn{RawParams: params}
-	conn.invFront = crypting.NewInvertingFront(spriv.cryptingParams)
-	if err = conn.initServer(spriv, conn.invFront); err != nil {
+func BeginRawServer(socket Socket, spriv *ServerPrivate, params *RawParams) (rconn *RawConn, err error) {
+	rconn = newRawConn(params, &spriv.cryptingParams)
+	if err = rconn.initServer(spriv, rconn.invFront); err != nil {
 		return
 	}
-	if err = conn.spawn(socket); err != nil {
+	if err = rconn.spawn(socket); err != nil {
 		return
 	}
 	return

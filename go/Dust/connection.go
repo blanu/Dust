@@ -3,6 +3,8 @@ package Dust
 import (
 	"errors"
 	"io"
+	"sync"
+	"sync/atomic"
 
 	"github.com/op/go-logging"
 
@@ -18,9 +20,9 @@ var (
 
 // Socket provides the underlying "visible" transport for a single Dust connection.  Currently, it must be a
 // stream-oriented socket, generally a TCP socket.  It must support having at least one read and one write
-// simultaneously in-flight from different goroutines, and it must support being closed from any goroutine
+// simultaneously in-flight from different goroutines.  It must support being closed from any goroutine
 // simultaneously with any other operations, which should cause all pending reads and writes to return as soon
-// as possible.
+// as possible, and all future reads and writes to fail immediately.
 type Socket interface {
 	io.ReadWriteCloser
 }
@@ -32,10 +34,12 @@ type connection struct {
 	crypter *crypting.Session
 	front   crypting.Front
 	shaper  *shaping.Shaper
-	closed  bool
 
-	shapingParams   shaping.Params
-	alwaysHardClose bool
+	closed     uint32
+	closeMutex sync.Mutex
+	hardClose  bool
+
+	shapingParams shaping.Params
 
 	enc ShapingEncoder
 	dec ShapingDecoder
@@ -45,39 +49,39 @@ type connection struct {
 
 func (c *connection) setShapingParams(params shaping.Params) {
 	c.shapingParams = params
-	c.alwaysHardClose = !params.IgnoreDuration
+	c.hardClose = params.IgnoreDuration
 }
 
 func (c *connection) Close() error {
-	if c.alwaysHardClose {
-		return c.HardClose()
-	}
-
-	if c.closed {
+	switch {
+	case atomic.LoadUint32(&c.closed) != 0:
 		return ErrClosed
+	case c.hardClose:
+		return c.HardClose()
+	default:
+		// The shaper is detached and continues to run in the background.  It'll exit when its
+		// designated interval elapses, and is responsible for closing the socket.  The crypter will
+		// already be draining any further real data frames into the bit bucket from both sides.
+		atomic.StoreUint32(&c.closed, 1)
+		return nil
 	}
-
-	// We don't actually need to do anything here; we let the shaper continue to run in the background.
-	// It'll exit when its designated interval elapses.  The crypter already has backpressure relief, so
-	// it'll automatically be draining any further real data frames into the bit bucket (maybe a bit
-	// inefficiently).  The shaper has responsibility for closing the socket too.
-	c.closed = true
-	return nil
 }
 
 func (c *connection) HardClose() error {
+	c.closeMutex.Lock()
+	defer c.closeMutex.Unlock()
+	defer atomic.StoreUint32(&c.closed, 1)
 	if c.socket == nil {
 		return ErrClosed
 	}
 
 	log.Info("hard-closing %v <-> %v", c.local, c.remote)
 
-	// Make the shaper exit as soon as it can, and close the socket immediately.  Can't do much beyond
-	// that.
+	// Cancel the shaper process, and close the socket immediately.  Any shaper I/O on the socket should
+	// then immediately fail.  Can't do much beyond that.
 	err := c.socket.Close()
 	c.socket = nil
-	c.shaper.CloseDetach()
-	c.closed = true
+	c.shaper.Cancel()
 	return err
 }
 
@@ -139,13 +143,19 @@ func (c *connection) initServer(spriv *ServerPrivate, front crypting.Front) (err
 
 func (c *connection) spawn(socket Socket) (err error) {
 	c.socket = socket
+	var closer io.Closer = socket
+	if c.hardClose {
+		// We take responsibility for closing the socket.
+		closer = nil
+	}
 
-	c.shaper, err = shaping.NewShaper(c.crypter, c.socket, c.dec, c.socket, c.enc, c.socket, c.shapingParams)
+	// TODO: doc why no parent env propagation here
+	c.shaper, err = shaping.NewShaper(nil, c.crypter, c.socket, c.dec, c.socket, c.enc, closer, &c.shapingParams)
 	if err != nil {
 		log.Error("spawn: starting shaper: %v", err)
 		return
 	}
-	c.shaper.Spawn()
+	c.shaper.Start()
 
 	log.Info("started %v <-> %v", c.local, c.remote)
 	return

@@ -12,6 +12,7 @@ import (
 	"github.com/op/go-logging"
 
 	"github.com/blanu/Dust/go/Dust"
+	"github.com/blanu/Dust/go/Dust/proc"
 
 	_ "github.com/blanu/Dust/go/DustModel/sillyHex"
 )
@@ -149,25 +150,49 @@ func parseRestrictAddr(relativeTo *net.TCPAddr) error {
 	return nil
 }
 
-func mtuCopy(dst io.Writer, src io.Reader, mtu int) error {
-	log.Info("MTU is %d", mtu)
-	buf := make([]byte, mtu)
-	for {
-		n, err := src.Read(buf)
-		if n > 0 {
-			dst.Write(buf[:n])
-		}
-		if err != nil {
-			return err
+func managedCopy(dst io.Writer, src io.Reader, mtu int) func(*proc.Env) error {
+	return func(env *proc.Env) error {
+		defer log.Debug("one side done")
+
+		buf := make([]byte, mtu)
+		for {
+			env.CancellationPoint()
+			n, rerr := src.Read(buf)
+			env.CancellationPoint()
+
+			if n > 0 {
+				_, werr := dst.Write(buf[:n])
+				if werr != nil {
+					return werr
+				}
+			}
+
+			if rerr != nil {
+				return rerr
+			}
 		}
 	}
 }
 
+func noProcess(env *proc.Env) error {
+	_ = <-env.Cancel
+	return nil
+}
+
 func dustProxy(dustSide *Dust.RawConn, plainSide *net.TCPConn) error {
 	// TODO: re-add process management here when connection-close is handled more effectively.
-	go io.Copy(plainSide, dustSide)
-	go mtuCopy(dustSide, plainSide, dustSide.MTU())
-	return nil
+	var ctl proc.Ctl
+	penv := proc.InitChild(nil, &ctl, noProcess)
+	_ = proc.InitHelper(penv, managedCopy(plainSide, dustSide, 4096))
+	_ = proc.InitHelper(penv, managedCopy(dustSide, plainSide, dustSide.MTU()))
+	ctl.Start()
+	_ = <-ctl.Exit
+	err := ctl.Status()
+	log.Debug("closing")
+	dustSide.Close()
+	plainSide.Close()
+	log.Debug("done: %v", err)
+	return err
 }
 
 func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
@@ -205,7 +230,7 @@ func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
 func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) error {
 	log.Notice("listening for Dusts on %v, will dial plains on %v", listenAddr, dialAddr)
 	eachConn := func(in *net.TCPConn) error {
-		dconn, err := Dust.BeginRawServer(in, spriv, Dust.RawParams{})
+		dconn, err := Dust.BeginRawServer(in, spriv, nil)
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err
@@ -285,7 +310,7 @@ func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) err
 		// so that there's less risk of dialing visibly and then getting hosed on some other part of
 		// initialization.
 
-		dconn, err := Dust.BeginRawClient(out, spub, Dust.RawParams{})
+		dconn, err := Dust.BeginRawClient(out, spub, nil)
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err

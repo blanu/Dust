@@ -2,7 +2,6 @@ package shaping
 
 import (
 	"io"
-	"time"
 
 	"github.com/op/go-logging"
 
@@ -12,93 +11,9 @@ import (
 
 var log = logging.MustGetLogger("Dust/shaper")
 
-type shaperReader struct {
-	proc.Link
-	readFrom  io.Reader
-	sharedBuf []byte
-}
-
 const (
 	shaperBufSize = 1024
 )
-
-func newShaperReader(readFrom io.Reader, sharedBuf []byte) *shaperReader {
-	sr := &shaperReader{
-		readFrom:  readFrom,
-		sharedBuf: sharedBuf,
-	}
-	sr.InitLink(sr.run)
-	return sr
-}
-
-func (sr *shaperReader) run() (err error) {
-	for req, any := sr.GetRequest(); any; req, any = sr.GetRequest() {
-		// We now own the shared buffer.
-		offset := req.(int)
-		n, err := sr.readFrom.Read(sr.sharedBuf[offset:])
-		if err != nil {
-			return err
-		}
-
-		sr.PutReply(n)
-	}
-
-	return nil
-}
-
-func (sr *shaperReader) cycle(offset int) {
-	//log.Debug("cycling reader")
-	sr.PutRequest(offset)
-}
-
-type shaperTimer struct {
-	proc.Link
-
-	maxDuration time.Duration
-	useDuration bool
-}
-
-func newShaperTimer() *shaperTimer {
-	st := &shaperTimer{}
-	st.InitLink(st.run)
-	return st
-}
-
-func (st *shaperTimer) setDuration(dur time.Duration) {
-	log.Debug("-> expected total duration: %v", dur)
-	st.maxDuration = dur
-	st.useDuration = true
-}
-
-func (st *shaperTimer) run() (err error) {
-	// TODO: does Go provide access to the monotonic clock?  This is problematic if it's using
-	// CLOCK_REALTIME or similar as a base and we have time skew due to NTP etc.
-	fixedEndTime := time.Now().Add(st.maxDuration)
-
-	for req, any := st.GetRequest(); any; req, any = st.GetRequest() {
-		dur := req.(time.Duration)
-		beforeSleep := time.Now()
-		reqEndTime := beforeSleep.Add(dur)
-		if st.useDuration && reqEndTime.After(fixedEndTime) {
-			dur = fixedEndTime.Sub(beforeSleep)
-		}
-
-		//log.Debug("sleeping for %v", dur)
-		time.Sleep(dur)
-		afterSleep := time.Now()
-		if st.useDuration && afterSleep.After(fixedEndTime) {
-			break
-		}
-		st.PutReply(afterSleep)
-	}
-
-	return nil
-}
-
-func (st *shaperTimer) cycle(dur time.Duration) {
-	log.Debug("-> waiting %v", dur)
-	st.PutRequest(dur)
-}
 
 // Params represents globally applicable options for the shaper itself.  The zero value is the default.
 type Params struct {
@@ -108,7 +23,7 @@ type Params struct {
 // Shaper represents a process mediating between a shaped channel and a Dust crypting session.  It can be
 // managed through its proc.Link structure.
 type Shaper struct {
-	proc.Link
+	proc.Ctl
 	Params
 
 	crypter   *crypting.Session
@@ -116,12 +31,12 @@ type Shaper struct {
 	shapedOut io.Writer
 	closer    io.Closer
 
-	reader  *shaperReader
+	reader  reader
 	decoder Decoder
 	inBuf   []byte
 	pushBuf []byte
 
-	timer    *shaperTimer
+	timer    timer
 	encoder  Encoder
 	outBuf   []byte
 	pullBuf  []byte
@@ -130,7 +45,6 @@ type Shaper struct {
 
 func (sh *Shaper) handleRead(subn int) error {
 	// We own inBuf until we cycle the reader again.
-	//log.Debug("read %d bytes", subn)
 	in := sh.inBuf[:subn]
 	for {
 		dn, sn := sh.decoder.UnshapeBytes(sh.pushBuf, in)
@@ -180,93 +94,83 @@ func (sh *Shaper) handleTimer() error {
 		sh.pullMark -= sn
 	}
 
-	//log.Debug("writing %d/%d bytes", outMark, outLen)
 	_, err := sh.shapedOut.Write(sh.outBuf[:outMark])
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
-func (sh *Shaper) run() (err error) {
-	defer sh.closer.Close()
-	defer sh.reader.CloseDetach()
-	sh.reader.Spawn()
-	defer sh.timer.CloseDetach()
-	if !sh.IgnoreDuration {
-		sh.timer.setDuration(sh.encoder.WholeStreamDuration())
-	}
-	sh.timer.Spawn()
+func (sh *Shaper) runShaper(env *proc.Env) (err error) {
+	defer func() {
+		if sh.closer != nil {
+			sh.closer.Close()
+		}
+		log.Info("shaper exiting: %v", err)
+	}()
+
 	sh.reader.cycle(0)
 	sh.timer.cycle(sh.encoder.NextPacketSleep())
-	defer log.Debug("shaper exiting")
+	log.Info("shaper starting")
 
 	for {
 		select {
-		case subn, ok := <-sh.reader.Rep:
-			if !ok {
-				// Reader is dead.
-				return sh.reader.CloseWait()
-			}
-
+		case subn := <-sh.reader.Rep:
 			err = sh.handleRead(subn.(int))
 			if err != nil {
 				return
 			}
 
-		case _, ok := <-sh.timer.Rep:
-			if !ok {
-				// Timer is dead.
-				return sh.timer.CloseWait()
-			}
-
+		case _ = <-sh.timer.Rep:
 			err = sh.handleTimer()
 			if err != nil {
 				return
 			}
 
-		case _, _ = <-sh.Link.Kill:
-			return nil
+		case _ = <-env.Cancel:
+			return env.ExitCanceled()
 		}
 	}
 }
 
 // NewShaper initializes a new shaper process object for the outward-facing side of crypter, using in/out for
 // receiving and sending shaped data and decoder/encoder as the model for this side of the Dust connection.
-// The shaper will not be running.  Call Spawn() on the shaper afterwards to start it in the background; after
-// that point, the shaper takes responsibility for delivering a close signal to closer.
+// The shaper will not be running.  Call Start() on the shaper afterwards to start it in the background; after
+// that point, the shaper takes responsibility for closing the closer if it is not nil.
 func NewShaper(
+	parent *proc.Env,
 	crypter *crypting.Session,
 	in io.Reader,
 	decoder Decoder,
 	out io.Writer,
 	encoder Encoder,
 	closer io.Closer,
-	params Params,
+	params *Params,
 ) (*Shaper, error) {
 	sh := &Shaper{
-		Params: params,
-
 		crypter:   crypter,
 		shapedIn:  in,
 		shapedOut: out,
 		closer:    closer,
 
-		reader:  nil, // initialized below
+		// reader is initialized below
 		decoder: decoder,
 		inBuf:   make([]byte, shaperBufSize),
 		pushBuf: make([]byte, shaperBufSize),
 
-		timer:    nil, // initialized below
+		// timer is initialized below
 		encoder:  encoder,
 		outBuf:   make([]byte, encoder.MaxPacketLength()),
 		pullBuf:  make([]byte, shaperBufSize),
 		pullMark: 0,
 	}
 
-	sh.InitLink(sh.run)
-	sh.reader = newShaperReader(sh.shapedIn, sh.inBuf)
-	sh.timer = newShaperTimer()
+	if params != nil {
+		sh.Params = *params
+	}
+
+	env := proc.InitChild(parent, &sh.Ctl, sh.runShaper)
+	sh.reader.Init(env, sh.shapedIn, sh.inBuf)
+	sh.timer.Init(env)
+	if !sh.IgnoreDuration {
+		sh.timer.setDuration(sh.encoder.WholeStreamDuration())
+	}
 	return sh, nil
 }

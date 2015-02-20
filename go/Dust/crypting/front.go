@@ -7,10 +7,12 @@ import (
 	"github.com/op/go-logging"
 
 	"github.com/blanu/Dust/go/Dust/buf"
+	"github.com/blanu/Dust/go/Dust/proc"
 )
 
 var (
 	ErrSomeDatagramsLost = errors.New("Dust/crypting: some datagrams lost")
+	ErrClosed            = errors.New("Dust/crypting: closed")
 )
 
 type Front interface {
@@ -26,6 +28,9 @@ type numberedGram struct {
 
 type InvertingFront struct {
 	Params
+
+	closeEvent *proc.Event
+	closeChan  <-chan struct{}
 
 	// Datagrams with sequence numbers are sent to inGrams from the outward-facing side of the crypto
 	// session.  The receiver owns the data chunks.  inSequence is the next sequence number to send from
@@ -46,14 +51,15 @@ func (inv *InvertingFront) Init() {
 	inv.inGrams = make(chan numberedGram, 4)
 	inv.outPlains = make(chan []byte, 4)
 	inv.inSequence = 1
+	inv.closeEvent, inv.closeChan = proc.NewEvent()
 }
 
 func (inv *InvertingFront) PullGram(write func(p []byte, mayRetain bool)) {
 	select {
-	default:
-		// Nothing available.
 	case dgram := <-inv.outPlains:
 		write(dgram, true)
+	default:
+		// Nothing available.
 	}
 }
 
@@ -69,8 +75,13 @@ func (inv *InvertingFront) Write(p []byte) (n int, err error) {
 		dgram = dgram[:inv.MTU]
 		err = io.ErrShortWrite
 	}
-	inv.outPlains <- buf.CopyNew(dgram)
-	return len(dgram), err
+
+	select {
+	case _ = <-inv.closeChan:
+		return 0, ErrClosed
+	case inv.outPlains <- buf.CopyNew(dgram):
+		return len(dgram), err
+	}
 }
 
 func (inv *InvertingFront) PushGram(p []byte, mayRetain bool) {
@@ -95,7 +106,13 @@ func (inv *InvertingFront) Read(p []byte) (n int, err error) {
 		}()
 	}
 
-	ngram := <-inv.inGrams
+	var ngram numberedGram
+	select {
+	case _ = <-inv.closeChan:
+		return 0, ErrClosed
+	case ngram = <-inv.inGrams:
+	}
+
 	if ngram.seq == 0 {
 		inv.inLossage = 0
 		return 0, io.EOF
@@ -128,6 +145,10 @@ func (inv *InvertingFront) DrainOutput() {
 			return
 		}
 	}
+}
+
+func (inv *InvertingFront) Close() {
+	inv.closeEvent.Trip(nil)
 }
 
 func NewInvertingFront(params Params) *InvertingFront {
