@@ -8,26 +8,31 @@ import (
 	"strings"
 
 	"github.com/blanu/Dust/go/Dust"
+
+	_ "github.com/blanu/Dust/go/DustModel/sillyHex"
 )
 
 const progName = "DustTool"
 const usageMessageRaw = `
-Usage: DustTool SUBCOMMAND...
+Usage: DustTool OPTIONS SUBCOMMAND...
+
+Options:
+  --mode MODE, -m MODE
+	Manipulate identities suitable for the given transport mode.
+	Valid modes: minus
 
 Subcommands:
-  newid -o FILE NICKNAME HOST:PORT PARAMS...
-    Generate a new Dust server identity for a server named NICKNAME,
-    to listen at HOST:PORT, communicating using PARAMS.  Each PARAM must
-    be of the form KEY=VALUE.  Write private information to the new file
-    FILE and output a full bridge line on standard output.
+  newid -o FILE PARAMS...
+	Generate a new Dust server identity for communicating using PARAMS.
+	Each PARAM must be of the form KEY=VALUE.  Write private information
+	to the new file FILE, and write bridge line parameters to standard
+	output.
 
-    Currently, PARAMS are not fully validated to make sure that Dust
-    connections could reasonably be established with them.
-
-  bridgeline FILE
-    Read a Dust server private identity from FILE and write its bridge
-    line to standard output.
+  params FILE
+	Read a Dust server private identity from FILE and write its bridge
+	line parameters to standard output.
 `
+// TODO: $models
 
 type nullWriter struct{}
 
@@ -75,39 +80,37 @@ func endOfArgs() {
 	}
 }
 
-func formatBridgeLine(bline Dust.BridgeLine) string {
-	parts := []string{
-		bline.Nickname,
-		bline.Address,
+func formatParams(p map[string]string) string {
+	parts := []string{}
+	for key, val := range p {
+		parts = append(parts, key + "=" + val)
 	}
-	for k, v := range bline.Params {
-		parts = append(parts, k+"="+v)
-	}
-
 	return strings.Join(parts, " ")
 }
 
-func newidToFile(path string, bline Dust.BridgeLine) error {
-	var spriv *Dust.ServerPrivate
-	var err error
-	defer func() {
-		if spriv != nil {
-			// TODO: type fixup
-			//spriv.DestroyPrivate()
-		}
-	}()
+func showParams(spub *Dust.ServerPublic) {
+	fmt.Fprintf(os.Stdout, "Bridge DustMinus ADDRESS %s\n", formatParams(spub.Unparse()))
+}
 
-	spriv, err = Dust.NewServerPrivateBridgeLine(bline)
+func newidToFile(path string, unparsed map[string]string) (err error) {
+	var spriv *Dust.ServerPrivate
+	var ep *Dust.EndpointParams
+
+	ep, err = Dust.ParseEndpointParams(unparsed)
 	if err != nil {
-		return err
+		return
+	}
+
+	spriv, err = Dust.NewServerPrivate(ep)
+	if err != nil {
+		return
 	}
 
 	if err = spriv.SavePrivateFile(path); err != nil {
-		return err
+		return
 	}
 
-	realBline := spriv.Public().BridgeLine()
-	fmt.Fprintf(os.Stdout, "Bridge %s\n", formatBridgeLine(realBline))
+	showParams(spriv.Public())
 	return nil
 }
 
@@ -129,26 +132,17 @@ func newidFromArgs() (func() error, error) {
 
 	ourFlags = subFlags
 	argI = 0
-	nickname := nextArg("NICKNAME")
-	addrString := nextArg("ADDR-STRING")
 	paramArgs := remainingArgs()
 
-	params := make(map[string]string)
-	for _, pairArg := range paramArgs {
-		equals := strings.IndexRune(pairArg, '=')
+	unparsed := make(map[string]string)
+	for _, arg := range paramArgs {
+		equals := strings.IndexRune(arg, '=')
 		if equals < 0 {
 			usageErrorf("bridge parameter must be of the form KEY=VALUE")
 		}
 
-		key := pairArg[:equals]
-		val := pairArg[equals+1:]
-		params[key] = val
-	}
-
-	bline := Dust.BridgeLine{
-		Nickname: nickname,
-		Address:  addrString,
-		Params:   params,
+		key, val := arg[:equals], arg[equals+1:]
+		unparsed[key] = val
 	}
 
 	if *outputPathPtr == "" {
@@ -156,22 +150,21 @@ func newidFromArgs() (func() error, error) {
 	}
 
 	return func() error {
-		return newidToFile(*outputPathPtr, bline)
+		return newidToFile(*outputPathPtr, unparsed)
 	}, nil
 }
 
-func bridgelineFromFile(path string) error {
+func showParamsFromFile(path string) error {
 	spriv, err := Dust.LoadServerPrivateFile(path)
 	if err != nil {
 		return err
 	}
 
-	bline := spriv.Public().BridgeLine()
-	fmt.Fprintf(os.Stdout, "Bridge %s\n", formatBridgeLine(bline))
+	showParams(spriv.Public())
 	return nil
 }
 
-func bridgelineFromArgs() (func() error, error) {
+func showParamsFromArgs() (func() error, error) {
 	// TODO: in DustProxy, do the same sort of thing here (when this is all refactored) so that subcommands
 	// can parse their own options.
 	subFlags := flag.NewFlagSet(progName, flag.ContinueOnError)
@@ -192,13 +185,17 @@ func bridgelineFromArgs() (func() error, error) {
 	endOfArgs()
 
 	return func() error {
-		return bridgelineFromFile(path)
+		return showParamsFromFile(path)
 	}, nil
 }
 
 func main() {
 	var err error
+
+	var userMode string
 	ourFlags = flag.NewFlagSet(progName, flag.ContinueOnError)
+	ourFlags.StringVar(&userMode, "mode", "", "")
+	ourFlags.StringVar(&userMode, "m", "", "")
 	ourFlags.Usage = func() {}
 	ourFlags.SetOutput(&nullWriter{})
 
@@ -210,6 +207,11 @@ func main() {
 		usageErrorf("%s", argErr.Error())
 	}
 
+	userMode = strings.ToLower(userMode)
+	if userMode != "minus" {
+		usageErrorf("unsupported mode: '%s'", userMode)
+	}
+
 	var requestedCommand func() error
 	subcommandArg := nextArg("SUBCOMMAND")
 	switch subcommandArg {
@@ -217,8 +219,8 @@ func main() {
 		usageErrorf("unrecognized subcommand \"%s\"", subcommandArg)
 	case "newid":
 		requestedCommand, err = newidFromArgs()
-	case "bridgeline":
-		requestedCommand, err = bridgelineFromArgs()
+	case "params":
+		requestedCommand, err = showParamsFromArgs()
 	}
 
 	if err != nil {

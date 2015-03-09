@@ -18,7 +18,7 @@ var (
 	ErrBadMTU = errors.New("Dust/crypting: bad MTU")
 )
 
-func ValidateParams(params Params) error {
+func (params *Params) Validate() error {
 	if !(MinMTU <= params.MTU && params.MTU <= MaxMTU) {
 		return ErrBadMTU
 	}

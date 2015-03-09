@@ -6,13 +6,9 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/op/go-logging"
-
 	"github.com/blanu/Dust/go/Dust/crypting"
 	"github.com/blanu/Dust/go/Dust/shaping"
 )
-
-var log = logging.MustGetLogger("Dust")
 
 var (
 	ErrClosed = errors.New("Dust: connection closed")
@@ -94,7 +90,7 @@ func (c *connection) initAny(front crypting.Front) {
 func (c *connection) initClient(spub *ServerPublic, front crypting.Front) (err error) {
 	c.initAny(front)
 
-	model, err := spub.ReifyModel()
+	model, err := spub.EndpointParams.ModelSpec.reifyModel()
 	if err != nil {
 		log.Error("initClient: retrieving model: %v", err)
 		return
@@ -106,20 +102,20 @@ func (c *connection) initClient(spub *ServerPublic, front crypting.Front) (err e
 		return
 	}
 
-	c.crypter, err = crypting.BeginClient(spub.cryptoPublic(), c.front, spub.cryptingParams)
+	c.crypter, err = crypting.BeginClient(spub.cryptoPublic(), c.front, spub.Crypting)
 	if err != nil {
 		log.Error("initClient: starting crypting session: %v", err)
 		return
 	}
 
-	c.setShapingParams(spub.shapingParams)
+	c.setShapingParams(spub.Shaping)
 	return
 }
 
 func (c *connection) initServer(spriv *ServerPrivate, front crypting.Front) (err error) {
 	c.initAny(front)
 
-	model, err := spriv.ReifyModel()
+	model, err := spriv.EndpointParams.ModelSpec.reifyModel()
 	if err != nil {
 		log.Error("initServer: retrieving model: %v", err)
 		return
@@ -131,13 +127,13 @@ func (c *connection) initServer(spriv *ServerPrivate, front crypting.Front) (err
 		return
 	}
 
-	c.crypter, err = crypting.BeginServer(spriv.cryptoPrivate(), c.front, spriv.cryptingParams)
+	c.crypter, err = crypting.BeginServer(spriv.cryptoPrivate(), c.front, spriv.Crypting)
 	if err != nil {
 		log.Error("initServer: starting crypting session: %v", err)
 		return
 	}
 
-	c.setShapingParams(spriv.shapingParams)
+	c.setShapingParams(spriv.Shaping)
 	return
 }
 

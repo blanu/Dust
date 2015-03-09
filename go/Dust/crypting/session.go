@@ -105,7 +105,7 @@ func (cs *Session) fail() {
 }
 
 func (cs *Session) Init() error {
-	if err := ValidateParams(cs.Params); err != nil {
+	if err := cs.Params.Validate(); err != nil {
 		return err
 	}
 

@@ -20,6 +20,10 @@ type Params struct {
 	IgnoreDuration bool
 }
 
+func (params *Params) Validate() error {
+	return nil
+}
+
 // Shaper represents a process mediating between a shaped channel and a Dust crypting session.  It can be
 // managed through its proc.Link structure.
 type Shaper struct {

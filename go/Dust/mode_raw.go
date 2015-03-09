@@ -114,7 +114,7 @@ func newRawConn(params *RawParams, cryptingParams *crypting.Params) (rconn *RawC
 }
 
 func BeginRawClient(socket Socket, spub *ServerPublic, params *RawParams) (rconn *RawConn, err error) {
-	rconn = newRawConn(params, &spub.cryptingParams)
+	rconn = newRawConn(params, &spub.Crypting)
 	if err = rconn.initClient(spub, rconn.invFront); err != nil {
 		return
 	}
@@ -125,7 +125,7 @@ func BeginRawClient(socket Socket, spub *ServerPublic, params *RawParams) (rconn
 }
 
 func BeginRawServer(socket Socket, spriv *ServerPrivate, params *RawParams) (rconn *RawConn, err error) {
-	rconn = newRawConn(params, &spriv.cryptingParams)
+	rconn = newRawConn(params, &spriv.Crypting)
 	if err = rconn.initServer(spriv, rconn.invFront); err != nil {
 		return
 	}
