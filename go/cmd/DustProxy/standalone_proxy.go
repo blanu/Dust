@@ -185,10 +185,10 @@ func dustProxy(dustSide *Dust.RawConn, plainSide *net.TCPConn) error {
 	ctl.Start()
 	_ = <-ctl.Exit
 	err := ctl.Status()
-	log.Debug("closing")
+	log.Info("closing")
 	dustSide.Close()
 	plainSide.Close()
-	log.Debug("done: %v", err)
+	log.Info("done: %v", err)
 	return err
 }
 
@@ -269,6 +269,9 @@ func dustToPlainFromArgs() (func() error, error) {
 		return nil, err
 	}
 
+	// (minus mode)
+	spriv.EndpointParams.Shaping.IgnoreDuration = true
+
 	listenAddr, err := net.ResolveTCPAddr("tcp", userListenAddr)
 	if err != nil {
 		return nil, err
@@ -343,6 +346,9 @@ func plainToDustFromArgs() (func() error, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// (minus mode)
+	spub.EndpointParams.Shaping.IgnoreDuration = true
 
 	dialAddr, err := net.ResolveTCPAddr("tcp", userDialAddr)
 	if err != nil {
