@@ -1,7 +1,7 @@
 package prim
 
 import (
-	"github.com/dchest/skein"
+	"github.com/blanu/Dust/go/Dust/prim/skein"
 )
 
 type (
