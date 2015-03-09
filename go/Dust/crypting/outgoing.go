@@ -109,4 +109,3 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 
 	return
 }
-

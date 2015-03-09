@@ -78,7 +78,7 @@ func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 			tLen := int(uint16(plain[0])<<8 | uint16(plain[1]))
 			dgramLen := tLen - 256
 			if dgramLen > cs.MTU {
-				log.Error("datagram received longer than MTU")
+				log.Error("corrupted datagram")
 				cs.fail()
 				return
 			}
@@ -104,7 +104,7 @@ func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 			cs.inMAC.Reset(cs.inPosition)
 			log.Debug("input MAC reset at %d", cs.inPosition)
 			if !authenticated {
-				log.Error("datagram failed authentication")
+				log.Error("corrupted datagram")
 				cs.fail()
 				return
 			}
