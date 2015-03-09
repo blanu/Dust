@@ -25,12 +25,12 @@ Subcommands:
   newid -o FILE PARAMS...
 	Generate a new Dust server identity for communicating using PARAMS.
 	Each PARAM must be of the form KEY=VALUE.  Write private information
-	to the new file FILE, and write bridge line parameters to standard
+	to the new file FILE, and write a pseudo-bridge-line to standard
 	output.
 
   params FILE
-	Read a Dust server private identity from FILE and write its bridge
-	line parameters to standard output.
+	Read a Dust server private identity from FILE and write its parameters
+	to standard output in pseudo-bridge-line form.
 `
 // TODO: $models
 
