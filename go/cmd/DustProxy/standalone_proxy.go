@@ -269,7 +269,7 @@ func dustToPlainFromArgs() (func() error, error) {
 		return nil, err
 	}
 
-	listenAddr := spriv.ListenAddr()
+	listenAddr := spriv.ListenAddr().(*net.TCPAddr)
 	if userListenAddr != "" {
 		// Overrides address in identity file.
 		physListenAddr, err := net.ResolveTCPAddr("tcp", userListenAddr)
@@ -364,7 +364,7 @@ func plainToDustFromArgs() (func() error, error) {
 		return nil, err
 	}
 
-	dialAddr := spub.DialAddr()
+	dialAddr := spub.DialAddr().(*net.TCPAddr)
 	if userDialAddr != "" {
 		// Overrides address in bridge line.
 		physDialAddr, err := net.ResolveTCPAddr("tcp", userDialAddr)

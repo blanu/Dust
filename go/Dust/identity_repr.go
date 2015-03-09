@@ -17,6 +17,7 @@ const (
 	bridgeParamPublicKey      string = "p"
 	bridgeParamModel          string = "m"
 	bridgeParamOptionalSuffix string = "?"
+	bridgeParamOpaqueId       string = "id"
 	bridgeParamMTU            string = "mtu"
 
 	magicLine = "!!Dust-Server-Private!!"
@@ -25,6 +26,7 @@ const (
 var (
 	ErrNoMagic          = &ParameterError{ParameterMissing, "magic line", ""}
 	ErrNoAddress        = &ParameterError{ParameterMissing, "network address", ""}
+	ErrNoOpaqueId       = &ParameterError{ParameterMissing, "opaque identifier", ""}
 	ErrNoPrivateKey     = &ParameterError{ParameterMissing, "private key", ""}
 	ErrNoPublicKey      = &ParameterError{ParameterMissing, "public key", ""}
 	ErrNoModelName      = &ParameterError{ParameterMissing, "model name", ""}
@@ -41,7 +43,11 @@ var defShapingParams = shaping.Params{
 	IgnoreDuration: true,
 }
 
-func parseEndpointAddress(addrString string) (*endpointAddress, error) {
+func parseEndpointAddress(addrString string) (net.Addr, error) {
+	if addrString == "" {
+		return nil, nil
+	}
+
 	// Do all the splitting manually, because we really don't want to accidentally take a DNS lookup here.
 	// Unfortunately, there's no net.ParseTCPAddr, only net.ResolveTCPAddr.
 	colonIndex := strings.LastIndex(addrString, ":")
@@ -68,13 +74,7 @@ func parseEndpointAddress(addrString string) (*endpointAddress, error) {
 		return nil, ErrInvalidAddress
 	}
 
-	tcpAddr := &net.TCPAddr{ip, int(port), ""}
-	idBytes, err := crypting.IdentityBytesOfNetworkAddress(tcpAddr)
-	if err != nil {
-		return nil, ErrInvalidAddress
-	}
-
-	return &endpointAddress{tcpAddr, idBytes}, nil
+	return &net.TCPAddr{ip, int(port), ""}, nil
 }
 
 func extractModelSpec(
@@ -130,9 +130,24 @@ func loadCryptingParams(
 func loadEndpointConfigBridgeLine(
 	bline BridgeLine,
 	ackedParams map[string]bool,
+	haveOpaque *crypting.OpaqueId,
 ) (result *endpointConfig, err error) {
-	endpointAddress, err := parseEndpointAddress(bline.Address)
+	netAddr, err := parseEndpointAddress(bline.Address)
 	if err != nil {
+		return
+	}
+
+	var opaqueId *crypting.OpaqueId
+	if haveOpaque != nil {
+		opaqueId = haveOpaque
+	} else if opaqueText, ok := bline.Params[bridgeParamOpaqueId]; ok {
+		ackedParams[bridgeParamOpaqueId] = true
+		opaqueId, err = crypting.LoadOpaqueIdText(opaqueText)
+		if err != nil {
+			return
+		}
+	} else {
+		err = ErrNoOpaqueId
 		return
 	}
 
@@ -147,10 +162,11 @@ func loadEndpointConfigBridgeLine(
 	}
 
 	result = &endpointConfig{
-		endpointAddress: *endpointAddress,
-		modelSpec:       *modelSpec,
-		cryptingParams:  cryptingParams,
-		shapingParams:   defShapingParams,
+		netAddr:        netAddr,
+		opaqueId:       *opaqueId,
+		modelSpec:      *modelSpec,
+		cryptingParams: cryptingParams,
+		shapingParams:  defShapingParams,
 	}
 	return
 }
@@ -158,7 +174,7 @@ func loadEndpointConfigBridgeLine(
 // LoadServerPublicBridgeLine converts parameters from a bridge line into a server public identity.
 func LoadServerPublicBridgeLine(bline BridgeLine) (result *ServerPublic, err error) {
 	ackedParams := make(map[string]bool)
-	endpointConfig, err := loadEndpointConfigBridgeLine(bline, ackedParams)
+	endpointConfig, err := loadEndpointConfigBridgeLine(bline, ackedParams, nil)
 	if err != nil {
 		return
 	}
@@ -188,9 +204,10 @@ func LoadServerPublicBridgeLine(bline BridgeLine) (result *ServerPublic, err err
 
 // BridgeLine returns a suitable bridge line for a server public identity.
 func (spub ServerPublic) BridgeLine() BridgeLine {
-	addrString := spub.tcpAddr.String()
+	addrString := spub.netAddr.String()
 	params := map[string]string{
 		bridgeParamPublicKey: spub.longtermPublic.Text(),
+		bridgeParamOpaqueId:  spub.opaqueId.Text(),
 	}
 
 	if mtu := spub.cryptingParams.MTU; mtu != defCryptingParams.MTU {
@@ -242,7 +259,16 @@ func LoadServerPrivateFile(
 		return nil, scanErrorOr(ErrNoAddress)
 	}
 	addrLine := lines.Text()
-	endpointAddress, err := parseEndpointAddress(addrLine)
+	netAddr, err := parseEndpointAddress(addrLine)
+	if err != nil {
+		return
+	}
+
+	if !lines.Scan() {
+		return nil, scanErrorOr(ErrNoOpaqueId)
+	}
+	opaqueLine := lines.Text()
+	opaqueId, err := crypting.LoadOpaqueIdText(opaqueLine)
 	if err != nil {
 		return
 	}
@@ -292,10 +318,11 @@ func LoadServerPrivateFile(
 	result = &ServerPrivate{
 		nickname: nickname,
 		endpointConfig: endpointConfig{
-			endpointAddress: *endpointAddress,
-			modelSpec:       *modelSpec,
-			cryptingParams:  cryptingParams,
-			shapingParams:   defShapingParams,
+			netAddr:        netAddr,
+			opaqueId:       *opaqueId,
+			modelSpec:      *modelSpec,
+			cryptingParams: cryptingParams,
+			shapingParams:  defShapingParams,
 		},
 		longtermPrivate: private,
 	}
@@ -308,7 +335,8 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 	headerLines := []string{
 		magicLine,
 		spriv.nickname,
-		spriv.tcpAddr.String(),
+		spriv.netAddr.String(),
+		spriv.opaqueId.Text(),
 		spriv.longtermPrivate.PrivateText(),
 	}
 
@@ -327,6 +355,8 @@ func (spriv ServerPrivate) SavePrivateFile(path string) error {
 		switch key {
 		case bridgeParamPublicKey:
 			// Don't save public key; it's inferred from the private key.
+		case bridgeParamOpaqueId:
+			// Don't save opaque ID separately; that's already in a header line.
 		default:
 			paramLines = append(paramLines, key+"="+val)
 		}

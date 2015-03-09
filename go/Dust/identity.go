@@ -9,25 +9,21 @@ import (
 	"github.com/blanu/Dust/go/Dust/shaping"
 )
 
-type endpointAddress struct {
-	tcpAddr *net.TCPAddr
-	idBytes []byte
-}
-
 type modelSpec struct {
 	name   string
 	params map[string]string
 }
 
 type endpointConfig struct {
-	endpointAddress
 	modelSpec
+	netAddr        net.Addr
+	opaqueId       crypting.OpaqueId
 	shapingParams  shaping.Params
 	cryptingParams crypting.Params
 }
 
 // BridgeLine represents a Tor-style bridge line in parsed-text form, with strings corresponding to opaque
-// nickname, network address, and parameters.
+// nickname, network address, and parameters.  The nickname and address strings may be empty.
 type BridgeLine struct {
 	Nickname string
 	Address  string
@@ -74,7 +70,7 @@ func CheckUnackedParams(params map[string]string, ackedParams map[string]bool) e
 
 func (spub ServerPublic) cryptoPublic() *crypting.Public {
 	return &crypting.Public{
-		Id:  spub.endpointAddress.idBytes,
+		Id:  spub.opaqueId,
 		Key: spub.longtermPublic,
 	}
 }
@@ -90,27 +86,27 @@ func (spriv ServerPrivate) Public() ServerPublic {
 
 func (spriv ServerPrivate) cryptoPrivate() *crypting.Private {
 	return &crypting.Private{
-		Id:  spriv.endpointAddress.idBytes,
+		Id:  spriv.opaqueId,
 		Key: spriv.longtermPrivate,
 	}
 }
 
 // ListenAddr returns the TCP address on which a server corresponding to the given identity would normally
 // listen.
-func (spriv ServerPrivate) ListenAddr() *net.TCPAddr {
-	return spriv.tcpAddr
+func (spriv ServerPrivate) ListenAddr() net.Addr {
+	return spriv.netAddr
 }
 
 // DialAddr returns the TCP address to which a client wishing to contact the given identity would normally
 // connect.
-func (spub ServerPublic) DialAddr() *net.TCPAddr {
-	return spub.tcpAddr
+func (spub ServerPublic) DialAddr() net.Addr {
+	return spub.netAddr
 }
 
 // NewServerPrivateBridgeLine generates a new server private identity suitable for the given bridge line.
 func NewServerPrivateBridgeLine(bline BridgeLine) (result *ServerPrivate, err error) {
 	ackedParams := make(map[string]bool)
-	endpointConfig, err := loadEndpointConfigBridgeLine(bline, ackedParams)
+	endpointConfig, err := loadEndpointConfigBridgeLine(bline, ackedParams, crypting.NewOpaqueId())
 	if err != nil {
 		return
 	}

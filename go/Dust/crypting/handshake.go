@@ -37,7 +37,7 @@ func (cs *Session) receivedEphemeralKey() {
 		outKdfPrefix = kdfC2S
 		sd.WriteSecret(cs.localPrivate.SharedSecret(sinfo.Key))
 		confInput = bytes.Join([][]byte{
-			sinfo.Id,
+			sinfo.Id[:],
 			sinfo.Key.Binary(),
 			cs.localPrivate.Public.Binary(),
 			cs.remotePublic.Binary(),
@@ -48,7 +48,7 @@ func (cs *Session) receivedEphemeralKey() {
 		outKdfPrefix = kdfS2C
 		sd.WriteSecret(sinfo.Key.SharedSecret(cs.remotePublic))
 		confInput = bytes.Join([][]byte{
-			sinfo.Id,
+			sinfo.Id[:],
 			sinfo.Key.Public.Binary(),
 			cs.remotePublic.Binary(),
 			cs.localPrivate.Public.Binary(),
