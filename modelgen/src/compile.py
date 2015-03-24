@@ -38,10 +38,22 @@ def convertModel(name, data, lang):
   model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], lang)
   model['packet_sleep']=genITA(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], lang)
   model['huffman']=genHuffman(data['incomingModel']['huffman'])
+  model['incoming_sequence']=genSequence('incomingSequence', data['incomingModel']['sequence'])
+  model['outgoing_sequence']=genSequence('outgoingSequence', data['outgoingModel']['sequence'])
   model['encode']=genEncoder()
   model['decode']=genDecoder()
 
   return model
+
+def genSequence(varname, data):
+  return {
+    'decl': "%s []byte" % (varname),
+    'data': "%s: []byte{%s}" % (varname, makeByteArray(data)),
+    'body': ""
+  }
+
+def makeByteArray(data):
+  return ", ".join(map(str, data))
 
 def genDuration(dist, params, lang):
   if dist=='exponential':
