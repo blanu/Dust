@@ -4,7 +4,7 @@ package huffman
 type Decoder struct {
 	coding    *Coding
 	treeIndex int
-	heldBits  uint32
+	heldWord  uint32
 	heldCount uint8
 }
 
@@ -22,9 +22,9 @@ func (dec *Decoder) writeSymbolsTo(dst []byte) (dn int) {
 	for dn < len(dst) && 0 < dec.heldCount {
 		var selector uint32
 		if dec.heldCount >= treeShift {
-			selector = (dec.heldBits >> (dec.heldCount - treeShift)) & treeSelectorMask
+			selector = (dec.heldWord >> (dec.heldCount - treeShift)) & treeSelectorMask
 		} else {
-			selector = (dec.heldBits << (treeShift - dec.heldCount)) & treeSelectorMask
+			selector = (dec.heldWord << (treeShift - dec.heldCount)) & treeSelectorMask
 		}
 
 		pointer := treeNodes[dec.treeIndex].children[selector]
@@ -63,7 +63,7 @@ func (dec *Decoder) Decode(dst, src []byte) (dn, sn int) {
 			return
 		}
 		for sn < len(src) && (32-dec.heldCount) >= 8 {
-			dec.heldBits = dec.heldBits<<8 | uint32(src[sn])
+			dec.heldWord = dec.heldWord<<8 | uint32(src[sn])
 			dec.heldCount += 8
 			sn++
 		}
@@ -72,13 +72,15 @@ func (dec *Decoder) Decode(dst, src []byte) (dn, sn int) {
 
 // Aligned returns true iff the input consumed so far corresponds exactly to the output produced so far.
 func (dec *Decoder) Aligned() bool {
-	return dec.heldBits == 0
+	return dec.heldCount == 0
 }
 
 // Flush attempts to write any pending symbols into dst.  It returns the number of bytes written into dst and
 // whether or not the total input consumed corresponds exactly to the output.
 func (dec *Decoder) Flush(dst []byte) (dn int, finished bool) {
+	// TODO: this should really return whether all _symbols so far_ from the input have been written to
+	// the output, but that implies some restructuring of writeSymbolsTo...
 	dn = dec.writeSymbolsTo(dst)
-	finished = (dec.heldBits == 0)
+	finished = (dec.heldCount == 0)
 	return
 }

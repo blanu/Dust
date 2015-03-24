@@ -12,6 +12,7 @@ import (
 	"github.com/op/go-logging"
 
 	"github.com/blanu/Dust/go/Dust"
+	"github.com/blanu/Dust/go/Dust/proc"
 
 	_ "github.com/blanu/Dust/go/DustModel/sillyHex"
 )
@@ -20,13 +21,12 @@ var log = logging.MustGetLogger("DustProxy")
 
 const progName = "DustProxy"
 const usageMessageRaw = `
-Usage: DustProxy --incomplete OPTIONS DUST-SIDE
+Usage: DustProxy OPTIONS DUST-SIDE
 
 Options:
-  --incomplete
-	Acknowledge that this executable does not implement
-	the full Dust stack and is just a shell of its future
-	self.  Required.
+  --mode MODE, -m MODE
+	Use the given transport mode for proxying.  Required.
+	Valid modes: minus
   --listen HOST:PORT, -l HOST:PORT
 	Listen for TCP connections on HOST:PORT.
   --connect HOST:PORT, -c HOST:PORT
@@ -39,14 +39,13 @@ Options:
 Dust side syntax:
   in IDENTITY-FILE
 	Listen for Dust connections using the private key and
-	parameters in IDENTITY-FILE.  --connect must be used,
-	and will receive proxied clear-side connections.  If
-	--listen is used, it overrides the physical address.
-  out ADDR:PORT PARAMS...
-	Connect to the Dust server at ADDR:PORT, using PARAMS as
-	though from a bridge line.  --listen must be used, and
-	will accept clear-side connections to be proxied.  If
-	--connect is used, it overrides the physical address.
+	parameters in IDENTITY-FILE, on the address specified
+	by --listen.  Proxy clear-side connections to the address
+	specified by --connect.
+  out PARAMS...
+	Connect to the Dust server specified by --connect, using PARAMS as
+	though from a bridge line.  Listen for clear-side connections
+	to forward on the address specified by --listen.
 
 Models available:$models
 `
@@ -149,11 +148,48 @@ func parseRestrictAddr(relativeTo *net.TCPAddr) error {
 	return nil
 }
 
-func dustProxy(dustSide Dust.Connection, plainSide *net.TCPConn) error {
-	// TODO: re-add process management here when connection-close is handled more effectively.
-	go io.Copy(plainSide, dustSide)
-	go io.Copy(dustSide, plainSide)
+func managedCopy(dst io.Writer, src io.Reader, mtu int) func(*proc.Env) error {
+	return func(env *proc.Env) error {
+		defer log.Debug("one side done")
+
+		buf := make([]byte, mtu)
+		for {
+			env.CancellationPoint()
+			n, rerr := src.Read(buf)
+			env.CancellationPoint()
+
+			if n > 0 {
+				_, werr := dst.Write(buf[:n])
+				if werr != nil {
+					return werr
+				}
+			}
+
+			if rerr != nil {
+				return rerr
+			}
+		}
+	}
+}
+
+func noProcess(env *proc.Env) error {
+	_ = <-env.Cancel
 	return nil
+}
+
+func dustProxy(dustSide *Dust.RawConn, plainSide *net.TCPConn) error {
+	var ctl proc.Ctl
+	penv := proc.InitChild(nil, &ctl, noProcess)
+	_ = proc.InitHelper(penv, managedCopy(plainSide, dustSide, 4096))
+	_ = proc.InitHelper(penv, managedCopy(dustSide, plainSide, dustSide.MTU()))
+	ctl.Start()
+	_ = <-ctl.Exit
+	err := ctl.Status()
+	log.Info("closing")
+	dustSide.Close()
+	plainSide.Close()
+	log.Info("done: %v", err)
+	return err
 }
 
 func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
@@ -191,7 +227,7 @@ func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
 func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) error {
 	log.Notice("listening for Dusts on %v, will dial plains on %v", listenAddr, dialAddr)
 	eachConn := func(in *net.TCPConn) error {
-		dconn, err := Dust.BeginServer(in, spriv)
+		dconn, err := Dust.BeginRawServer(in, spriv, nil)
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err
@@ -203,7 +239,7 @@ func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) e
 			return err
 		}
 
-		log.Info("proxying from %v-> to %v->", in.RemoteAddr(), out.LocalAddr())
+		log.Info("proxying {Dust %v->} :: {plain %v->}", in.RemoteAddr(), out.LocalAddr())
 		return dustProxy(dconn, out)
 	}
 
@@ -212,11 +248,14 @@ func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) e
 
 func dustToPlainFromArgs() (func() error, error) {
 	var err error
-	var warnings [][]interface{}
 
-	if userDialAddr == "" {
+	switch {
+	case userDialAddr == "":
 		usageErrorf("must specify address to connect to")
+	case userListenAddr == "":
+		usageErrorf("must specify address to listen on")
 	}
+
 	dialAddr, err := net.ResolveTCPAddr("tcp", userDialAddr)
 	if err != nil {
 		return nil, err
@@ -230,27 +269,17 @@ func dustToPlainFromArgs() (func() error, error) {
 		return nil, err
 	}
 
-	listenAddr := spriv.ListenAddr()
-	if userListenAddr != "" {
-		// Overrides address in identity file.
-		physListenAddr, err := net.ResolveTCPAddr("tcp", userListenAddr)
-		if err != nil {
-			return nil, err
-		}
+	// (minus mode)
+	spriv.EndpointParams.Shaping.IgnoreDuration = true
 
-		if !tcpAddrEqual(physListenAddr, listenAddr) {
-			warnings = append(warnings, []interface{}{"listening on %v even though identity address is %v", physListenAddr, listenAddr})
-		}
-		listenAddr = physListenAddr
+	listenAddr, err := net.ResolveTCPAddr("tcp", userListenAddr)
+	if err != nil {
+		return nil, err
 	}
 
 	err = parseRestrictAddr(listenAddr)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, warning := range warnings {
-		log.Warning(warning[0].(string), warning[1:]...)
 	}
 
 	return func() error {
@@ -271,13 +300,13 @@ func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) err
 		// so that there's less risk of dialing visibly and then getting hosed on some other part of
 		// initialization.
 
-		dconn, err := Dust.BeginClient(out, spub)
+		dconn, err := Dust.BeginRawClient(out, spub, nil)
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err
 		}
 
-		log.Info("proxying from %v-> to %v->", in.RemoteAddr(), out.LocalAddr())
+		log.Info("proxying {plain %v->} :: {Dust %v->}", in.RemoteAddr(), out.LocalAddr())
 		return dustProxy(dconn, in)
 	}
 
@@ -285,11 +314,13 @@ func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) err
 }
 
 func plainToDustFromArgs() (func() error, error) {
-	var warnings [][]interface{}
-
-	if userListenAddr == "" {
+	switch {
+	case userListenAddr == "":
 		usageErrorf("must specify address to listen on")
+	case userDialAddr == "":
+		usageErrorf("must specify address to connect to")
 	}
+
 	listenAddr, err := net.ResolveTCPAddr("tcp", userListenAddr)
 	if err != nil {
 		return nil, err
@@ -300,47 +331,28 @@ func plainToDustFromArgs() (func() error, error) {
 		return nil, err
 	}
 
-	connString := nextArg("CONNECT-ADDRESS")
-
-	params := make(map[string]string)
-	for _, param := range remainingArgs() {
-		equals := strings.IndexRune(param, '=')
+	unparsed := make(map[string]string)
+	for _, arg := range remainingArgs() {
+		equals := strings.IndexRune(arg, '=')
 		if equals < 0 {
 			usageErrorf("malformed bridge-like parameter (expected equals sign)")
 		}
 
-		key := param[:equals]
-		val := param[equals+1:]
-		params[key] = val
+		key, val := arg[:equals], arg[equals+1:]
+		unparsed[key] = val
 	}
 
-	bline := Dust.BridgeLine{
-		// No need to set the nickname.
-		Address: connString,
-		Params:  params,
-	}
-
-	spub, err := Dust.LoadServerPublicBridgeLine(bline)
+	spub, err := Dust.ParseServerPublic(unparsed)
 	if err != nil {
 		return nil, err
 	}
 
-	dialAddr := spub.DialAddr()
-	if userDialAddr != "" {
-		// Overrides address in bridge line.
-		physDialAddr, err := net.ResolveTCPAddr("tcp", userDialAddr)
-		if err != nil {
-			return nil, err
-		}
+	// (minus mode)
+	spub.EndpointParams.Shaping.IgnoreDuration = true
 
-		if !tcpAddrEqual(physDialAddr, dialAddr) {
-			warnings = append(warnings, []interface{}{"connecting to %v even though identity address is %v", physDialAddr, dialAddr})
-		}
-		dialAddr = physDialAddr
-	}
-
-	for _, warning := range warnings {
-		log.Warning(warning[0].(string), warning[1:]...)
+	dialAddr, err := net.ResolveTCPAddr("tcp", userDialAddr)
+	if err != nil {
+		return nil, err
 	}
 
 	return func() error {
@@ -377,9 +389,10 @@ func main() {
 
 	// Usage strings are hardcoded above.
 
-	var incompleteAck bool
 	var debugLogging bool
-	ourFlags.BoolVar(&incompleteAck, "incomplete", false, "")
+	var userMode string
+	ourFlags.StringVar(&userMode, "mode", "", "")
+	ourFlags.StringVar(&userMode, "m", "", "")
 	ourFlags.StringVar(&userListenAddr, "listen", "", "")
 	ourFlags.StringVar(&userListenAddr, "l", "", "")
 	ourFlags.StringVar(&userDialAddr, "connect", "", "")
@@ -401,6 +414,11 @@ func main() {
 		leveledLogBackend.SetLevel(logging.DEBUG, "")
 	}
 
+	userMode = strings.ToLower(userMode)
+	if userMode != "minus" {
+		usageErrorf("unsupported mode: '%s'", userMode)
+	}
+
 	var requestedCommand func() error
 	dirArg := nextArg("DIRECTION")
 	switch dirArg {
@@ -414,10 +432,6 @@ func main() {
 
 	if err != nil {
 		exitError(err)
-	}
-
-	if !incompleteAck {
-		usageErrorf("this executable is incomplete; you must use --incomplete")
 	}
 
 	err = requestedCommand()

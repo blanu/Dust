@@ -108,14 +108,22 @@ func transcodeLoop(
 
 	for {
 		maybeExpand(256)
-		dsubn, _ := flush((*dst)[dn:])
+		dsubn, finished := flush((*dst)[dn:])
 		dn += dsubn
-		if dn < len(*dst) {
+		if dn < len(*dst) || finished {
 			break
 		}
 	}
 
 	*dst = (*dst)[:dn]
+}
+
+func showBinaryOctets(b []byte) string {
+	parts := make([]string, len(b))
+	for i, x := range b {
+		parts[i] = fmt.Sprintf("%08b", x)
+	}
+	return strings.Join(parts, " ")
 }
 
 func TestLoopback(t *testing.T) {
@@ -137,18 +145,15 @@ func TestLoopback(t *testing.T) {
 		for i, _ := range dataIn {
 			dataIn[i] = uint8(rng.Int())
 		}
+		t.Logf("input: " + showBinaryOctets(dataIn))
 
 		var huffed []byte
 		transcodeLoop(t, &huffed, dataIn, enc.Encode, enc.Flush)
-
-		var parts []string
-		for _, x := range huffed {
-			parts = append(parts, fmt.Sprintf("%08b", x))
-		}
-		t.Logf(strings.Join(parts, " "))
+		t.Logf("huffed: " + showBinaryOctets(huffed))
 
 		var dataOut []byte
 		transcodeLoop(t, &dataOut, huffed, dec.Decode, dec.Flush)
+		t.Logf("looped: " + showBinaryOctets(dataOut))
 
 		// Since this is an unterminated Huffman coding, we may decode some garbage symbols at the
 		// end.  TODO: check to make sure any garbage symbols come from zero-valued decode.

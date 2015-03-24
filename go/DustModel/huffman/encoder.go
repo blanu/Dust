@@ -13,15 +13,16 @@ func newBitWriter(dst []byte) bitWriter {
 	return bitWriter{dst, 0, 8}
 }
 
-// writeBits writes bits from src starting at srcBitOffset into the destination.  It returns the number of
-// bits successfully written.
-func (bwr *bitWriter) writeBits(src BitString, srcBitOffset int) (wroteBits int) {
+// writeBits writes bits from src into bwr, starting at the given bit offset.  It returns the number of bits
+// successfully written.
+func (bwr *bitWriter) writeBits(src BitString, offset int) (wroteBits int) {
+	si := offset
 	for bwr.di < len(bwr.dst) {
-		packed, n := src.extract(srcBitOffset, 8)
+		packed, n := src.extract(si, 8)
 		if n == 0 {
 			break
 		}
-		srcBitOffset += 8
+		si += 8
 
 		// Conversion safety: 0 < bwr.lowAvail <= 8
 		// Shift position 8 down to position bwr.lowAvail.
@@ -34,9 +35,11 @@ func (bwr *bitWriter) writeBits(src BitString, srcBitOffset int) (wroteBits int)
 			wroteBits += n
 			break
 		} else if bwr.di+1 == len(bwr.dst) {
-			// Don't count the unwritable -bwr.lowAvail bits.  Align to end of destination buffer.
-			// We can't write any more.
+			// Don't count the unwritable -bwr.lowAvail bits.  (This has to come first because
+			// we reset bwr.lowAvail below.
 			wroteBits += n - (-bwr.lowAvail)
+
+			// Align to end of destination buffer.  We can't write any more.
 			bwr.di++
 			bwr.lowAvail = 8
 			break
@@ -63,6 +66,7 @@ func (bwr *bitWriter) backOut() (octet uint8, bits int) {
 		octet = bwr.dst[bwr.di]
 		bits = 8 - bwr.lowAvail
 		bwr.lowAvail = 8
+		bwr.dst[bwr.di] = 0
 		return
 	}
 }
@@ -87,13 +91,33 @@ func (bwr bitWriter) wroteOctets() int {
 	return bwr.di
 }
 
+type bitStringTail struct {
+	BitString
+	tailOffset int
+}
+
+func (tail *bitStringTail) empty() bool {
+	return tail.tailOffset == tail.BitLength
+}
+
+func (tail *bitStringTail) remaining() int {
+	return tail.BitLength - tail.tailOffset
+}
+
+func (tail *bitStringTail) drain(bwr *bitWriter) {
+	if tail.tailOffset < tail.BitLength {
+		tail.tailOffset += bwr.writeBits(tail.BitString, tail.tailOffset)
+	}
+}
+
 // Encoder holds state for a single streaming Huffman encoding, converting one byte stream into another.
 type Encoder struct {
 	coding *Coding
 
-	// held refers to heldStorage, which is mutated while encoding.  It can hold up to 8 pending bits.
-	held        BitString
-	heldStorage [1]byte
+	// backoutTail comes before codeTail.
+	backoutTail, codeTail bitStringTail
+
+	backoutStorage [1]byte
 }
 
 // NewEncoder constructs a stateful encoder for the given coding.
@@ -102,26 +126,8 @@ func NewEncoder(coding *Coding) (enc *Encoder) {
 		coding: coding,
 	}
 
-	enc.held.Packed = enc.heldStorage[:]
-	enc.held.BitLength = 0
+	enc.backoutTail.Packed = enc.backoutStorage[:]
 	return
-}
-
-func (enc *Encoder) writeHeld(bwr *bitWriter) {
-	// bwr must be aligned already.
-	if enc.held.BitLength > 0 {
-		wroteBits := bwr.writeBits(enc.held, 0)
-		switch {
-		case wroteBits == enc.held.BitLength:
-			enc.held.BitLength = 0
-		case wroteBits == 0:
-			// Couldn't write anything.
-		default:
-			// We should have had either a zero-length output buffer or a full octet available,
-			// which would have been able to accept any held string.  Something is terribly wrong.
-			panic("huffman: inconsistent partial writeHeld")
-		}
-	}
 }
 
 // Encode continues encoding bytes from src into dst, stopping when either no further source bytes can be
@@ -130,35 +136,33 @@ func (enc *Encoder) writeHeld(bwr *bitWriter) {
 func (enc *Encoder) Encode(dst []byte, src []byte) (dn int, sn int) {
 	codeTable := enc.coding.codeTable
 	bwr := newBitWriter(dst)
-	enc.writeHeld(&bwr)
-	if enc.held.BitLength > 0 || len(src) == 0 {
+	enc.backoutTail.drain(&bwr)
+	enc.codeTail.drain(&bwr)
+	if !enc.backoutTail.empty() || !enc.codeTail.empty() || len(src) == 0 {
 		return bwr.wroteOctets(), 0
 	}
 
 	si := 0
-	for {
-		sym := symbol(src[si])
+	for si < len(src) {
+		code := codeTable[src[si]]
 		si++
-		code := codeTable[uint8(sym)]
 
 		wroteBits := bwr.writeBits(code, 0)
-		if wroteBits < code.BitLength || si == len(src) {
-			enc.held.Packed[0], enc.held.BitLength = bwr.backOut()
+		if wroteBits < code.BitLength {
+			enc.codeTail = bitStringTail{code, wroteBits}
 			break
 		}
 	}
 
-	if !bwr.aligned() {
-		panic("huffman: weirdly misaligned bit writer")
-	}
-
+	enc.backoutTail.Packed[0], enc.backoutTail.BitLength = bwr.backOut()
+	enc.backoutTail.tailOffset = 0
 	return bwr.wroteOctets(), si
 }
 
 // Aligned returns true iff the input consumed so far corresponds exactly to the output produced so far or
 // a successful Flush has been performed.
 func (enc *Encoder) Aligned() bool {
-	return enc.held.BitLength == 0
+	return enc.backoutTail.empty() && enc.codeTail.empty()
 }
 
 // Flush pads the output with zero bits to the next byte and attempts to write any pending output into dst.
@@ -167,8 +171,9 @@ func (enc *Encoder) Aligned() bool {
 // coded stream at this point; if resynchronization is necessary it must be done elsewhere.
 func (enc *Encoder) Flush(dst []byte) (dn int, finished bool) {
 	bwr := newBitWriter(dst)
-	enc.writeHeld(&bwr)
-	if enc.held.BitLength > 0 {
+	enc.backoutTail.drain(&bwr)
+	enc.codeTail.drain(&bwr)
+	if !enc.backoutTail.empty() || !enc.codeTail.empty() {
 		return bwr.wroteOctets(), false
 	}
 

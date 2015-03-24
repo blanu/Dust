@@ -4,69 +4,43 @@ Package crypting implements the cryptographic and framing layer of the Dust prot
 package crypting
 
 import (
-	"bytes"
 	"errors"
-	"net"
 
-	"github.com/blanu/Dust/go/Dust/cryptions"
+	"github.com/blanu/Dust/go/Dust/prim"
 )
+
+var (
+	ErrBadOpaqueId = errors.New("Dust/crypting: bad opaque ID")
+)
+
+type OpaqueId prim.CValue
 
 // Public holds the longterm public key and shared identifier for a server.
 type Public struct {
-	IdBytes        []byte
-	LongtermPublic cryptions.PublicKey
+	Id  OpaqueId
+	Key prim.Public
 }
 
 // Private holds the longterm private key and shared identifier for a server.
 type Private struct {
-	IdBytes      []byte
-	LongtermPair cryptions.KeyPair
+	Id  OpaqueId
+	Key prim.Private
 }
 
-func (priv *Private) Destroy() {
-	priv.LongtermPair.DestroyPrivate()
+func NewOpaqueId() *OpaqueId {
+	opaque := OpaqueId(prim.RandomCValue())
+	return &opaque
 }
 
-var (
-	ErrUnrecognizedAddressType = errors.New("Dust: unrecognized address type")
+func (opaque OpaqueId) Text() string {
+	return prim.CValue(opaque).Text()
+}
 
-	ipv4MappedPrefix = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff}
-)
-
-// IdentityBytesOfNetworkAddress takes a network address and returns a shared identifier for it.  Currently,
-// this address must be a TCP/IP address.  If the address is not of a type for which a shared identifier can
-// be determined, ErrUnrecognizedAddressType is returned.
-func IdentityBytesOfNetworkAddress(netAddr interface{}) ([]byte, error) {
-	var ip net.IP
-	var port int
-	var l3Flag uint8
-	var l4Flag uint8
-
-	switch a := netAddr.(type) {
-	default:
-		return nil, ErrUnrecognizedAddressType
-	case *net.TCPAddr:
-		ip, port = a.IP, a.Port
-		l4Flag = 0x00
+func LoadOpaqueIdText(text string) (*OpaqueId, error) {
+	if cvalue, err := prim.CValueFromText(text); err == nil {
+		opaque := OpaqueId(cvalue)
+		return &opaque, nil
+	} else {
+		return nil, ErrBadOpaqueId
 	}
-
-	switch len(ip) {
-	default:
-		return nil, ErrUnrecognizedAddressType
-	case net.IPv4len:
-		l3Flag = 0x00
-	case net.IPv6len:
-		// Sometimes net.IP stores IPv4 addresses in 16-byte slices too.  Sigh.
-		if bytes.HasPrefix(ip, ipv4MappedPrefix) {
-			l3Flag = 0x00
-		} else {
-			l3Flag = 0x01
-		}
-	}
-
-	idBytes := bytes.Join([][]byte{
-		[]byte{l3Flag | l4Flag}, ip,
-		[]byte{uint8(port >> 8), uint8(port & 0xff)},
-	}, []byte{})
-	return idBytes, nil
 }

@@ -23,9 +23,10 @@ This Dust package is loosely designed to use Tor bridge line format for public s
 
 A bridge line consists of an (uninterpreted) nickname, a TCP/IP endpoint address, and a set of `KEY=VALUE` parameters.  Parameter keys interpreted by Dust include:
 
-- `p=PUBLIC-KEY`: the uniform representative of the long-term Curve25519 public key of the server in Base32.
-- `m=MODEL-NAME`: the model name being requested, out of an application-specific set.
+- `p=PUBLIC-KEY` (required): the uniform representative of the long-term Curve25519 public key of the server in Base32.
+- `m=MODEL-NAME` (required): the model name being requested, out of an application-specific set.
 - `m.KEY=VALUE`: possible model-specific parameters.
+- `mtu=DECIMAL`: maximum size of datagrams that can be delivered over each Dust connection.  The default is 1500.
 
 Parameter keys that have a question mark as the last character are considered optional hints and may be discarded by versions or configurations of software that do not support them without causing connection failures.
 
