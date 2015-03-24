@@ -7,7 +7,7 @@ if [ ! -d "~/go/src/caolta3iaejox3z4madc5wmp4z.uuid" ]; then
   mkdir ~/go/src/caolta3iaejox3z4madc5wmp4z.uuid
 fi
 
-scripts/build.sh ../go/models caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels ~/go/src/caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels 
+scripts/build.sh go ../go/models caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels ~/go/src/caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels 
 
 pushd ~/go/src/github.com/blanu/Dust/go/cmd/DustTool
 go build
