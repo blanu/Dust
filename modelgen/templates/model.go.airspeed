@@ -19,6 +19,8 @@ type $codec_type struct {
   $packet_length.decl
   $encode.decl
   $decode.decl
+  $incoming_sequence.decl
+  $outgoing_sequence.decl
 }
 
 func computeModel() (result *$model_type) {
@@ -36,7 +38,9 @@ func (model $model_type) newCodec() (result *$codec_type, err error) {
     $packet_sleep.data
     $packet_length.data
     $encode.data
-    $decode.data}
+    $decode.data,
+    $incoming_sequence.data,
+    $outgoing_sequence.data}
   return
 }
 
@@ -97,4 +101,12 @@ func (codec $codec_type) ShapeBytes(dst, src []byte) (dn, sn int) {
 
 func (codec $codec_type) UnshapeBytes(dst, src []byte) (dn, sn int) {
   $encode.body
+}
+
+func (codec $codec_type) InjectBytes(dst, src []byte) (dn, sn int) {
+  $incoming_sequence.body
+}
+
+func (codec $codec_type) WithdrawBytes(dst, src []byte) (dn, sn int) {
+  $incoming_sequence.body
 }
