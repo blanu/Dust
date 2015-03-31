@@ -139,6 +139,7 @@ func (cs *Session) drainPushBuffer() {
 			return
 		}
 
+		cs.pushBuffer[0] = nil
 		cs.pushBuffer = cs.pushBuffer[1:]
 	}
 
