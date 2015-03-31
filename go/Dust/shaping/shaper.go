@@ -171,6 +171,12 @@ func (sh *Shaper) runShaper(env *proc.Env) (err error) {
 	log.Info("shaper starting")
 
 	for {
+		// TODO: frequently zero-sleeping models don't seem to work here.  It seems the select can
+		// repeatedly select timed writes to perform and never reads, and then neither side of the
+		// connection makes any progress.  If we had access to the polling loop we could do some
+		// rudimentary source round-robining, but nope!  Nope!  We get to maybe hardcode repetitious
+		// channel priority stuff to try to resolve this later because none of these waits are
+		// composable!  Thanks, Go!  Thanks a WHOLE BUNCH.
 		select {
 		case subn := <-sh.reader.Rep:
 			err = sh.handleRead(subn.(int))
