@@ -166,4 +166,4 @@ func TestBasic(t *testing.T) {
 // TODO:
 //   - test with various args
 //   - test stream cipher XOR parts
-
+//   - test different sequences of read/write lengths
