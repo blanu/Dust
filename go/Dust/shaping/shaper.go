@@ -167,10 +167,23 @@ func (sh *Shaper) runShaper(env *proc.Env) (err error) {
 	}()
 
 	sh.reader.cycle(sh.inBuf[:])
+	sh.reading = true
 	sh.timer.cycle(sh.encoder.NextPacketSleep())
 	log.Info("shaper starting")
 
 	for {
+		// Make sure the reader never starves.  AHAHAHAHA Go doesn't let you separate readiness polling
+		// on channels from reads, does it?  So you have to replicate all the code.  Ahahahahaha.
+		select {
+		case subn := <-sh.reader.Rep:
+			err = sh.handleRead(subn.(int))
+			if err != nil {
+				return
+			}
+		default:
+		}
+
+		// XXX: see above
 		// TODO: frequently zero-sleeping models don't seem to work here.  It seems the select can
 		// repeatedly select timed writes to perform and never reads, and then neither side of the
 		// connection makes any progress.  If we had access to the polling loop we could do some
