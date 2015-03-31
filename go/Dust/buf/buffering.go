@@ -22,10 +22,14 @@ func BeginReassembly(size int) Reassembly {
 	return make([]byte, 0, size)
 }
 
-// BeginReassemblyArray returns an empty reassembly backed by the given array.  The slice given must
-// correspond to exactly a single underlying array, and must not be a strict subslice of a larger array.
+// BeginReassemblyArray returns an empty reassembly backed by the given array.
 func BeginReassemblyArray(array []byte) Reassembly {
 	return array[:0]
+}
+
+// ExistingReassemblyArray returns a reassembly backed by the given array, with n bytes already present.
+func ExistingReassemblyArray(array []byte, n int) Reassembly {
+	return array[:n]
 }
 
 // CopyReassemble copies bytes from *in to the blank portion of *out.  It updates *out to reflect the

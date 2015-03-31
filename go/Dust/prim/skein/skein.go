@@ -116,6 +116,12 @@ type Hash struct {
 	octr uint64
 }
 
+func (h *Hash) Copy() (h1 Hash) {
+	h1 = *h
+	h1.xfer = buf.ExistingReassemblyArray(h1.xsto[:], h.xfer.ValidLen())
+	return
+}
+
 func (h *Hash) processBlock(b []byte) {
 	var input block
 	h.tweak[0] += uint64(input.consume(&b))

@@ -106,7 +106,6 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 
 	case stateHandshakeKey:
 		// Remote confirmation code hasn't been received yet.  Zeros are valid filler.
-		// TODO: 
 		cs.pullZeroData(p)
 
 	case stateStreaming:
