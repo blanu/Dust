@@ -14,44 +14,71 @@ type $model_type struct {
 
 type $codec_type struct {
   *$model_type
-  $duration.decl
   $packet_sleep.decl
   $packet_length.decl
   $encode.decl
   $decode.decl
-  $incoming_sequence.decl
-  $outgoing_sequence.decl
+  $sequence.decl
 }
 
 func computeModel() (result *$model_type) {
   var err error
   result = &$model_type{}
-  $huffman.body
+  $huffman.incoming
+  $huffman.outgoing
   return
 }
 
-func (model $model_type) newCodec() (result *$codec_type, err error) {
+func newCodec(direction bool) (result *$codec_type, err error) {
   // TODO: is this the best choice of source to use?
   prng := csrand.Rand
-  result = &$codec_type{
-    $duration.data
-    $packet_sleep.data
-    $packet_length.data
-    $encode.data
-    $decode.data,
-    $incoming_sequence.data,
-    $outgoing_sequence.data}
+
+  model := computeModel()
+
+  if direction {
+    result = &$codec_type{
+      $packet_sleep.incoming
+      $packet_length.incoming
+      $encode.incoming
+      $decode.outgoing,
+      $sequence.incoming}
+  } else {
+    result = &$codec_type{
+      $packet_sleep.outgoing
+      $packet_length.outgoing
+      $encode.outgoing
+      $decode.incoming,
+      $sequence.outgoing}
+  }
   return
 }
 
-func (model $model_type) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
-  codec, err := model.newCodec()
-  return codec, codec, err
+func (self $model_type) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+  incomingCodec, err1 := newCodec(true)
+  if err1 != nil {
+    return nil, nil, err1
+  } else {
+    outgoingCodec, err2 := newCodec(false)
+    if err2 != nil {
+      return nil, nil, err2
+    } else {
+      return incomingCodec, outgoingCodec, nil
+    }
+  }
 }
 
-func (model $model_type) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
-  codec, err := model.newCodec()
-  return codec, codec, err
+func (self $model_type) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+  incomingCodec, err1 := newCodec(true)
+  if err1 != nil {
+    return nil, nil, err1
+  } else {
+    outgoingCodec, err2 := newCodec(false)
+    if err2 != nil {
+      return nil, nil, err2
+    } else {
+      return outgoingCodec, incomingCodec, nil
+    }
+  }
 }
 
 func init() {
@@ -80,7 +107,8 @@ func clampUint16(n float64) uint16 {
 }
 
 func (self $codec_type) WholeStreamDuration() time.Duration {
-  return time.Duration($duration.expr) * time.Millisecond
+//  return time.Duration($duration.exp) * time.Millisecond
+  return time.Duration(0) * time.Millisecond
 }
 
 func (self $codec_type) MaxPacketLength() uint16 {
@@ -95,18 +123,25 @@ func (self $codec_type) NextPacketSleep() time.Duration {
   return time.Duration($packet_sleep.expr) * time.Millisecond
 }
 
-func (codec $codec_type) ShapeBytes(dst, src []byte) (dn, sn int) {
-  $decode.body
+func (codec $codec_type) ShapeBytes(dst []byte, src []byte) (dn int, sn int) {
+  var buffer []byte
+  var consumed int
+
+  if codec.encoder_position == 0 {
+    $decode.body
+    buffer=append(codec.sequence , buffer)
+    codec.
+  } else {
+    $decode.body
+  }
+
+  return buffer, consumed
 }
 
 func (codec $codec_type) UnshapeBytes(dst, src []byte) (dn, sn int) {
-  $encode.body
-}
+  if codec.decoder_position < codec. {
 
-func (codec $codec_type) InjectBytes(dst, src []byte) (dn, sn int) {
-  $incoming_sequence.body
-}
-
-func (codec $codec_type) WithdrawBytes(dst, src []byte) (dn, sn int) {
-  $incoming_sequence.body
+  } else {
+    $encode.body
+  }
 }

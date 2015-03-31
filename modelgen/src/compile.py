@@ -34,22 +34,20 @@ def convertModel(name, data, lang):
   model['name']=name
   model['model_type']=name+'Model'
   model['codec_type']=name+'Codec'
-  model['duration']=genDuration(data['duration']['dist'], data['duration']['params'], lang)
-  model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], lang)
-  model['packet_sleep']=genITA(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], lang)
-  model['huffman']=genHuffman(data['incomingModel']['huffman'])
-  model['incoming_sequence']=genSequence('incomingSequence', data['incomingModel']['sequence'])
-  model['outgoing_sequence']=genSequence('outgoingSequence', data['outgoingModel']['sequence'])
+  model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], data['outgoingModel']['length']['params'], lang)
+  model['packet_sleep']=genIAT(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], data['outgoingModel']['flow']['params'], lang)
+  model['huffman']=genHuffman(data['incomingModel']['huffman'], data['outgoingModel']['huffman'])
+  model['sequence']=genSequence('sequence', data['incomingModel']['sequence'], data['outgoingModel']['sequence'])
   model['encode']=genEncoder()
   model['decode']=genDecoder()
 
   return model
 
-def genSequence(varname, data):
+def genSequence(varname, data, data2):
   return {
-    'decl': "%s []byte" % (varname),
-    'data': "%s: []byte{%s}" % (varname, makeByteArray(data)),
-    'body': ""
+    'decl': "encoding_%s []byte\ndecoding_%s []byte\nencoding_position uint64\ndecoding_position uint64" % (varname),
+    'incoming': "encoding_%s: []byte{%s}" % (varname, makeByteArray(data)),
+    'outgoing': "decoding_%s: []byte{%s}" % (varname, makeByteArray(data2)),
   }
 
 def makeByteArray(data):
@@ -62,11 +60,12 @@ def genDuration(dist, params, lang):
     print('Unknown duration dist %s' % dist)
     return None
 
-def genExponential(varname, param, lang):
+def genExponential(varname, param1, param2, lang):
   if lang=='go':
     return {
       'decl': "%s dist.Exponential" % (varname),
-      'data': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param),
+      'incoming': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param1),
+      'outgoing': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param2),
       'expr': "clampUint16(self.%s.Rand())" % (varname)
     }
   elif lang=='js':
@@ -78,18 +77,21 @@ def genExponential(varname, param, lang):
   else:
     return {}
 
-def genLength(dist, params, lang):
+def genLength(dist, params1, params2, lang):
   if dist=='normal':
-    return genNormal("lengthDist", params[0], params[1], lang)
+    return genNormal("lengthDist", params1[0], params1[1], params2[0], params2[1], lang)
+  elif dist=='multinomial':
+    return genMultinomial("lengthDist", params1, params2, lang)
   else:
     print('Unknown length dist %s' % dist)
     return None
 
-def genNormal(varname, mu, sigma, lang):
+def genNormal(varname, mu1, sigma1, mu2, sigma2, lang):
   if lang=='go':
     return {
       'decl': "%s dist.Normal" % (varname),
-      'data': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu, sigma),
+      'incoming': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu1, sigma1),
+      'outgoing': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu2, sigma2),
       'expr': "clampUint16(self.%s.Rand())" % (varname)
     }
   elif lang=='js':
@@ -100,32 +102,26 @@ def genNormal(varname, mu, sigma, lang):
   else:
     return {}
 
-def genITA(dist, params, lang):
+def genIAT(dist, params1, params2, lang):
   if dist=='poisson':
-    return genExponential("sleepDist", params[0], lang)
+    return genExponential("sleepDist", params1[0], params2[0], lang)
   else:
     print('Unknown flow dist %s' % dist)
     return None
 
-# FIXME - Find code for generating a proper Poisson distribution
-def genPoisson(varname, param):
+def genHuffman(params1, params2):
   return {
-    'decl': "%s dist.Poisson" % (varname),
-    'data': "%s: dist.Poisson{Expected: float64(%f), Source: prng}," % (varname, param),
-    'body': "var total uint16 = 0\nfor iteration := 0; iteration < int(milliseconds); iteration++ {\n  total=total+uint16(self.%s.Rand())\n}\n\nreturn total" % (varname)
-  }
-
-def genHuffman(params):
-  return {
-    'decl': "coding *huffman.Coding",
-    'body': "result.coding, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params))
+    'decl': "incoming_coding *huffman.Coding\noutgoing_coding *huffman.Coding",
+    'incoming': "result.incoming_coding, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params1)),
+    'outgoing': "result.outgoing_coding, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params2))
   }
 
 def genEncoder():
   varname="contentDist"
   return {
     'decl': "encoder *huffman.Encoder",
-    'data': "encoder: huffman.NewEncoder(model.coding),",
+    'incoming': "encoder: huffman.NewEncoder(model.incoming_coding),",
+    'outgoing': "encoder: huffman.NewEncoder(model.outgoing_coding),",
     'body': """
       return codec.encoder.Encode(dst, src)
       """
@@ -135,7 +131,8 @@ def genDecoder():
   varname="contentDist"
   return {
     'decl': "decoder *huffman.Decoder",
-    'data': "decoder: huffman.NewDecoder(model.coding)",
+    'incoming': "decoder: huffman.NewDecoder(model.incoming_coding)",
+    'outgoing': "decoder: huffman.NewDecoder(model.outgoing_coding)",
     'body': """
       return codec.decoder.Decode(dst, src)
       """
