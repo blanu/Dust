@@ -89,13 +89,13 @@ The following functions and constants are assumed:
 The Dust2015 protocol uses:
 
 - NTOR_SEED_LEN = SECRET_LEN = MAC_LEN = KEY_LEN = 32.
-- NTOR_PROTO_ID = `"ntor(Dust2015)"`, NTOR_PROTO_ID_LEN = 14.
-- pprefix = `"tag:blanu.net,2015:Dust2015/"`.  P(suffix) = pprefix‖suffix.
-- NtorDigest2(input) = Skein-512-512(input, T_prs: P(`"ntor-H.skein"`)).  The seed is the first half of the result; the secret is the second half.
-- NtorDigestM(input) = Skein-512-256(input, T_prs: P(`"ntor-Hmac.skein"`)).
-- KDF(secret, id) = Skein-512-256(ε, T_key: secret, T_kdf: id, T_prs: P(`"kdf.skein"`)).  ε is the empty string.
-- MAC(input, nonce, key) = Skein-512-256(input, T_key: key, T_non: nonce64, T_prs: P(`"mac.skein"`)).  nonce64 is nonce represented in big-endian 64-bit binary form.
-- Stream(key) = Skein-512-Cipher(T_key: key, T_prs: P(`"stream.skein"`)).  The nominal output length is set to 2^64 − 1 bits, and continuously clocked output from Skein becomes the key stream.
+- NTOR_PROTO_ID = "ntor(Dust2015)", NTOR_PROTO_ID_LEN = 14.
+- pprefix = "tag:blanu.net,2015:Dust2015/".  P(suffix) = pprefix‖suffix.
+- NtorDigest2(input) = Skein-512-512(input, T_prs: P("ntor-H.skein")).  The seed is the first half of the result; the secret is the second half.
+- NtorDigestM(input) = Skein-512-256(input, T_prs: P("ntor-Hmac.skein")).
+- KDF(secret, id) = Skein-512-256(ε, T_key: secret, T_kdf: id, T_prs: P("kdf.skein")).  ε is the empty string.
+- MAC(input, nonce, key) = Skein-512-256(input, T_key: key, T_non: nonce64, T_prs: P("mac.skein")).  nonce64 is nonce represented in big-endian 64-bit binary form.
+- Stream(key) = Skein-512-Cipher(ε, T_key: key, T_prs: P("stream.skein")).  The nominal output length is set to 2^64 − 1 bits, and continuously clocked output from Skein becomes the key stream.  ε is the empty string.
 - PK_LEN = 32.  DH_LEN = 32.
 - NewKey(entropy) = Elligator-Curve25519.  The public key representation is the Elligator uniform representative.  Multiple tries may be needed to generate a valid Elligator key; the current implementation consumes up to 256*PK_LEN bits from the entropy source.
 - DH(private, public) = Elligator-Curve25519-ECDH.
@@ -128,7 +128,7 @@ side, it can generate the shared cryptographic values needed:
   4. [PK_LEN] Client ephemeral public key repr
   5. [PK_LEN] Server ephemeral public key repr
   6. [NTOR_PROTO_ID_LEN] The literal string NTOR_PROTO_ID
-2. FromLocal = `"cli."` for the client or `"srv."` for the server
+2. FromLocal = "cli." for the client or "srv." for the server
 3. Confirmation = NtorDigestM(input) where input is the concatenation of:
   1. [NTOR_SEED_LEN] ConfSeed
   2. [*] Server identity string
@@ -137,8 +137,8 @@ side, it can generate the shared cryptographic values needed:
   5. [NTOR_PROTO_ID_LEN] The literal string NTOR_PROTO_ID
   6. [4] FromLocal
 4. Derived keys:
-  - StreamKey = KDF(Secret, `"clk."`‖FromLocal‖`"dta."`)
-  - AuthKey = KDF(Secret, `"mac."`‖FromLocal‖`"grm."`)
+  - StreamKey = KDF(Secret, "clk."‖FromLocal‖"dta.")
+  - AuthKey = KDF(Secret, "mac."‖FromLocal‖"grm.")
 
 All steps after step 1 are also computed from the perspective of the other endpoint, for determining when the
 confirmation has been received and keying the receiving half-connection.  Once this is done, endpoint can
