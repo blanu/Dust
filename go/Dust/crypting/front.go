@@ -17,7 +17,7 @@ var (
 
 type Front interface {
 	PullGram(write func(p []byte, mayRetain bool))
-	PushGram(p []byte, mayRetain bool)
+	PushGram(p []byte, mayRetain bool) (unsent []byte, unsentOwned bool)
 	DrainOutput()
 }
 
@@ -84,7 +84,7 @@ func (inv *InvertingFront) Write(p []byte) (n int, err error) {
 	}
 }
 
-func (inv *InvertingFront) PushGram(p []byte, mayRetain bool) {
+func (inv *InvertingFront) PushGram(p []byte, mayRetain bool) (unsent []byte, unsentOwned bool) {
 	if !mayRetain {
 		p = buf.CopyNew(p)
 	}
@@ -93,9 +93,12 @@ func (inv *InvertingFront) PushGram(p []byte, mayRetain bool) {
 	inv.inSequence++
 	select {
 	case inv.inGrams <- ngram:
+		return nil, false
 	default:
-		// Inward-facing side not consuming these fast enough.  Drop the datagram on
-		// the floor.
+		// Inward-facing side not consuming these fast enough.  Let the sender decide
+		// whether to exert backpressure or drop it on the floor.  (The standard case
+		// is the latter.)
+		return p, true
 	}
 }
 
