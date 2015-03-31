@@ -12,9 +12,9 @@ import (
 var log = logging.MustGetLogger("Dust/crypting")
 
 var (
-	ErrBadHandshake      = errors.New("Dust/crypting: bad handshake")
-	ErrBadDecode         = errors.New("Dust/crypting: bad decode")
-	ErrDatagramTooLarge  = errors.New("Dust/crypting: datagram too large")
+	ErrBadHandshake     = errors.New("Dust/crypting: bad handshake")
+	ErrBadDecode        = errors.New("Dust/crypting: bad decode")
+	ErrDatagramTooLarge = errors.New("Dust/crypting: datagram too large")
 )
 
 const (
@@ -129,8 +129,8 @@ func (cs *Session) Init() error {
 
 func beginAny(sinfo interface{}, front Front, params Params) (*Session, error) {
 	cs := &Session{
-		Params: params,
-		front: front,
+		Params:     params,
+		front:      front,
 		serverInfo: sinfo,
 	}
 	if err := cs.Init(); err != nil {

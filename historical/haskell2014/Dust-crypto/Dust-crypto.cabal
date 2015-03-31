@@ -6,7 +6,7 @@ Category:            Cryptography
 License:             GPL
 License-file:        LICENSE
 Author:              Brandon Wiley
-Maintainer:          brandon@ischool.utexas.edu
+Maintainer:          brandon@blanu.net
 Build-Type:          Simple
 Cabal-Version:       >=1.8
 

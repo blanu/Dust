@@ -5,7 +5,7 @@ homepage:            https://github.com/blanu/Dust
 license:             GPL-2
 license-file:        LICENSE
 author:              Brandon Wiley
-maintainer:          brandon@ischool.utexas.edu
+maintainer:          brandon@blanu.net
 category:            Network
 build-type:          Simple
 cabal-version:       >=1.10
