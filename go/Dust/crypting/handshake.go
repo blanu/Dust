@@ -22,8 +22,6 @@ func (cs *Session) receivedEphemeralKey() {
 
 	var ntor prim.NtorHandshake
 	var inKdfPrefix, outKdfPrefix string
-	var secret prim.Secret
-	var outConfirmation prim.AuthValue
 
 	switch sinfo := cs.serverInfo.(type) {
 	default:
@@ -35,15 +33,17 @@ func (cs *Session) receivedEphemeralKey() {
 		ntor.Init(sinfo.Id[:], &cs.localPrivate.Public, &cs.remotePublic)
 		ntor.WriteDHPart(cs.localPrivate.SharedSecret(cs.remotePublic))
 		ntor.WriteDHPart(cs.localPrivate.SharedSecret(sinfo.Key))
-		secret, outConfirmation, cs.inConfirmation = ntor.Finish()
 
 	case *Private:
 		inKdfPrefix, outKdfPrefix = kdfC2S, kdfS2C
 		ntor.Init(sinfo.Id[:], &cs.remotePublic, &cs.localPrivate.Public)
 		ntor.WriteDHPart(cs.localPrivate.SharedSecret(cs.remotePublic))
 		ntor.WriteDHPart(sinfo.Key.SharedSecret(cs.remotePublic))
-		secret, cs.inConfirmation, outConfirmation = ntor.Finish()
 	}
+
+	var secret prim.Secret
+	var outConfirmation prim.AuthValue
+	secret, cs.inConfirmation, outConfirmation = ntor.Finish(inKdfPrefix, outKdfPrefix)
 
 	cs.outCrypted.CopyIn(outConfirmation[:])
 	log.Debug("-> send confirmation starting with %x", outConfirmation[:2])

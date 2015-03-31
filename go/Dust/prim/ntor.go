@@ -43,7 +43,7 @@ func (ntor *NtorHandshake) WriteDHPart(secret Secret) {
 	ntor.h.Write(secret[:])
 }
 
-func (ntor *NtorHandshake) Finish() (shared Secret, tB, tA AuthValue) {
+func (ntor *NtorHandshake) Finish(inTail, outTail string) (shared Secret, tIn, tOut AuthValue) {
 	// The DH parts have already been written into ntor.h.
 	hTail := bytes.Join([][]byte{ntor.bHat, ntor.x, ntor.y, []byte(ntorSquawk)}, nil)
 	ntor.h.Write(hTail)
@@ -58,12 +58,12 @@ func (ntor *NtorHandshake) Finish() (shared Secret, tB, tA AuthValue) {
 	hMac.Write(confSeed[:])
 	hMac.Write(hMacMedial)
 
-	hMacB := hMac.Copy()
-	hMacB.Write([]byte(ntorServer))
-	_, _ = hMacB.Read(tB[:])
-	hMacA := hMac.Copy()
-	hMacA.Write([]byte(ntorClient))
-	_, _ = hMacA.Read(tA[:])
+	hMacIn := hMac.Copy()
+	hMacIn.Write([]byte(inTail))
+	_, _ = hMacIn.Read(tIn[:])
+	hMacOut := hMac.Copy()
+	hMacOut.Write([]byte(outTail))
+	_, _ = hMacOut.Read(tOut[:])
 
 	return
 }
