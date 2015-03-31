@@ -2,10 +2,16 @@ package prim
 
 import (
 	cryptoSubtle "crypto/subtle"
-	"encoding/binary"
 	"io"
 
 	"github.com/blanu/Dust/go/Dust/prim/skein"
+)
+
+const (
+	personMAC = personPrefix + "mac.skein"
+
+	AuthKeyLen = 32
+	AuthLen = 32
 )
 
 type (
@@ -14,22 +20,35 @@ type (
 )
 
 type MAC struct {
-	*skein.Hash
-	args skein.Args
+	skein.Hash
+
+	keyInitial skein.Initial
+	nonceSet   bool
 }
 
 var _ io.Writer = (*MAC)(nil)
 
 func (m *MAC) SetKey(key AuthKey) {
-	m.args.Key = key[:]
-	m.args.Person = skeinPersonalization
+	m.keyInitial.Init(AuthLen, &skein.Args{Key: key[:], Person: []byte(personMAC)})
+	m.nonceSet = false
 }
 
 func (m *MAC) Reset(nonceInt uint64) {
-	var nonceArray [8]byte
-	binary.BigEndian.PutUint64(nonceArray[:], nonceInt)
-	m.args.Nonce = nonceArray[:]
-	m.Hash = skein.New(CValueSize, &m.args)
+	var nonceBytes [8]byte
+	nonceBytes[0] = byte(nonceInt >> 56)
+	nonceBytes[1] = byte(nonceInt >> 48)
+	nonceBytes[2] = byte(nonceInt >> 40)
+	nonceBytes[3] = byte(nonceInt >> 32)
+	nonceBytes[4] = byte(nonceInt >> 24)
+	nonceBytes[5] = byte(nonceInt >> 16)
+	nonceBytes[6] = byte(nonceInt >> 8)
+	nonceBytes[7] = byte(nonceInt)
+
+	afterNonce := m.keyInitial
+	afterNonce.AddArg(skein.ArgNonce, nonceBytes[:])
+	afterNonce.Finish()
+	m.Hash.InitFrom(&afterNonce)
+	m.nonceSet = true
 }
 
 type GeneratingMAC struct {
@@ -37,12 +56,12 @@ type GeneratingMAC struct {
 }
 
 func (m *GeneratingMAC) Generate() (result AuthValue) {
-	if m.args.Nonce == nil {
+	if !m.nonceSet {
 		panic("Dust/prim: no nonce for MAC")
 	}
 
-	_ = m.Sum(result[:0])
-	m.args.Nonce = nil
+	_, _ = m.Read(result[:])
+	m.nonceSet = false
 	return
 }
 
@@ -56,12 +75,12 @@ type VerifyingMAC struct {
 }
 
 func (m *VerifyingMAC) Verify(in []byte) bool {
-	if m.args.Nonce == nil {
+	if !m.nonceSet {
 		panic("Dust/prim: no nonce for MAC")
 	}
 
-	_ = m.Sum(m.verifyEqual[:0])
-	m.args.Nonce = nil
+	_, _ = m.Read(m.verifyEqual[:])
+	m.nonceSet = false
 	return m.verifyEqual.Equal(in)
 }
 
@@ -74,6 +93,5 @@ func GenerateMAC(input []byte, nonceInt uint64, key AuthKey) AuthValue {
 }
 
 func (av AuthValue) Equal(other []byte) bool {
-	// TODO: AuthLen
-	return len(other) == 32 && cryptoSubtle.ConstantTimeCompare(av[:], other[:]) == 1
+	return len(other) == AuthLen && cryptoSubtle.ConstantTimeCompare(av[:], other[:]) == 1
 }

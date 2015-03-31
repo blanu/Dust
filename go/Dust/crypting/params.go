@@ -7,6 +7,9 @@ import (
 type Params struct {
 	// Maximum datagram size.
 	MTU int
+
+	// Whether to allow propagating backpressure by buffering unsent datagrams.
+	HoldIncoming bool
 }
 
 const (

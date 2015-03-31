@@ -271,6 +271,7 @@ func dustToPlainFromArgs() (func() error, error) {
 
 	// (minus mode)
 	spriv.EndpointParams.Shaping.IgnoreDuration = true
+	spriv.EndpointParams.Crypting.HoldIncoming = true
 
 	listenAddr, err := net.ResolveTCPAddr("tcp", userListenAddr)
 	if err != nil {
@@ -349,6 +350,7 @@ func plainToDustFromArgs() (func() error, error) {
 
 	// (minus mode)
 	spub.EndpointParams.Shaping.IgnoreDuration = true
+	spub.EndpointParams.Crypting.HoldIncoming = true
 
 	dialAddr, err := net.ResolveTCPAddr("tcp", userDialAddr)
 	if err != nil {

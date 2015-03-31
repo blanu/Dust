@@ -4,11 +4,17 @@ import (
 	"github.com/blanu/Dust/go/Dust/buf"
 )
 
-func (cs *Session) pullZero(p []byte) {
+func (cs *Session) pullZeroRaw(p []byte) {
 	for i := 0; i < len(p); i++ {
 		p[i] = 0
 	}
 	cs.outCipher.XORKeyStream(p, p)
+}
+
+func (cs *Session) pullZeroData(p []byte) {
+	cs.pullZeroRaw(p)
+	cs.outMAC.Write(p)
+	cs.outPosition += uint64(len(p))
 }
 
 func (cs *Session) pullData(p []byte) {
@@ -35,9 +41,7 @@ func (cs *Session) pullData(p []byte) {
 		cs.front.PullGram(setDgram)
 		if dgram == nil {
 			log.Debug("no gram; write %d zeros", len(p))
-			cs.pullZero(p)
-			cs.outMAC.Write(p)
-			cs.outPosition += uint64(len(p))
+			cs.pullZeroData(p)
 			return
 		}
 		log.Debug("gram len %d", len(dgram))
@@ -88,22 +92,24 @@ func (cs *Session) PullWrite(p []byte) (n int, err error) {
 
 	case stateHandshakeNoKey:
 		// Handshake interstitial data must be aligned 32-byte chunks.
-		cs.pullZero(p)
+		cs.pullZeroRaw(p)
 
 		if len(p)%32 != 0 {
-			cs.pullZero(cs.outCrypted.PreData(32 - len(p)%32))
+			cs.pullZeroRaw(cs.outCrypted.PreData(32 - len(p)%32))
 		}
 
 		log.Debug("-> handshake interstitial %d bytes", len(p))
 
 	case stateFailed:
 		cs.front.DrainOutput()
-		cs.pullZero(p)
+		cs.pullZeroRaw(p)
 
-	case stateStreaming, stateHandshakeKey:
-		// TODO: this starts potentially sending data even before the remote confirmation code
-		// has been received.  That might be important for reducing the number of round trips,
-		// but...
+	case stateHandshakeKey:
+		// Remote confirmation code hasn't been received yet.  Zeros are valid filler.
+		cs.pullZeroData(p)
+
+	case stateStreaming:
+		// Can send data.
 		cs.pullData(p)
 	}
 

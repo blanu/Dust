@@ -22,6 +22,16 @@ func BeginReassembly(size int) Reassembly {
 	return make([]byte, 0, size)
 }
 
+// BeginReassemblyArray returns an empty reassembly backed by the given array.
+func BeginReassemblyArray(array []byte) Reassembly {
+	return array[:0]
+}
+
+// ExistingReassemblyArray returns a reassembly backed by the given array, with n bytes already present.
+func ExistingReassemblyArray(array []byte, n int) Reassembly {
+	return array[:n]
+}
+
 // CopyReassemble copies bytes from *in to the blank portion of *out.  It updates *out to reflect the
 // new valid length, sets *in to the unconsumed tail, and returns the number of bytes copied.
 func CopyReassemble(out *Reassembly, in *[]byte) int {
@@ -64,7 +74,7 @@ func (reassembly Reassembly) FixedSizeComplete() bool {
 	return len(reassembly) == cap(reassembly)
 }
 
-// Data returns the slice of valid bytes in reassembly.
+// Data returns the slice of valid bytes in reassembly.  This is the same as slicing the reassembly.
 func (reassembly Reassembly) Data() []byte {
 	return reassembly
 }
@@ -72,6 +82,11 @@ func (reassembly Reassembly) Data() []byte {
 // ValidLen returns the number of valid bytes in reassembly.
 func (reassembly Reassembly) ValidLen() int {
 	return len(reassembly)
+}
+
+// Empty returns true iff reassembly contains no data.
+func (reassembly Reassembly) Empty() bool {
+	return len(reassembly) == 0
 }
 
 // Consume alters reassembly so that all but the first n bytes are copied to the front and become the
@@ -88,10 +103,11 @@ func (reassembly *Reassembly) Consume(n int) {
 	}
 }
 
-func (reassembly *Reassembly) CopyOut(out *[]byte) {
+func (reassembly *Reassembly) CopyOut(out *[]byte) int {
 	n := copy(*out, *reassembly)
 	reassembly.Consume(n)
 	*out = (*out)[n:]
+	return n
 }
 
 func (reassembly *Reassembly) PreData(n int) (fill []byte) {

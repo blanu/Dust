@@ -48,6 +48,8 @@ type Session struct {
 
 	front Front
 
+	pushBuffer [][]byte
+
 	// Failed: we're using a bogus key to send, and received bytes are discarded.  HandshakeNoKey: we're
 	// reassembling the remote side's ephemeral public key.  HandshakeKey: we're searching for the
 	// confirmation code from the remote side.  Streaming: framed bytes can be sent and received.

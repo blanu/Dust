@@ -35,21 +35,27 @@ type Shaper struct {
 	shapedOut io.Writer
 	closer    io.Closer
 
-	reader  reader
-	decoder Decoder
-	inBuf   []byte
-	pushBuf []byte
+	reader   reader
+	decoder  Decoder
+	inBuf    []byte
+	pushBuf  []byte
+	reading  bool
 
 	timer    timer
+	writer   writer
 	encoder  Encoder
 	outBuf   []byte
+	outPoint int
+	outMark  int
 	pullBuf  []byte
 	pullMark int
+	writing  bool
 }
 
 func (sh *Shaper) handleRead(subn int) error {
-	// We own inBuf until we cycle the reader again.
+	sh.reading = false
 	in := sh.inBuf[:subn]
+
 	for {
 		dn, sn := sh.decoder.UnshapeBytes(sh.pushBuf, in)
 		log.Debug("  <- unshaped %d from %d bytes", dn, sn)
@@ -66,13 +72,60 @@ func (sh *Shaper) handleRead(subn int) error {
 		}
 	}
 
-	sh.reader.cycle(0)
+	if sh.crypter.PushReadCTS() {
+		sh.reader.cycle(sh.inBuf[:])
+		sh.reading = true
+	} else {
+		log.Debug("  <- propagating !CTS backpressure from front")
+	}
+
+	return nil
+}
+
+func (sh *Shaper) handleWrite(subn int) error {
+	sh.outPoint += subn
+	switch {
+	case sh.outPoint < sh.outMark:
+		log.Debug("-> only wrote %d bytes, %d left over", subn, sh.outMark - sh.outPoint)
+		sh.writer.cycle(sh.outBuf[sh.outPoint:sh.outMark])
+	case sh.outPoint == sh.outMark:
+		sh.writing = false
+	case sh.outPoint > sh.outMark:
+		panic("Dust/shaper: somehow wrote more bytes than we had")
+	}
+
 	return nil
 }
 
 func (sh *Shaper) handleTimer() error {
-	outLen := int(sh.encoder.NextPacketLength())
+	if !sh.reading {
+		// We stopped reading to propagate backpressure.  See whether the application is consuming
+		// anything by now.  TODO: this isn't really the right place to do this; we want a separate
+		// notification, but that implies making crypting.Front capable of either blocking or
+		// nonblocking operation, aaargh.
+		_, err := sh.crypter.PushRead(nil)
+		if err != nil {
+			return err
+		}
+
+		if sh.crypter.PushReadCTS() {
+			log.Debug("  <- releasing backpressure propagation")
+			sh.reader.cycle(sh.inBuf[:])
+			sh.reading = true
+		}
+	}
+
+	// This must come before checks for whether to skip packets, so that we always get the next
+	// timer pulse.
 	sh.timer.cycle(sh.encoder.NextPacketSleep())
+
+	if sh.writing {
+		// We're under visible stream backpressure, so just skip it.
+		log.Debug("-> cannot write any more right now")
+		return nil
+	}
+	
+	outLen := int(sh.encoder.NextPacketLength())
 
 	outMark := 0
 	out := sh.outBuf[:outLen]
@@ -98,8 +151,11 @@ func (sh *Shaper) handleTimer() error {
 		sh.pullMark -= sn
 	}
 
-	_, err := sh.shapedOut.Write(sh.outBuf[:outMark])
-	return err
+	sh.outPoint = 0
+	sh.outMark = outMark
+	sh.writer.cycle(sh.outBuf[sh.outPoint:sh.outMark])
+	sh.writing = true
+	return nil
 }
 
 func (sh *Shaper) runShaper(env *proc.Env) (err error) {
@@ -107,17 +163,29 @@ func (sh *Shaper) runShaper(env *proc.Env) (err error) {
 		if sh.closer != nil {
 			sh.closer.Close()
 		}
-		log.Info("shaper exiting: %v", err)
+		log.Info("shaper exiting")
 	}()
 
-	sh.reader.cycle(0)
+	sh.reader.cycle(sh.inBuf[:])
 	sh.timer.cycle(sh.encoder.NextPacketSleep())
 	log.Info("shaper starting")
 
 	for {
+		// TODO: frequently zero-sleeping models don't seem to work here.  It seems the select can
+		// repeatedly select timed writes to perform and never reads, and then neither side of the
+		// connection makes any progress.  If we had access to the polling loop we could do some
+		// rudimentary source round-robining, but nope!  Nope!  We get to maybe hardcode repetitious
+		// channel priority stuff to try to resolve this later because none of these waits are
+		// composable!  Thanks, Go!  Thanks a WHOLE BUNCH.
 		select {
 		case subn := <-sh.reader.Rep:
 			err = sh.handleRead(subn.(int))
+			if err != nil {
+				return
+			}
+
+		case subn := <-sh.writer.Rep:
+			err = sh.handleWrite(subn.(int))
 			if err != nil {
 				return
 			}
@@ -171,8 +239,9 @@ func NewShaper(
 	}
 
 	env := proc.InitChild(parent, &sh.Ctl, sh.runShaper)
-	sh.reader.Init(env, sh.shapedIn, sh.inBuf)
+	sh.reader.Init(env, sh.shapedIn)
 	sh.timer.Init(env)
+	sh.writer.Init(env, sh.shapedOut)
 	if !sh.IgnoreDuration {
 		sh.timer.setDuration(sh.encoder.WholeStreamDuration())
 	}

@@ -4,45 +4,36 @@ import (
 	"github.com/blanu/Dust/go/Dust/prim/skein"
 )
 
-type (
-	Secret CValue
+const (
+	personKDF = personPrefix + "kdf.skein"
+
+	SecretLen = 32
 )
 
-type SecretDigest struct {
-	*skein.Hash
-}
+type Secret CValue
 
-func (d *SecretDigest) Init() {
+func (s Secret) deriveRaw(n uint64, id string) (result CValue) {
 	args := skein.Args{
-		Person: skeinPersonalization,
+		Key:    s[:],
+		Person: []byte(personKDF),
+		KeyId:  []byte(id),
 	}
-	d.Hash = skein.New(CValueSize, &args)
-}
 
-func (d *SecretDigest) WriteSecret(secret Secret) {
-	d.Write(secret[:])
-}
-
-func (d *SecretDigest) Finish() (result Secret) {
-	_ = d.Sum(result[:0])
+	var hash skein.Hash
+	hash.Init(n, &args)
+	_, _ = hash.Read(result[:n])
 	return
 }
 
-func (s Secret) deriveRaw(id string) CValue {
-	args := skein.Args{
-		Key:   s[:],
-		KeyId: []byte(id),
-	}
-
-	var result CValue
-	skein.New(CValueSize, &args).Sum(result[:0])
-	return result
-}
+const (
+	kdfCipherPrefix = "clk."
+	kdfAuthPrefix = "mac."
+)
 
 func (s Secret) DeriveCipherKey(id string) CipherKey {
-	return CipherKey(s.deriveRaw(`clk.` + id))
+	return CipherKey(s.deriveRaw(CipherKeyLen, kdfCipherPrefix + id))
 }
 
 func (s Secret) DeriveAuthKey(id string) AuthKey {
-	return AuthKey(s.deriveRaw(`mac.` + id))
+	return AuthKey(s.deriveRaw(AuthKeyLen, kdfAuthPrefix + id))
 }

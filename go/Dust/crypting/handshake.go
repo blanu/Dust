@@ -1,8 +1,6 @@
 package crypting
 
 import (
-	"bytes"
-
 	"github.com/blanu/Dust/go/Dust/buf"
 	"github.com/blanu/Dust/go/Dust/prim"
 )
@@ -22,51 +20,38 @@ func (cs *Session) receivedEphemeralKey() {
 
 	log.Debug("  <- received ephemeral key")
 
-	var sd prim.SecretDigest
-	sd.Init()
-	sd.WriteSecret(cs.localPrivate.SharedSecret(cs.remotePublic))
+	var ntor prim.NtorHandshake
 	var inKdfPrefix, outKdfPrefix string
-	var confInput []byte
 
 	switch sinfo := cs.serverInfo.(type) {
 	default:
 		panic("Dust/crypting: bad serverInfo type")
 
 	case *Public:
-		inKdfPrefix = kdfS2C
-		outKdfPrefix = kdfC2S
-		sd.WriteSecret(cs.localPrivate.SharedSecret(sinfo.Key))
-		confInput = bytes.Join([][]byte{
-			sinfo.Id[:],
-			sinfo.Key.Binary(),
-			cs.localPrivate.Public.Binary(),
-			cs.remotePublic.Binary(),
-		}, []byte{})
+		// We're the client.
+		inKdfPrefix, outKdfPrefix = kdfS2C, kdfC2S
+		ntor.Init(sinfo.Id[:], &cs.localPrivate.Public, &cs.remotePublic)
+		ntor.WriteDHPart(cs.localPrivate.SharedSecret(cs.remotePublic))
+		ntor.WriteDHPart(cs.localPrivate.SharedSecret(sinfo.Key))
 
 	case *Private:
-		inKdfPrefix = kdfC2S
-		outKdfPrefix = kdfS2C
-		sd.WriteSecret(sinfo.Key.SharedSecret(cs.remotePublic))
-		confInput = bytes.Join([][]byte{
-			sinfo.Id[:],
-			sinfo.Key.Public.Binary(),
-			cs.remotePublic.Binary(),
-			cs.localPrivate.Public.Binary(),
-		}, []byte{})
+		inKdfPrefix, outKdfPrefix = kdfC2S, kdfS2C
+		ntor.Init(sinfo.Id[:], &cs.remotePublic, &cs.localPrivate.Public)
+		ntor.WriteDHPart(cs.localPrivate.SharedSecret(cs.remotePublic))
+		ntor.WriteDHPart(sinfo.Key.SharedSecret(cs.remotePublic))
 	}
 
-	sd.Write(confInput)
-	secret := sd.Finish()
+	var secret prim.Secret
+	var outConfirmation prim.AuthValue
+	secret, cs.inConfirmation, outConfirmation = ntor.Finish(inKdfPrefix, outKdfPrefix)
 
-	outConfirmation := prim.GenerateMAC(confInput, 0, secret.DeriveAuthKey(outKdfPrefix+kdfMACConfirm))
-	outCSlice := outConfirmation[:]
-	buf.CopyReassemble(&cs.outCrypted, &outCSlice)
-	log.Debug("-> send confirmation starting with %v", outConfirmation[:2])
+	cs.outCrypted.CopyIn(outConfirmation[:])
+	log.Debug("-> send confirmation starting with %x", outConfirmation[:2])
 	cs.outCipher.SetKey(secret.DeriveCipherKey(outKdfPrefix + kdfCipherData))
 	cs.outMAC.SetKey(secret.DeriveAuthKey(outKdfPrefix + kdfMACData))
 	cs.outMAC.Reset(0)
-	cs.inConfirmation = prim.GenerateMAC(confInput, 0, secret.DeriveAuthKey(inKdfPrefix+kdfMACConfirm))
-	log.Debug("  <- expect confirmation starting with %v", cs.inConfirmation[:2])
+
+	log.Debug("  <- expect confirmation starting with %x", cs.inConfirmation[:2])
 	cs.inCipher.SetKey(secret.DeriveCipherKey(inKdfPrefix + kdfCipherData))
 	cs.inMAC.SetKey(secret.DeriveAuthKey(inKdfPrefix + kdfMACData))
 	cs.inMAC.Reset(0)

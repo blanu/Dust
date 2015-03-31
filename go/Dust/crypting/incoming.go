@@ -109,11 +109,41 @@ func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 				return
 			}
 
-			cs.front.PushGram(dgramPlain, false)
+			unsent, unsentOwned := dgramPlain, false
+
+			// We can only try to send directly if there's nothing in line ahead of it.
+			if len(cs.pushBuffer) == 0 {
+				unsent, unsentOwned = cs.front.PushGram(unsent, false)
+			}
+
+			// Only try to hold it for later sending if we're supposed to do that.  Otherwise,
+			// drop it on the floor.
+			if unsent != nil && cs.HoldIncoming {
+				if !unsentOwned {
+					unsent = buf.CopyNew(unsent)
+				}
+				cs.pushBuffer = append(cs.pushBuffer, unsent)
+			}
+
 			consume(endPos)
 		}
 	}
 	return
+}
+
+func (cs *Session) drainPushBuffer() {
+	for len(cs.pushBuffer) > 0 {
+		dgramPlain := cs.pushBuffer[0]
+		unsent, _ := cs.front.PushGram(dgramPlain, true)
+		if unsent != nil {
+			return
+		}
+
+		cs.pushBuffer[0] = nil
+		cs.pushBuffer = cs.pushBuffer[1:]
+	}
+
+	cs.pushBuffer = nil
 }
 
 // PushRead processes new pre-decryption bytes in p, handling handshake completions and sending any usable
@@ -122,6 +152,8 @@ func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 func (cs *Session) PushRead(p []byte) (n int, err error) {
 	log.Debug("  <- pushing %d bytes", len(p))
 	n, err = 0, nil
+
+	cs.drainPushBuffer()
 
 	for len(p) > 0 {
 		// TIMING: arguably this leads to a timing attack against whether a handshake succeeded if the
@@ -158,4 +190,8 @@ func (cs *Session) PushRead(p []byte) (n int, err error) {
 		err = io.ErrShortWrite
 	}
 	return n, err
+}
+
+func (cs *Session) PushReadCTS() bool {
+	return len(cs.pushBuffer) == 0
 }
