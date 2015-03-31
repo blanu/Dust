@@ -1,5 +1,12 @@
 package prim
 
+const (
+	PublicBinaryLen  = 32
+	PrivateBinaryLen = 32
+	PublicTextLen    = 52
+	PrivateTextLen   = 52
+)
+
 func LoadPublicBinary(b []byte) (result Public, err error) {
 	if len(b) != 32 {
 		return Public{}, ErrBadPublicKey
