@@ -19,7 +19,7 @@ const (
 
 	paramPrivateKey = "px!"
 
-	suffixOptional  = "?"
+	suffixOptional = "?"
 )
 
 var (
@@ -146,7 +146,7 @@ func (ep *EndpointParams) Validate() error {
 	if err := ep.ModelSpec.Validate(); err != nil {
 		return err
 	}
-	
+
 	if err := ep.Crypting.Validate(); err != nil {
 		return err
 	}
@@ -337,7 +337,7 @@ func (spriv ServerPrivate) SavePrivateFile(path string) (err error) {
 			err = ErrSyntax
 			return
 		}
-		lines = append(lines, key + "=" + val)
+		lines = append(lines, key+"="+val)
 	}
 	lines = append(lines, "")
 	content := strings.Join(lines, "\n")
