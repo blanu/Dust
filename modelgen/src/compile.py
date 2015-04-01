@@ -37,17 +37,16 @@ def convertModel(name, data, lang):
   model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], data['outgoingModel']['length']['params'], lang)
   model['packet_sleep']=genIAT(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], data['outgoingModel']['flow']['params'], lang)
   model['huffman']=genHuffman(data['incomingModel']['huffman'], data['outgoingModel']['huffman'])
-  model['sequence']=genSequence('sequence', data['incomingModel']['sequence'], data['outgoingModel']['sequence'])
+  model['sequence']=genSequence(data['incomingModel']['sequence'], data['outgoingModel']['sequence'])
   model['encode']=genEncoder()
   model['decode']=genDecoder()
 
   return model
 
-def genSequence(varname, data, data2):
+def genSequence(data, data2):
   return {
-    'decl': "encoding_%s []byte\ndecoding_%s []byte\nencoding_position uint64\ndecoding_position uint64" % (varname),
-    'incoming': "encoding_%s: []byte{%s}" % (varname, makeByteArray(data)),
-    'outgoing': "decoding_%s: []byte{%s}" % (varname, makeByteArray(data2)),
+    'incoming': "encoding_sequence: []byte{%s}" % (makeByteArray(data)),
+    'outgoing': "decoding_sequence: []byte{%s}" % (makeByteArray(data2)),
   }
 
 def makeByteArray(data):
@@ -111,31 +110,22 @@ def genIAT(dist, params1, params2, lang):
 
 def genHuffman(params1, params2):
   return {
-    'decl': "incoming_coding *huffman.Coding\noutgoing_coding *huffman.Coding",
-    'incoming': "result.incoming_coding, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params1)),
-    'outgoing': "result.outgoing_coding, err = huffman.NewCoding([]huffman.BitString %s)\nif err != nil {panic(err)}\n" % (genBitstringArrays(params2))
+    'incoming': genBitstringArrays(params1),
+    'outgoing': genBitstringArrays(params2)
   }
 
 def genEncoder():
   varname="contentDist"
   return {
-    'decl': "encoder *huffman.Encoder",
     'incoming': "encoder: huffman.NewEncoder(model.incoming_coding),",
-    'outgoing': "encoder: huffman.NewEncoder(model.outgoing_coding),",
-    'body': """
-      return codec.encoder.Encode(dst, src)
-      """
+    'outgoing': "encoder: huffman.NewEncoder(model.outgoing_coding),"
   }
 
 def genDecoder():
   varname="contentDist"
   return {
-    'decl': "decoder *huffman.Decoder",
     'incoming': "decoder: huffman.NewDecoder(model.incoming_coding)",
-    'outgoing': "decoder: huffman.NewDecoder(model.outgoing_coding)",
-    'body': """
-      return codec.decoder.Decode(dst, src)
-      """
+    'outgoing': "decoder: huffman.NewDecoder(model.outgoing_coding)"
   }
 
 def genArray(arr):

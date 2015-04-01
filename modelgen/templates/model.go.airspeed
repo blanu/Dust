@@ -9,23 +9,39 @@ import (
 )
 
 type $model_type struct {
-  $huffman.decl
+  incoming_coding *huffman.Coding
+  outgoing_coding *huffman.Coding
 }
 
 type $codec_type struct {
   *$model_type
   $packet_sleep.decl
   $packet_length.decl
-  $encode.decl
-  $decode.decl
-  $sequence.decl
+
+  encoder *huffman.Encoder
+  decoder *huffman.Decoder
+
+  encoding_sequence []byte
+  decoding_sequence []byte
+
+  encoding_position int
+  decoding_position int
 }
 
 func computeModel() (result *$model_type) {
   var err error
   result = &$model_type{}
-  $huffman.incoming
-  $huffman.outgoing
+
+  result.incoming_coding, err = huffman.NewCoding([]huffman.BitString $huffman.incoming)
+  if err != nil {
+    panic(err)
+  }
+
+  result.outgoing_coding, err = huffman.NewCoding([]huffman.BitString $huffman.outgoing)
+  if err != nil {
+    panic(err)
+  }
+
   return
 }
 
@@ -123,25 +139,69 @@ func (self $codec_type) NextPacketSleep() time.Duration {
   return time.Duration($packet_sleep.expr) * time.Millisecond
 }
 
+// dst is a fixed length empty buffer to write results
+// src is a fixed length full buffer
+// dn is the number of bytes written to dst
+// sn is the number of bytes consumed from the src buffer
 func (codec $codec_type) ShapeBytes(dst []byte, src []byte) (dn int, sn int) {
-  var buffer []byte
-  var consumed int
+  var produced int = 0
+  var consumed int = 0
 
-  if codec.encoder_position == 0 {
-    $decode.body
-    buffer=append(codec.sequence , buffer)
-    codec.
-  } else {
-    $decode.body
+  // First, add as many bytes from the encoding sequence to the buffer as possible
+  // Either all bytes of the sequence will be added, or the buffer will run out of space
+  for (codec.encoding_position < len(codec.encoding_sequence)) && (produced < len(dst)) {
+    dst[produced]=codec.encoding_sequence[codec.encoding_position]
+    produced++
+    codec.encoding_position++
   }
 
-  return buffer, consumed
+  // Either all bytes of the sequence will be added, or the buffer will run out of space
+  // If the buffer has run out of space, we must exit without consuming any input bytes
+  // If there is still space in the buffer, we can encode some input bytes.
+  if produced < len(dst) {
+    buffer := make([]byte, len(dst)-produced)
+    encode_produced, encode_consumed := codec.encoder.Encode(buffer, src)
+
+    for index := produced; index < len(dst); index++ {
+      dst[index] = buffer[index-produced]
+    }
+
+    produced += encode_produced
+    consumed += encode_consumed
+  }
+
+  return produced, consumed
 }
 
-func (codec $codec_type) UnshapeBytes(dst, src []byte) (dn, sn int) {
-  if codec.decoder_position < codec. {
+// dst is a fixed length empty buffer to write results
+// src is a fixed length full buffer
+// dn is the number of bytes written to dst
+// sn is the number of bytes consumed from the src buffer
+func (codec $codec_type) UnshapeBytes(dst []byte, src []byte) (dn int, sn int) {
+  var produced int = 0
+  var consumed int = 0
 
-  } else {
-    $encode.body
+  // First, remove as many bytes from the encoding sequence to the buffer as possible up to the length of the sequence
+  // Either all bytes of the sequence will be removed, or the buffer will run out of space
+  for (codec.decoding_position < len(codec.decoding_sequence)) && (consumed < len(src)) {
+    consumed++
+    codec.decoding_position++
   }
+
+  // Either all bytes of the sequence will be removed, or the buffer will run out of space
+  // If the buffer has run out of space, we must exit without producing any output bytes
+  // If there is still space in the buffer, we can decode some input bytes.
+  if consumed < len(src) {
+    buffer := make([]byte, len(src)-consumed)
+    for index := consumed; index < len(src); index++ {
+      buffer[index-consumed] = src[index]
+    }
+
+    decode_produced, decode_consumed := codec.decoder.Decode(dst, buffer)
+
+    produced += decode_produced
+    consumed += decode_consumed
+  }
+
+  return produced, consumed
 }
