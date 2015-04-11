@@ -14,7 +14,7 @@ type ModelSpec struct {
 
 // reifyModel tries to construct a live model from the spec based on the set of registered model constructors.
 func (ms *ModelSpec) reifyModel() (ShapingModel, error) {
-	constructor, ok := registeredModels[ms.Name]
+	constructor, ok := getModelConstructor(ms.Name)
 	if !ok {
 		return nil, ErrInvalidModelName
 	}

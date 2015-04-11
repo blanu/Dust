@@ -1,6 +1,8 @@
 package Dust
 
 import (
+	"sync"
+
 	"github.com/blanu/Dust/go/Dust/shaping"
 )
 
@@ -33,20 +35,27 @@ type ShapingModel interface {
 type ShapingModelConstructor func(params map[string]string) (ShapingModel, error)
 
 var registeredModels = make(map[string]ShapingModelConstructor)
+var registeredModelMutex sync.Mutex
 
 // RegisterModel registers that models of the type named by name can be constructed by using constructor.  It
 // panics if a model constructor of this name is already registered.
 func RegisterModel(name string, constructor ShapingModelConstructor) {
+	registeredModelMutex.Lock()
+	defer registeredModelMutex.Unlock()
 	_, already := registeredModels[name]
 	if already {
 		panic("Dust: registering model '" + name + "' twice")
 	}
 
+	log.Debug("registering model %s", name)
 	registeredModels[name] = constructor
 }
 
 // ModelsAvailable returns a list of all registered model type names, in no particular order.
 func ModelsAvailable() []string {
+	registeredModelMutex.Lock()
+	defer registeredModelMutex.Unlock()
+
 	models := []string{}
 	for name, _ := range registeredModels {
 		models = append(models, name)
@@ -57,6 +66,16 @@ func ModelsAvailable() []string {
 // ModelAvailable returns true iff a shaping model with the given name has been registered with the Dust
 // package.
 func ModelAvailable(name string) bool {
+	registeredModelMutex.Lock()
+	defer registeredModelMutex.Unlock()
+
 	_, ok := registeredModels[name]
 	return ok
+}
+
+func getModelConstructor(name string) (result ShapingModelConstructor, ok bool) {
+	registeredModelMutex.Lock()
+	defer registeredModelMutex.Unlock()
+	result, ok = registeredModels[name]
+	return
 }
