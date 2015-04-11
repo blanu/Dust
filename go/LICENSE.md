@@ -1,8 +1,8 @@
 # Licenses for software included in this directory
 
-## Main Dust packages and support packages
+## Main Dust packages and first-party support packages
 
-The directories 'v2' and 'sillyHex' compose the main Dust packages for Go.  The directories 'buf', 'huffman', 'prim1', and 'proc' compose the support packages.
+The directories 'v2' and 'sillyHex' compose the main Dust packages for Go.  The directories 'buf', 'huffman', 'prim1', and 'proc' compose the first-party support packages.  These are all subject to the following terms:
 
 Copyright © 2015 Drake Wilson &lt;drake@dasyatidae.com&gt;
 
@@ -14,7 +14,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Skein
 
-The directory 'skein' contains a modified version of Dmitry Chestnykh's Skein-512 code.
+The directory 'skein' contains a modified version of Dmitry Chestnykh's Skein-512 code.  It is subject to the following terms:
 
 Copyright © 2012 Dmitry Chestnykh &lt;dmitry@codingrobots.com&gt;
 Copyright © 2015 Drake Wilson &lt;drake@dasyatidae.com&gt;
