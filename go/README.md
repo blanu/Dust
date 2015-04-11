@@ -4,38 +4,31 @@
 
 ## Using Dust
 
-An application that wishes to use Dust will generally link with the main `Dust` package plus one or more model
-packages.  By convention:
+An application that wishes to use Dust will generally link with the main Dust engine package plus one or more model packages.  By convention:
 
-0. Model codecs are generated as Go code, usually via the programs in `go-modelgen`.  They are placed in a package or packages in the namespace of the client application.
+0. Model codecs are generated as Go code, usually via the programs in ../modelgen.  They are placed in a package or packages in the namespace of the client application.
 1. A client application imports all of its model packages for side effects.
-2. The model packages register their names with a registry in the Dust package at init time.
-3. The client application then requests models by short-string names.
+2. The model packages call into the Dust package to register their names at init time.
+3. The client application can then request models by short-string names for establishing connections.
 
-Things a client application does _not_ need from this directory:
+Currently, the only available Dust engine package is in ./v2/engine; its full import path is therefore github.com/blanu/Dust/go/v2/engine.
 
-- `DustModel` contains the canonical locations of various support packages for model implementations.  It does not contain any usable model implementations itself, except for contrived models strictly for testing purposes.
-- `cmd` contains invokable support programs for Dust.
+## Server identities in Dust 2
 
-## Server identities
+The Dust engine uses ASCII key-value parameters for representing public and private server identity and endpoint configuration information.  Keys that have a question mark as the last character are considered optional hints; these may be discarded by software versions or configurations that do not support them, without causing connection failures.  Neither a key nor a value may contain newlines.  A key may not contain horizontal whitespace or the # character.  A value may not begin with horizontal whitespace.
 
-This Dust package is loosely designed to use Tor bridge line format for public server identities, and a simple textual format for private identity files.
+Endpoint configuration parameters used by either side include:
 
-A bridge line consists of an (uninterpreted) nickname, a TCP/IP endpoint address, and a set of `KEY=VALUE` parameters.  Parameter keys interpreted by Dust include:
-
-- `p=PUBLIC-KEY` (required): the uniform representative of the long-term Curve25519 public key of the server in Base32.
 - `m=MODEL-NAME` (required): the model name being requested, out of an application-specific set.
 - `m.KEY=VALUE`: possible model-specific parameters.
 - `mtu=DECIMAL`: maximum size of datagrams that can be delivered over each Dust connection.  The default is 1500.
 
-Parameter keys that have a question mark as the last character are considered optional hints and may be discarded by versions or configurations of software that do not support them without causing connection failures.
+Parameters given to a client to identify a server also include:
 
-A private identity file consists of the following lines, each terminated by LF or CR LF:
+- `p=PUBLIC-KEY` (required): the uniform representative of the long-term Curve25519 public key of the server in Base32.
+- `n=OPAQUE` (required): the 32-octet opaque name of the server in Base32.
 
-1. Format-identifying magic text: `!!Dust-Server-Private!!`
-2. An arbitrary nickname.
-3. The TCP/IP endpoint address.
-4. The long-term Curve25519 *private* key of the server in Base32.  Currently, there is no provision for encrypting this key, so identity files must be strongly protected at the storage level.
-5. One or more lines corresponding to bridge line parameters, excluding the `p` parameter.
+Parameters given to a server to identify itself instead include:
 
-Server identities can be manipulated using the DustTool program (in `cmd/DustTool`).
+- `px!=PRIVATE-KEY` (required): the long-term Curve25519 private key of the server in Base32.
+- `n=OPAQUE` (required): the 32-octet opaque name of the server in Base32.
