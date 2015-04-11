@@ -9,49 +9,92 @@ import (
 )
 
 type $model_type struct {
-  $huffman.decl
+  incoming_coding *huffman.Coding
+  outgoing_coding *huffman.Coding
 }
 
 type $codec_type struct {
   *$model_type
-  $duration.decl
   $packet_sleep.decl
   $packet_length.decl
-  $encode.decl
-  $decode.decl
-  $incoming_sequence.decl
-  $outgoing_sequence.decl
+
+  encoder *huffman.Encoder
+  decoder *huffman.Decoder
+
+  encoding_sequence []byte
+  decoding_sequence []byte
+
+  encoding_position int
+  decoding_position int
 }
 
 func computeModel() (result *$model_type) {
   var err error
   result = &$model_type{}
-  $huffman.body
+
+  result.incoming_coding, err = huffman.NewCoding([]huffman.BitString $huffman.incoming)
+  if err != nil {
+    panic(err)
+  }
+
+  result.outgoing_coding, err = huffman.NewCoding([]huffman.BitString $huffman.outgoing)
+  if err != nil {
+    panic(err)
+  }
+
   return
 }
 
-func (model $model_type) newCodec() (result *$codec_type, err error) {
+func newCodec(direction bool) (result *$codec_type, err error) {
   // TODO: is this the best choice of source to use?
   prng := csrand.Rand
-  result = &$codec_type{
-    $duration.data
-    $packet_sleep.data
-    $packet_length.data
-    $encode.data
-    $decode.data,
-    $incoming_sequence.data,
-    $outgoing_sequence.data}
+
+  model := computeModel()
+
+  if direction {
+    result = &$codec_type{
+      $packet_sleep.incoming
+      $packet_length.incoming
+      $encode.incoming
+      $decode.outgoing,
+      $sequence.incoming}
+  } else {
+    result = &$codec_type{
+      $packet_sleep.outgoing
+      $packet_length.outgoing
+      $encode.outgoing
+      $decode.incoming,
+      $sequence.outgoing}
+  }
   return
 }
 
-func (model $model_type) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
-  codec, err := model.newCodec()
-  return codec, codec, err
+func (self $model_type) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+  incomingCodec, err1 := newCodec(true)
+  if err1 != nil {
+    return nil, nil, err1
+  } else {
+    outgoingCodec, err2 := newCodec(false)
+    if err2 != nil {
+      return nil, nil, err2
+    } else {
+      return incomingCodec, outgoingCodec, nil
+    }
+  }
 }
 
-func (model $model_type) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
-  codec, err := model.newCodec()
-  return codec, codec, err
+func (self $model_type) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+  incomingCodec, err1 := newCodec(true)
+  if err1 != nil {
+    return nil, nil, err1
+  } else {
+    outgoingCodec, err2 := newCodec(false)
+    if err2 != nil {
+      return nil, nil, err2
+    } else {
+      return outgoingCodec, incomingCodec, nil
+    }
+  }
 }
 
 func init() {
@@ -80,7 +123,8 @@ func clampUint16(n float64) uint16 {
 }
 
 func (self $codec_type) WholeStreamDuration() time.Duration {
-  return time.Duration($duration.expr) * time.Millisecond
+//  return time.Duration($duration.exp) * time.Millisecond
+  return time.Duration(0) * time.Millisecond
 }
 
 func (self $codec_type) MaxPacketLength() uint16 {
@@ -95,18 +139,69 @@ func (self $codec_type) NextPacketSleep() time.Duration {
   return time.Duration($packet_sleep.expr) * time.Millisecond
 }
 
-func (codec $codec_type) ShapeBytes(dst, src []byte) (dn, sn int) {
-  $decode.body
+// dst is a fixed length empty buffer to write results
+// src is a fixed length full buffer
+// dn is the number of bytes written to dst
+// sn is the number of bytes consumed from the src buffer
+func (codec $codec_type) ShapeBytes(dst []byte, src []byte) (dn int, sn int) {
+  var produced int = 0
+  var consumed int = 0
+
+  // First, add as many bytes from the encoding sequence to the buffer as possible
+  // Either all bytes of the sequence will be added, or the buffer will run out of space
+  for (codec.encoding_position < len(codec.encoding_sequence)) && (produced < len(dst)) {
+    dst[produced]=codec.encoding_sequence[codec.encoding_position]
+    produced++
+    codec.encoding_position++
+  }
+
+  // Either all bytes of the sequence will be added, or the buffer will run out of space
+  // If the buffer has run out of space, we must exit without consuming any input bytes
+  // If there is still space in the buffer, we can encode some input bytes.
+  if produced < len(dst) {
+    buffer := make([]byte, len(dst)-produced)
+    encode_produced, encode_consumed := codec.encoder.Encode(buffer, src)
+
+    for index := produced; index < len(dst); index++ {
+      dst[index] = buffer[index-produced]
+    }
+
+    produced += encode_produced
+    consumed += encode_consumed
+  }
+
+  return produced, consumed
 }
 
-func (codec $codec_type) UnshapeBytes(dst, src []byte) (dn, sn int) {
-  $encode.body
-}
+// dst is a fixed length empty buffer to write results
+// src is a fixed length full buffer
+// dn is the number of bytes written to dst
+// sn is the number of bytes consumed from the src buffer
+func (codec $codec_type) UnshapeBytes(dst []byte, src []byte) (dn int, sn int) {
+  var produced int = 0
+  var consumed int = 0
 
-func (codec $codec_type) InjectBytes(dst, src []byte) (dn, sn int) {
-  $incoming_sequence.body
-}
+  // First, remove as many bytes from the encoding sequence to the buffer as possible up to the length of the sequence
+  // Either all bytes of the sequence will be removed, or the buffer will run out of space
+  for (codec.decoding_position < len(codec.decoding_sequence)) && (consumed < len(src)) {
+    consumed++
+    codec.decoding_position++
+  }
 
-func (codec $codec_type) WithdrawBytes(dst, src []byte) (dn, sn int) {
-  $incoming_sequence.body
+  // Either all bytes of the sequence will be removed, or the buffer will run out of space
+  // If the buffer has run out of space, we must exit without producing any output bytes
+  // If there is still space in the buffer, we can decode some input bytes.
+  if consumed < len(src) {
+    buffer := make([]byte, len(src)-consumed)
+    for index := consumed; index < len(src); index++ {
+      buffer[index-consumed] = src[index]
+    }
+
+    decode_produced, decode_consumed := codec.decoder.Decode(dst, buffer)
+
+    produced += decode_produced
+    consumed += decode_consumed
+  }
+
+  return produced, consumed
 }

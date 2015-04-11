@@ -35,11 +35,11 @@ type Shaper struct {
 	shapedOut io.Writer
 	closer    io.Closer
 
-	reader   reader
-	decoder  Decoder
-	inBuf    []byte
-	pushBuf  []byte
-	reading  bool
+	reader  reader
+	decoder Decoder
+	inBuf   []byte
+	pushBuf []byte
+	reading bool
 
 	timer    timer
 	writer   writer
@@ -86,7 +86,7 @@ func (sh *Shaper) handleWrite(subn int) error {
 	sh.outPoint += subn
 	switch {
 	case sh.outPoint < sh.outMark:
-		log.Debug("-> only wrote %d bytes, %d left over", subn, sh.outMark - sh.outPoint)
+		log.Debug("-> only wrote %d bytes, %d left over", subn, sh.outMark-sh.outPoint)
 		sh.writer.cycle(sh.outBuf[sh.outPoint:sh.outMark])
 	case sh.outPoint == sh.outMark:
 		sh.writing = false
@@ -124,7 +124,7 @@ func (sh *Shaper) handleTimer() error {
 		log.Debug("-> cannot write any more right now")
 		return nil
 	}
-	
+
 	outLen := int(sh.encoder.NextPacketLength())
 
 	outMark := 0
