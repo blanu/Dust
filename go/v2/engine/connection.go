@@ -27,18 +27,15 @@ type Socket interface {
 }
 
 // connection holds the combination of crypting, shaping, and backend socket state for a single underlying
-// Dust connection.  It can be used with different fronts to handle the different modes of the Dust stack.
+// Dust connection.
 type connection struct {
 	socket  Socket
 	crypter *crypting.Session
 	front   crypting.Front
 	shaper  *shaping.Shaper
 
-	closed     uint32
-	closeMutex sync.Mutex
-	hardClose  bool
-
-	shapingParams shaping.Params
+	closeOnce  sync.Once
+	closeError error
 
 	enc ShapingEncoder
 	dec ShapingDecoder
@@ -46,42 +43,19 @@ type connection struct {
 	local, remote LinkAddr
 }
 
-func (c *connection) setShapingParams(params shaping.Params) {
-	c.shapingParams = params
-	c.hardClose = params.IgnoreDuration
-}
-
-func (c *connection) Close() error {
-	switch {
-	case atomic.LoadUint32(&c.closed) != 0:
-		return ErrClosed
-	case c.hardClose:
-		return c.HardClose()
-	default:
-		// The shaper is detached and continues to run in the background.  It'll exit when its
-		// designated interval elapses, and is responsible for closing the socket.  The crypter will
-		// already be draining any further real data frames into the bit bucket from both sides.
-		atomic.StoreUint32(&c.closed, 1)
-		return nil
-	}
-}
-
-func (c *connection) HardClose() error {
-	c.closeMutex.Lock()
-	defer c.closeMutex.Unlock()
-	defer atomic.StoreUint32(&c.closed, 1)
-	if c.socket == nil {
-		return ErrClosed
-	}
-
-	log.Info("hard-closing %v <-> %v", c.local, c.remote)
-
+func (c *connection) hardClose() {
 	// Cancel the shaper process, and close the socket immediately.  Any shaper I/O on the socket should
 	// then immediately fail.  Can't do much beyond that.
 	err := c.socket.Close()
 	c.socket = nil
 	c.shaper.Cancel()
-	return err
+	log.Info("closing %v <-> %v", c.local, c.remote)
+	c.closeError = err
+}
+
+func (c *connection) Close() error {
+	c.closeOnce.Do(c.hardClose)
+	return c.closeError
 }
 
 func (c *connection) initAny(front crypting.Front) {
@@ -142,11 +116,8 @@ func (c *connection) initServer(spriv *ServerPrivate, front crypting.Front) (err
 
 func (c *connection) spawn(socket Socket) (err error) {
 	c.socket = socket
-	var closer io.Closer = socket
-	if c.hardClose {
-		// We take responsibility for closing the socket.
-		closer = nil
-	}
+	// TODO: remove this entirely; we take responsibility for closing the socket now.
+	var closer io.Closer = nil
 
 	// TODO: doc why no parent env propagation here
 	c.shaper, err = shaping.NewShaper(nil, c.crypter, c.socket, c.dec, c.socket, c.enc, closer, &c.shapingParams)

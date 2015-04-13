@@ -154,10 +154,6 @@ func (ep *EndpointParams) Validate() error {
 		return err
 	}
 
-	if err := ep.Shaping.Validate(); err != nil {
-		return err
-	}
-
 	return nil
 }
 

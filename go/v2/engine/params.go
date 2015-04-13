@@ -29,7 +29,6 @@ func (ms *ModelSpec) reifyModel() (ShapingModel, error) {
 // connection between two endpoints, excluding endpoint-specific identity material.
 type EndpointParams struct {
 	ModelSpec ModelSpec
-	Shaping   shaping.Params
 	Crypting  crypting.Params
 }
 
@@ -37,9 +36,6 @@ type EndpointParams struct {
 var defEndpointParams = EndpointParams{
 	Crypting: crypting.Params{
 		MTU: 1500,
-	},
-	Shaping: shaping.Params{
-		IgnoreDuration: false,
 	},
 }
 

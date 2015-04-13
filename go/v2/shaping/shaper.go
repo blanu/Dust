@@ -18,15 +18,6 @@ const (
 	shaperBufSize = 1024
 )
 
-// Params represents globally applicable options for the shaper itself.  The zero value is the default.
-type Params struct {
-	IgnoreDuration bool
-}
-
-func (params *Params) Validate() error {
-	return nil
-}
-
 // Shaper represents a process mediating between a shaped channel and a Dust crypting session.  It can be
 // managed through its proc.Link structure.
 type Shaper struct {
@@ -36,7 +27,6 @@ type Shaper struct {
 	crypter   *crypting.Session
 	shapedIn  io.Reader
 	shapedOut io.Writer
-	closer    io.Closer
 
 	reader  reader
 	decoder Decoder
@@ -163,9 +153,6 @@ func (sh *Shaper) handleTimer() error {
 
 func (sh *Shaper) runShaper(env *proc.Env) (err error) {
 	defer func() {
-		if sh.closer != nil {
-			sh.closer.Close()
-		}
 		log.Info("shaper exiting")
 	}()
 
@@ -220,8 +207,7 @@ func (sh *Shaper) runShaper(env *proc.Env) (err error) {
 
 // NewShaper initializes a new shaper process object for the outward-facing side of crypter, using in/out for
 // receiving and sending shaped data and decoder/encoder as the model for this side of the Dust connection.
-// The shaper will not be running.  Call Start() on the shaper afterwards to start it in the background; after
-// that point, the shaper takes responsibility for closing the closer if it is not nil.
+// The shaper will not be running.  Call Start() on the shaper afterwards to start it in the background.
 func NewShaper(
 	parent *proc.Env,
 	crypter *crypting.Session,
@@ -229,14 +215,11 @@ func NewShaper(
 	decoder Decoder,
 	out io.Writer,
 	encoder Encoder,
-	closer io.Closer,
-	params *Params,
 ) (*Shaper, error) {
 	sh := &Shaper{
 		crypter:   crypter,
 		shapedIn:  in,
 		shapedOut: out,
-		closer:    closer,
 
 		// reader is initialized below
 		decoder: decoder,
@@ -248,10 +231,6 @@ func NewShaper(
 		outBuf:   make([]byte, encoder.MaxPacketLength()),
 		pullBuf:  make([]byte, shaperBufSize),
 		pullMark: 0,
-	}
-
-	if params != nil {
-		sh.Params = *params
 	}
 
 	env := proc.InitChild(parent, &sh.Ctl, sh.runShaper)
