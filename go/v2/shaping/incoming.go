@@ -40,19 +40,19 @@ func (ic *incoming) Init(
 func (ic *incoming) runIncoming(env *proc.Env) error {
 	// TODO: expand buf API and use it here
 	for {
-		env.CheckCancellation()
+		env.CancellationPoint()
 		rn, err := ic.visible.Read(ic.inBuf[len(ic.inBuf):cap(ic.inBuf)])
 		if err != nil {
 			return err
 		}
 		ic.inBuf = ic.inBuf[:len(ic.inBuf)+rn]
 
-		env.CheckCancellation()
+		env.CancellationPoint()
 		dn, sn := ic.decoder.UnshapeBytes(ic.pushBuf[len(ic.pushBuf):cap(ic.pushBuf)], ic.inBuf)
 		ic.pushBuf = ic.pushBuf[:len(ic.pushBuf)+dn]
 		ic.inBuf = ic.inBuf[:copy(ic.inBuf, ic.inBuf[sn:])]
 
-		env.CheckCancellation()
+		env.CancellationPoint()
 		wn, err := ic.uniform.Write(ic.pushBuf)
 		if err != nil && err != io.ErrShortWrite {
 			return err
