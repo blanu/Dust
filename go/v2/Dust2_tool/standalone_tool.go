@@ -15,14 +15,9 @@ import (
 	_ "github.com/blanu/Dust/go/sillyHex"
 )
 
-const progName = "DustTool"
+const progName = "Dust2_tool"
 const usageMessageRaw = `
-Usage: DustTool OPTIONS SUBCOMMAND...
-
-Options:
-  --mode MODE, -m MODE
-	Manipulate identities suitable for the given transport mode.
-	Valid modes: minus
+Usage: Dust2_tool OPTIONS SUBCOMMAND...
 
 Subcommands:
   newid -o FILE PARAMS...
@@ -92,7 +87,7 @@ func formatParams(p map[string]string) string {
 }
 
 func showParams(spub *Dust.ServerPublic) {
-	fmt.Fprintf(os.Stdout, "Bridge DustMinus ADDRESS %s\n", formatParams(spub.Unparse()))
+	fmt.Fprintf(os.Stdout, "Bridge Dust2 ADDRESS %s\n", formatParams(spub.Unparse()))
 }
 
 func newidToFile(path string, unparsed map[string]string) (err error) {
@@ -195,10 +190,7 @@ func showParamsFromArgs() (func() error, error) {
 func main() {
 	var err error
 
-	var userMode string
 	ourFlags = flag.NewFlagSet(progName, flag.ContinueOnError)
-	ourFlags.StringVar(&userMode, "mode", "", "")
-	ourFlags.StringVar(&userMode, "m", "", "")
 	ourFlags.Usage = func() {}
 	ourFlags.SetOutput(&nullWriter{})
 
@@ -208,11 +200,6 @@ func main() {
 		os.Exit(0)
 	} else if argErr != nil {
 		usageErrorf("%s", argErr.Error())
-	}
-
-	userMode = strings.ToLower(userMode)
-	if userMode != "minus" {
-		usageErrorf("unsupported mode: '%s'", userMode)
 	}
 
 	var requestedCommand func() error

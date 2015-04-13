@@ -20,16 +20,13 @@ import (
 	_ "github.com/blanu/Dust/go/sillyHex"
 )
 
-var log = logging.MustGetLogger("DustProxy")
+var log = logging.MustGetLogger("Dust/proxy")
 
-const progName = "DustProxy"
+const progName = "Dust2_proxy"
 const usageMessageRaw = `
-Usage: DustProxy OPTIONS DUST-SIDE
+Usage: Dust2_proxy OPTIONS DUST-SIDE
 
 Options:
-  --mode MODE, -m MODE
-	Use the given transport mode for proxying.  Required.
-	Valid modes: minus
   --listen HOST:PORT, -l HOST:PORT
 	Listen for TCP connections on HOST:PORT.
   --connect HOST:PORT, -c HOST:PORT
@@ -272,10 +269,6 @@ func dustToPlainFromArgs() (func() error, error) {
 		return nil, err
 	}
 
-	// (minus mode)
-	spriv.EndpointParams.Shaping.IgnoreDuration = true
-	spriv.EndpointParams.Crypting.HoldIncoming = true
-
 	listenAddr, err := net.ResolveTCPAddr("tcp", userListenAddr)
 	if err != nil {
 		return nil, err
@@ -351,10 +344,6 @@ func plainToDustFromArgs() (func() error, error) {
 		return nil, err
 	}
 
-	// (minus mode)
-	spub.EndpointParams.Shaping.IgnoreDuration = true
-	spub.EndpointParams.Crypting.HoldIncoming = true
-
 	dialAddr, err := net.ResolveTCPAddr("tcp", userDialAddr)
 	if err != nil {
 		return nil, err
@@ -395,9 +384,6 @@ func main() {
 	// Usage strings are hardcoded above.
 
 	var debugLogging bool
-	var userMode string
-	ourFlags.StringVar(&userMode, "mode", "", "")
-	ourFlags.StringVar(&userMode, "m", "", "")
 	ourFlags.StringVar(&userListenAddr, "listen", "", "")
 	ourFlags.StringVar(&userListenAddr, "l", "", "")
 	ourFlags.StringVar(&userDialAddr, "connect", "", "")
@@ -417,11 +403,6 @@ func main() {
 
 	if debugLogging {
 		leveledLogBackend.SetLevel(logging.DEBUG, "")
-	}
-
-	userMode = strings.ToLower(userMode)
-	if userMode != "minus" {
-		usageErrorf("unsupported mode: '%s'", userMode)
 	}
 
 	var requestedCommand func() error
