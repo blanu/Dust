@@ -14,7 +14,7 @@ import (
 
 	"github.com/op/go-logging"
 
-	"github.com/blanu/Dust/go/v2/engine"
+	"github.com/blanu/Dust/go/v2/interface"
 	"github.com/blanu/Dust/go/proc"
 
 	_ "github.com/blanu/Dust/go/sillyHex"
@@ -177,11 +177,11 @@ func noProcess(env *proc.Env) error {
 	return nil
 }
 
-func dustProxy(dustSide *Dust.RawConn, plainSide *net.TCPConn) error {
+func dustProxy(dustSide *Dust.RawStreamConn, plainSide *net.TCPConn) error {
 	var ctl proc.Ctl
 	penv := proc.InitChild(nil, &ctl, noProcess)
 	_ = proc.InitHelper(penv, managedCopy(plainSide, dustSide, 4096))
-	_ = proc.InitHelper(penv, managedCopy(dustSide, plainSide, dustSide.MTU()))
+	_ = proc.InitHelper(penv, managedCopy(dustSide, plainSide, 4096))
 	ctl.Start()
 	_ = <-ctl.Exit
 	err := ctl.Status()
@@ -227,7 +227,7 @@ func listenOn(addr *net.TCPAddr, eachConn func(*net.TCPConn) error) error {
 func dustToPlain(listenAddr, dialAddr *net.TCPAddr, spriv *Dust.ServerPrivate) error {
 	log.Notice("listening for Dusts on %v, will dial plains on %v", listenAddr, dialAddr)
 	eachConn := func(in *net.TCPConn) error {
-		dconn, err := Dust.BeginRawServer(in, spriv, nil)
+		dconn, err := Dust.BeginRawStreamServer(in, spriv)
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err
@@ -297,7 +297,7 @@ func plainToDust(listenAddr, dialAddr *net.TCPAddr, spub *Dust.ServerPublic) err
 		// so that there's less risk of dialing visibly and then getting hosed on some other part of
 		// initialization.
 
-		dconn, err := Dust.BeginRawClient(out, spub, nil)
+		dconn, err := Dust.BeginRawStreamClient(out, spub)
 		if err != nil {
 			log.Error("cannot begin Dust connection: %v", err)
 			return err

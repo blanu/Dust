@@ -11,7 +11,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/blanu/Dust/go/v2/engine"
+	"github.com/blanu/Dust/go/v2/interface"
 )
 
 type sillyHexCodec struct {
@@ -63,10 +63,6 @@ func makeSillyHexModel(params map[string]string) (Dust.ShapingModel, error) {
 
 func init() {
 	Dust.RegisterModel("sillyHex", makeSillyHexModel)
-}
-
-func (hex *sillyHexCodec) WholeStreamDuration() time.Duration {
-	return 10 * time.Second
 }
 
 func (hex *sillyHexCodec) MaxPacketLength() uint16 {

@@ -4,81 +4,81 @@
 package crypting
 
 import (
-	"github.com/blanu/Dust/go/buf"
 	"github.com/blanu/Dust/go/prim1"
 )
 
-func (cs *Session) receivedEphemeralKey() {
-	var err error
+const (
+	kdfC2S = `cli.`
+	kdfS2C = `srv.`
 
-	received := cs.inHandshake.Data()
-	if len(received) != 32 {
-		panic("Dust/crypting: should not have gotten here without 32-byte handshake")
+	kdfCipherData = `dta.`
+	kdfMACData    = `grm.`
+	kdfMACConfirm = `bgn.`
+)
+
+type streamKeys struct {
+	cipherKey prim.CipherKey
+	authKey   prim.AuthKey
+	confirm   prim.AuthValue
+}
+
+func (sk *streamKeys) Clear() {
+	sk.cipherKey = prim.ZeroCipherKey()
+	sk.authKey = prim.ZeroAuthKey()
+	sk.confirm = prim.ZeroAuthValue()
+}
+
+type handshake struct {
+	local  prim.Private
+	remote prim.Public
+	sinfo  interface{}
+
+	in, out streamKeys
+}
+
+func (hs *handshake) start(sinfo interface{}) []byte {
+	hs.local = prim.NewPrivate()
+	hs.sinfo = sinfo
+	return hs.local.Public.Binary()
+}
+
+func (hs *handshake) completeWith(received []byte) {
+	var err error
+	if len(received) != prim.PublicBinaryLen {
+		panic("Dust/crypting: should not have gotten here without PublicBinaryLen bytes")
 	}
 
-	cs.remotePublic, err = prim.LoadPublicBinary(received)
+	hs.remote, err = prim.LoadPublicBinary(received)
 	if err != nil {
 		panic("Dust/crypting: should always be able to load public key here")
 	}
 
-	log.Debug("  <- received ephemeral key")
-
 	var ntor prim.NtorHandshake
 	var inKdfPrefix, outKdfPrefix string
 
-	switch sinfo := cs.serverInfo.(type) {
+	switch sinfo := hs.sinfo.(type) {
 	default:
 		panic("Dust/crypting: bad serverInfo type")
 
 	case *Public:
 		// We're the client.
 		inKdfPrefix, outKdfPrefix = kdfS2C, kdfC2S
-		ntor.Init(sinfo.Id[:], &cs.localPrivate.Public, &cs.remotePublic)
-		ntor.WriteDHPart(cs.localPrivate.SharedSecret(cs.remotePublic))
-		ntor.WriteDHPart(cs.localPrivate.SharedSecret(sinfo.Key))
+		ntor.Init(sinfo.Id[:], &hs.local.Public, &hs.remote)
+		ntor.WriteDHPart(hs.local.SharedSecret(hs.remote))
+		ntor.WriteDHPart(hs.local.SharedSecret(sinfo.Key))
 
 	case *Private:
+		// We're the server.
 		inKdfPrefix, outKdfPrefix = kdfC2S, kdfS2C
-		ntor.Init(sinfo.Id[:], &cs.remotePublic, &cs.localPrivate.Public)
-		ntor.WriteDHPart(cs.localPrivate.SharedSecret(cs.remotePublic))
-		ntor.WriteDHPart(sinfo.Key.SharedSecret(cs.remotePublic))
+		ntor.Init(sinfo.Id[:], &hs.remote, &hs.local.Public)
+		ntor.WriteDHPart(hs.local.SharedSecret(hs.remote))
+		ntor.WriteDHPart(sinfo.Key.SharedSecret(hs.remote))
 	}
 
 	var secret prim.Secret
-	var outConfirmation prim.AuthValue
-	secret, cs.inConfirmation, outConfirmation = ntor.Finish(inKdfPrefix, outKdfPrefix)
-
-	cs.outCrypted.CopyIn(outConfirmation[:])
-	log.Debug("-> send confirmation starting with %x", outConfirmation[:2])
-	cs.outCipher.SetKey(secret.DeriveCipherKey(outKdfPrefix + kdfCipherData))
-	cs.outMAC.SetKey(secret.DeriveAuthKey(outKdfPrefix + kdfMACData))
-	cs.outMAC.Reset(0)
-
-	log.Debug("  <- expect confirmation starting with %x", cs.inConfirmation[:2])
-	cs.inCipher.SetKey(secret.DeriveCipherKey(inKdfPrefix + kdfCipherData))
-	cs.inMAC.SetKey(secret.DeriveAuthKey(inKdfPrefix + kdfMACData))
-	cs.inMAC.Reset(0)
-
-	cs.inHandshake = buf.BeginReassembly(32)
-	cs.state = stateHandshakeKey
-}
-
-// Change to the Streaming state if we've reassembled a correct confirmation code.  Otherwise, throw away
-// the 32-byte chunk and continue.
-func (cs *Session) checkConfirmation() {
-	if !cs.inConfirmation.Equal(cs.inHandshake.Data()) {
-		//log.Debug("<- discarding not-a-confirmation")
-		cs.inHandshake.Reset()
-		return
-	}
-
-	// We already set up all the derived keys when we received the ephemeral key.
-	log.Debug("  <- entering streaming state")
-	cs.inHandshake = nil
-	cs.inStreaming = buf.BeginReassembly(cs.MTU + frameOverhead)
-	cs.inPosition = 0
-	// Do not reset outPosition here; we may already have been streaming on the output side.
-	cs.inFrameStart = 0
-	cs.state = stateStreaming
-	return
+	secret, hs.in.confirm, hs.out.confirm = ntor.Finish(inKdfPrefix, outKdfPrefix)
+	hs.in.cipherKey = secret.DeriveCipherKey(inKdfPrefix + kdfCipherData)
+	hs.in.authKey = secret.DeriveAuthKey(inKdfPrefix + kdfMACData)
+	hs.out.cipherKey = secret.DeriveCipherKey(outKdfPrefix + kdfCipherData)
+	hs.out.authKey = secret.DeriveAuthKey(outKdfPrefix + kdfCipherData)
 }

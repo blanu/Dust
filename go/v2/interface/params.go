@@ -6,7 +6,6 @@ package Dust
 import (
 	"github.com/blanu/Dust/go/v2/crypting"
 	"github.com/blanu/Dust/go/prim1"
-	"github.com/blanu/Dust/go/v2/shaping"
 )
 
 // ModelSpec represents the name of a model to use for an endpoint, plus unparsed model-specific parameters.
@@ -32,7 +31,6 @@ type EndpointParams struct {
 	Crypting  crypting.Params
 }
 
-// TODO: make clients set IgnoreDuration properly!
 var defEndpointParams = EndpointParams{
 	Crypting: crypting.Params{
 		MTU: 1500,

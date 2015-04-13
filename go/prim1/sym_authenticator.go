@@ -22,6 +22,14 @@ type (
 	AuthValue CValue
 )
 
+func ZeroAuthKey() AuthKey {
+	return AuthKey(zeroCValue)
+}
+
+func ZeroAuthValue() AuthValue {
+	return AuthValue(zeroCValue)
+}
+
 type MAC struct {
 	skein.Hash
 

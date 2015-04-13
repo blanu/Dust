@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/blanu/Dust/go/v2/engine"
+	"github.com/blanu/Dust/go/v2/interface"
 
 	_ "github.com/blanu/Dust/go/sillyHex"
 )

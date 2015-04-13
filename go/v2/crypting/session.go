@@ -5,10 +5,10 @@ package crypting
 
 import (
 	"errors"
+	"io"
 
 	"github.com/op/go-logging"
 
-	"github.com/blanu/Dust/go/buf"
 	"github.com/blanu/Dust/go/prim1"
 )
 
@@ -21,23 +21,23 @@ var (
 )
 
 const (
-	frameOverhead = 2 + 32
-
-	kdfC2S = `cli.`
-	kdfS2C = `srv.`
-
-	kdfCipherData = `dta.`
-	kdfMACData    = `grm.`
-	kdfMACConfirm = `bgn.`
+	frameOverhead = 2 + prim.AuthLen
 )
 
 type state int
 
 const (
+	// Using a bogus key to send continuous padding.  Received bytes are discarded.
 	stateFailed state = iota
+
+	// Reassembling the remote side's ephemeral public key.
 	stateHandshakeNoKey
+
+	// Searching for the confirmation code from the remote side.
 	stateHandshakeKey
-	stateStreaming
+
+	// Channel established.  Framed datagrams can be sent and received.
+	stateEstablished
 )
 
 // A Session holds state for a single secure channel.  There are two "sides" to a session: the outward-facing
@@ -49,94 +49,41 @@ const (
 type Session struct {
 	Params
 
-	front Front
+	Front io.ReadWriter
+	Back  io.ReadWriter
 
-	pushBuffer [][]byte
+	// Shared handshake state.  The incoming side manipulates this as it receives handshake data, and
+	// sends messages to the outgoing side about what to output.
+	handshake handshake
 
-	// Failed: we're using a bogus key to send, and received bytes are discarded.  HandshakeNoKey: we're
-	// reassembling the remote side's ephemeral public key.  HandshakeKey: we're searching for the
-	// confirmation code from the remote side.  Streaming: framed bytes can be sent and received.
-	state state
+	// Channel used to propagate advancement of handshake state from incoming to outgoing side.
+	stateChan chan state
 
-	// This is a *Public for clients and *Private for servers.
+	// Each stream manages its own state; they may be accessed independently.
+	incoming incoming
+	outgoing outgoing
+
+	// Server identity: a *Public for clients, or a *Private for servers.
 	serverInfo interface{}
-
-	// These both correspond to ephemeral keys.  The server's long-term key or keypair will be
-	// stashed somewhere in serverInfo.  localPrivate is always set.  remotePublic is set if state is
-	// HandshakeKey.
-	localPrivate prim.Private
-	remotePublic prim.Public
-
-	// Incoming data must be processed against this first, if set, before inCipher.  When HandshakeNoKey:
-	// reassembling an ephemeral public key.  When HandshakeKey: searching for the confirmation code from
-	// the remote side.
-	inHandshake buf.Reassembly
-
-	// Set in HandshakeKey state.
-	inConfirmation prim.AuthValue
-
-	// Set in Streaming state.  In other states, inCipher uses a random key.  inPosition refers to the
-	// position of the MAC for incoming data.
-	inCipher   prim.Cipher
-	inMAC      prim.VerifyingMAC
-	inPosition uint64
-
-	// Data is reassembled into frames here.  The reassembly capacity is the maximum frame wire size.  The
-	// earliest byte of inStreaming is at inFrameStart of the stream, and this is measured against
-	// inPosition to determine how far the MAC has been advanced.
-	inStreaming  buf.Reassembly
-	inFrameStart uint64
-
-	// Implicitly prepended to any other outgoing data; these bytes are not encrypted before sending.
-	outCrypted buf.Reassembly
-
-	// Set in Streaming state.  In other states, outCipher uses a random key.
-	outCipher   prim.Cipher
-	outMAC      prim.GeneratingMAC
-	outPosition uint64
-
-	// Used for advancing the stream cipher when copying MAC bytes; must be exactly one MAC-length long.
-	outGarbage []byte
 }
 
-// Move from any state to the Failed state, setting a bogus session key and destroying any in-progress data.
-func (cs *Session) fail() {
-	log.Info("session failure")
-	cs.state = stateFailed
-	cs.inHandshake = nil
-	cs.inStreaming = nil
-	cs.outCipher.SetRandomKey()
-	cs.outCrypted = nil
-}
-
-func (cs *Session) Init() error {
+func (cs *Session) Init(sinfo interface{}) error {
 	if err := cs.Params.Validate(); err != nil {
 		return err
 	}
 
-	if !(MinMTU <= cs.MTU && cs.MTU <= MaxMTU) {
-		return ErrBadMTU
-	}
-
-	cs.localPrivate = prim.NewPrivate()
-	cs.inCipher.SetRandomKey()
-	cs.outCipher.SetRandomKey()
-	cs.outCrypted = buf.BeginReassembly(cs.MTU + 32 + frameOverhead)
-	cs.outGarbage = make([]byte, 32)
-	startingData := cs.localPrivate.Public.Binary()
-	buf.CopyReassemble(&cs.outCrypted, &startingData)
-	cs.inHandshake = buf.BeginReassembly(32)
-	cs.state = stateHandshakeNoKey
+	cs.stateChan = make(chan state, 3)
+	greeting := cs.handshake.start(sinfo)
+	cs.incoming.Init(cs)
+	cs.outgoing.Init(cs, greeting)
+	cs.Front = &ioPair{rd: &cs.incoming, wr: &cs.outgoing}
+	cs.Back = &ioPair{rd: &cs.outgoing, wr: &cs.incoming}
 	return nil
 }
 
-func beginAny(sinfo interface{}, front Front, params Params) (*Session, error) {
-	cs := &Session{
-		Params:     params,
-		front:      front,
-		serverInfo: sinfo,
-	}
-	if err := cs.Init(); err != nil {
+func beginAny(sinfo interface{}, params Params) (*Session, error) {
+	cs := &Session{Params: params}
+	if err := cs.Init(sinfo); err != nil {
 		return nil, err
 	}
 
@@ -145,12 +92,12 @@ func beginAny(sinfo interface{}, front Front, params Params) (*Session, error) {
 
 // BeginClient starts a new crypting session from the client's perspective, given a server's public
 // cryptographic parameters.
-func BeginClient(pub *Public, front Front, params Params) (*Session, error) {
-	return beginAny(pub, front, params)
+func BeginClient(pub *Public, params Params) (*Session, error) {
+	return beginAny(pub, params)
 }
 
 // BeginServer starts a new crypting session from the server's perspective, given the server's private
 // cryptographic parameters.
-func BeginServer(priv *Private, front Front, params Params) (*Session, error) {
-	return beginAny(priv, front, params)
+func BeginServer(priv *Private, params Params) (*Session, error) {
+	return beginAny(priv, params)
 }

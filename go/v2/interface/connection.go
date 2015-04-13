@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"sync"
-	"sync/atomic"
 
 	"github.com/blanu/Dust/go/v2/crypting"
 	"github.com/blanu/Dust/go/v2/shaping"
@@ -31,7 +30,6 @@ type Socket interface {
 type connection struct {
 	socket  Socket
 	crypter *crypting.Session
-	front   crypting.Front
 	shaper  *shaping.Shaper
 
 	closeOnce  sync.Once
@@ -58,14 +56,13 @@ func (c *connection) Close() error {
 	return c.closeError
 }
 
-func (c *connection) initAny(front crypting.Front) {
+func (c *connection) initAny() {
 	c.local = genLinkAddr()
 	c.remote = genLinkAddr()
-	c.front = front
 }
 
-func (c *connection) initClient(spub *ServerPublic, front crypting.Front) (err error) {
-	c.initAny(front)
+func (c *connection) initClient(spub *ServerPublic) (err error) {
+	c.initAny()
 
 	model, err := spub.EndpointParams.ModelSpec.reifyModel()
 	if err != nil {
@@ -79,18 +76,17 @@ func (c *connection) initClient(spub *ServerPublic, front crypting.Front) (err e
 		return
 	}
 
-	c.crypter, err = crypting.BeginClient(spub.cryptoPublic(), c.front, spub.Crypting)
+	c.crypter, err = crypting.BeginClient(spub.cryptoPublic(), spub.Crypting)
 	if err != nil {
 		log.Error("initClient: starting crypting session: %v", err)
 		return
 	}
 
-	c.setShapingParams(spub.Shaping)
 	return
 }
 
-func (c *connection) initServer(spriv *ServerPrivate, front crypting.Front) (err error) {
-	c.initAny(front)
+func (c *connection) initServer(spriv *ServerPrivate) (err error) {
+	c.initAny()
 
 	model, err := spriv.EndpointParams.ModelSpec.reifyModel()
 	if err != nil {
@@ -104,23 +100,20 @@ func (c *connection) initServer(spriv *ServerPrivate, front crypting.Front) (err
 		return
 	}
 
-	c.crypter, err = crypting.BeginServer(spriv.cryptoPrivate(), c.front, spriv.Crypting)
+	c.crypter, err = crypting.BeginServer(spriv.cryptoPrivate(), spriv.Crypting)
 	if err != nil {
 		log.Error("initServer: starting crypting session: %v", err)
 		return
 	}
 
-	c.setShapingParams(spriv.Shaping)
 	return
 }
 
 func (c *connection) spawn(socket Socket) (err error) {
 	c.socket = socket
-	// TODO: remove this entirely; we take responsibility for closing the socket now.
-	var closer io.Closer = nil
 
 	// TODO: doc why no parent env propagation here
-	c.shaper, err = shaping.NewShaper(nil, c.crypter, c.socket, c.dec, c.socket, c.enc, closer, &c.shapingParams)
+	c.shaper, err = shaping.NewShaper(nil, c.crypter, c.socket, c.dec, c.socket, c.enc)
 	if err != nil {
 		log.Error("spawn: starting shaper: %v", err)
 		return

@@ -7,32 +7,126 @@ import (
 	"io"
 
 	"github.com/blanu/Dust/go/buf"
+	"github.com/blanu/Dust/go/prim1"
 )
+
+type incoming struct {
+	session   *Session
+	handshake *handshake
+
+	state     state
+	stateChan chan<- state
+
+	// Incoming data must be processed against this first, if set, before cipher.  When HandshakeNoKey:
+	// reassembling an ephemeral public key.  When HandshakeKey: searching for the confirmation code from
+	// the remote side.
+	handshakeReassembly buf.Reassembly
+
+	// Set in HandshakeKey state.
+	confirm prim.AuthValue
+
+	// Set in Established state.  In other states, cipher uses a random key.  macPosition refers to the
+	// position of the MAC for incoming data; it may be within a frame that is already being reassembled.
+	cipher      prim.Cipher
+	mac         prim.VerifyingMAC
+	macPosition uint64
+
+	// Data is reassembled into frames here.  The reassembly capacity is the maximum frame wire size.  The
+	// earliest byte of reassembly is at frameStart of the stream, and this is measured against
+	// macPosition to determine how far the MAC has been advanced.
+	frameReassembly buf.Reassembly
+	frameStart      uint64
+
+	frontGrams     chan []byte
+	frontBufs      chan []byte
+	frontHeldBuf   []byte
+	frontHeldTail  []byte
+}
+
+func (ic *incoming) Init(session *Session) {
+	ic.session = session
+	ic.handshake = &session.handshake
+	ic.state = stateHandshakeNoKey
+	ic.stateChan = session.stateChan
+	ic.cipher.SetRandomKey()
+	ic.handshakeReassembly = buf.BeginReassembly(prim.PublicBinaryLen)
+	ic.frameReassembly = buf.BeginReassembly(session.MTU + frameOverhead)
+
+	nbufs := 3
+	ic.frontGrams = make(chan []byte, nbufs)
+	ic.frontBufs = make(chan []byte, nbufs)
+	for i := 0; i < nbufs; i++ {
+		ic.frontBufs <- make([]byte, 0, session.MTU)
+	}
+	ic.frontHeldBuf = nil
+	ic.frontHeldTail = nil
+}
+
+func (ic *incoming) receivedEphemeralKey() {
+	log.Debug("<-  received ephemeral key")
+	ic.handshake.completeWith(ic.handshakeReassembly.Data())
+
+	inKeys := &ic.handshake.in
+	ic.cipher.SetKey(inKeys.cipherKey)
+	ic.mac.SetKey(inKeys.authKey)
+	ic.mac.Reset(0)
+	ic.macPosition = 0
+	ic.confirm = inKeys.confirm
+	log.Debug("<-  expect confirmation starting with %x", ic.confirm[:2])
+	inKeys.Clear()
+
+	ic.handshakeReassembly = buf.BeginReassembly(prim.AuthLen)
+	ic.state = stateHandshakeKey
+	ic.stateChan <- ic.state
+}
+
+// Change to the Established state if we've reassembled a correct confirmation code.  Otherwise, throw away
+// the 32-byte chunk and continue.
+func (ic *incoming) checkConfirmation() {
+	if !ic.confirm.Equal(ic.handshakeReassembly.Data()) {
+		ic.handshakeReassembly.Reset()
+		return
+	}
+
+	// We already set up all the derived keys when we received the ephemeral key.
+	log.Debug("<-  ESTABLISHED")
+	ic.handshakeReassembly = nil
+	ic.frameStart = 0
+	ic.state = stateEstablished
+	ic.stateChan <- ic.state
+}
+
+func (ic *incoming) fail() {
+	log.Debug("<-  FAIL")
+	ic.handshakeReassembly = nil
+	ic.state = stateFailed
+	ic.stateChan <- ic.state
+}
 
 // decodeFrames continues decoding frames.  The earliest byte of inStreaming must be in padding or at the
 // start of a frame.
-func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
+func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 	// Invariant: plain starts at absolute position plainStart.  crypt starts at cryptOffset from plain.
-	plain := cs.inStreaming.Data()
-	plainStart := cs.inFrameStart
+	plain := ic.frameReassembly.Data()
+	plainStart := ic.frameStart
 	defer func() {
-		log.Debug("consuming %d bytes", int(plainStart - cs.inFrameStart))
-		cs.inStreaming.Consume(int(plainStart - cs.inFrameStart))
-		cs.inFrameStart = plainStart
+		//log.Debug("consuming %d bytes", int(plainStart - ic.frameStart))
+		ic.frameReassembly.Consume(int(plainStart - ic.frameStart))
+		ic.frameStart = plainStart
 	}()
 
 	// Ensure the MAC is advanced to at least plainStart+relPos.
 	advanceData := func(relPos int) {
-		log.Debug("advanceData(%d)", relPos)
+		//log.Debug("advanceData(%d)", relPos)
 		absPos := plainStart + uint64(relPos)
-		if cs.inPosition < absPos {
-			needed := int(absPos - cs.inPosition)
+		if ic.macPosition < absPos {
+			needed := int(absPos - ic.macPosition)
 			if relPos - needed - cryptOffset < 0 {
 				panic("Dust/crypting: somehow lost the bytes we needed for the MAC")
 			}
 
-			cs.inMAC.Write(crypt[relPos-needed-cryptOffset:relPos-cryptOffset])
-			cs.inPosition += uint64(needed)
+			ic.mac.Write(crypt[relPos-needed-cryptOffset:relPos-cryptOffset])
+			ic.macPosition += uint64(needed)
 		}
 	}
 
@@ -40,7 +134,7 @@ func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 	// any bytes earlier than in crypt were already so overwritten.  Do not write them to the MAC
 	// or advance the input position.
 	advanceNoCipher := func(relFrom, relTo int) {
-		log.Debug("advanceNoCipher(%d, %d)", relFrom, relTo)
+		//log.Debug("advanceNoCipher(%d, %d)", relFrom, relTo)
 		if relFrom < cryptOffset {
 			relFrom = cryptOffset
 		}
@@ -49,7 +143,7 @@ func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 
 	// Consume n bytes, advancing plain and crypt.
 	consume := func(n int) {
-		log.Debug("consume(%d)", n)
+		//log.Debug("consume(%d)", n)
 		plain = plain[n:]
 		if len(plain) >= 2 {
 			log.Debug("plain starts with %v", plain[:2])
@@ -66,7 +160,7 @@ func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 	// inPosition has been advanced past all of crypt.
 
 	for len(plain) > 0 {
-		log.Debug("have %d plains, %d+%d crypts", len(plain), cryptOffset, len(crypt))
+		//log.Debug("<-- have %d plains, %d+%d crypts", len(plain), cryptOffset, len(crypt))
 		if plain[0] == 0 {
 			k := 1
 			for k < len(plain) && plain[k] == 0 {
@@ -80,9 +174,8 @@ func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 		} else {
 			tLen := int(uint16(plain[0])<<8 | uint16(plain[1]))
 			dgramLen := tLen - 256
-			if dgramLen > cs.MTU {
-				log.Error("corrupted datagram")
-				cs.fail()
+			if dgramLen > ic.session.MTU {
+				ic.fail()
 				return
 			}
 
@@ -94,107 +187,110 @@ func (cs *Session) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 
 			dgramPlain := plain[2:macPos]
 			advanceData(macPos)
-			// TODO: MAC length constant
-			endPos := macPos + 32
+			endPos := macPos + prim.AuthLen
 			if len(plain) < endPos {
 				advanceNoCipher(macPos, len(plain))
 				return
 			}
 
 			advanceNoCipher(macPos, endPos)
-			authenticated := cs.inMAC.Verify(plain[macPos:endPos])
-			cs.inPosition += 32
-			cs.inMAC.Reset(cs.inPosition)
-			log.Debug("input MAC reset at %d", cs.inPosition)
+			authenticated := ic.mac.Verify(plain[macPos:endPos])
+			ic.macPosition += 32
+			ic.mac.Reset(ic.macPosition)
+			log.Debug("<-  MAC reset at %d", ic.macPosition)
 			if !authenticated {
-				log.Error("corrupted datagram")
-				cs.fail()
+				ic.fail()
 				return
 			}
 
-			unsent, unsentOwned := dgramPlain, false
-
-			// We can only try to send directly if there's nothing in line ahead of it.
-			if len(cs.pushBuffer) == 0 {
-				unsent, unsentOwned = cs.front.PushGram(unsent, false)
-			}
-
-			// Only try to hold it for later sending if we're supposed to do that.  Otherwise,
-			// drop it on the floor.
-			if unsent != nil && cs.HoldIncoming {
-				if !unsentOwned {
-					unsent = buf.CopyNew(unsent)
-				}
-				cs.pushBuffer = append(cs.pushBuffer, unsent)
-			}
-
+			// TODO: interrupt support
+			log.Debug("<-- DATA len %d", len(dgramPlain))
+			frontBuf := <-ic.frontBufs
+			dgramCopy := frontBuf[:copy(frontBuf[:cap(frontBuf)], dgramPlain)]
+			ic.frontGrams <- dgramCopy
 			consume(endPos)
 		}
 	}
 	return
 }
 
-func (cs *Session) drainPushBuffer() {
-	for len(cs.pushBuffer) > 0 {
-		dgramPlain := cs.pushBuffer[0]
-		unsent, _ := cs.front.PushGram(dgramPlain, true)
-		if unsent != nil {
-			return
-		}
-
-		cs.pushBuffer[0] = nil
-		cs.pushBuffer = cs.pushBuffer[1:]
-	}
-
-	cs.pushBuffer = nil
-}
-
-// PushRead processes new pre-decryption bytes in p, handling handshake completions and sending any usable
-// plaintext that results to the inward-facing side of the Session.  This method must be called from the
-// outward-facing side of the Session.  The signature is similar to io.Writer.Write.
-func (cs *Session) PushRead(p []byte) (n int, err error) {
-	log.Debug("  <- pushing %d bytes", len(p))
+// Write processes new pre-decryption bytes in p, handling handshake completions and sending any usable
+// plaintext that results onward.
+func (ic *incoming) Write(p []byte) (n int, err error) {
+	log.Debug("<   pushing %d bytes", len(p))
 	n, err = 0, nil
 
-	cs.drainPushBuffer()
-
 	for len(p) > 0 {
-		// TIMING: arguably this leads to a timing attack against whether a handshake succeeded if the
-		// attacker can measure our CPU usage, but that's probably not preventable anyway?  Come back to this
-		// later.
-		if cs.state == stateFailed {
+		if ic.state == stateFailed {
 			return n + len(p), err
 		}
 
-		if cs.inHandshake != nil {
-			n += buf.CopyReassemble(&cs.inHandshake, &p)
-			if cs.inHandshake.FixedSizeComplete() {
-				switch cs.state {
+		if ic.handshakeReassembly != nil {
+			n += buf.CopyReassemble(&ic.handshakeReassembly, &p)
+			if ic.handshakeReassembly.FixedSizeComplete() {
+				switch ic.state {
 				default:
 					panic("Dust/crypting: handshake reassembly in weird state")
 				case stateHandshakeNoKey:
-					cs.receivedEphemeralKey()
+					ic.receivedEphemeralKey()
 				case stateHandshakeKey:
-					cs.checkConfirmation()
+					ic.checkConfirmation()
 				}
 			}
 		} else {
-			subn := cs.inStreaming.TransformIn(p, cs.inCipher.XORKeyStream)
+			subn :=	ic.frameReassembly.TransformIn(p, ic.cipher.XORKeyStream)
 			n += subn
-			consumed := cs.decodeFrames(p[:subn], cs.inStreaming.ValidLen()-subn)
-			cs.inStreaming.Consume(consumed)
-			cs.inFrameStart += uint64(consumed)
+			consumed := ic.decodeFrames(p[:subn], ic.frameReassembly.ValidLen()-subn)
+			ic.frameReassembly.Consume(consumed)
+			ic.frameStart += uint64(consumed)
 			p = p[subn:]
 		}
 	}
 
-	if len(p) > 0 && err == nil {
-		// Oops.
-		err = io.ErrShortWrite
-	}
 	return n, err
 }
 
-func (cs *Session) PushReadCTS() bool {
-	return len(cs.pushBuffer) == 0
+func (ic *incoming) Read(p []byte) (n int, err error) {
+	for len(p) > 0 {
+		if ic.frontHeldTail != nil {
+			subn := copy(p, ic.frontHeldTail)
+			p = p[subn:]
+			ic.frontHeldTail = ic.frontHeldTail[subn:]
+			n += subn
+
+			if len(ic.frontHeldTail) == 0 {
+				ic.frontBufs <- ic.frontHeldBuf
+				ic.frontHeldBuf = nil
+				ic.frontHeldTail = nil
+			}
+		} else {
+			var dgram []byte
+			if n == 0 {
+				dgram = <-ic.frontGrams
+			} else {
+				select {
+				case dgram = <-ic.frontGrams:
+				default:
+					return
+				}
+			}
+
+			if dgram == nil {
+				err = io.EOF
+				return
+			}
+
+			subn := copy(p, dgram)
+			p = p[subn:]
+			if subn == len(dgram) {
+				ic.frontBufs <- dgram
+			} else {
+				ic.frontHeldBuf = dgram
+				ic.frontHeldTail = dgram[subn:]
+			}
+			n += subn
+		}
+	}
+
+	return
 }

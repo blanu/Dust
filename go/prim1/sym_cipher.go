@@ -19,6 +19,10 @@ type (
 	CipherKey CValue
 )
 
+func ZeroCipherKey() CipherKey {
+	return CipherKey(zeroCValue)
+}
+
 type Cipher struct {
 	skein.Hash
 }

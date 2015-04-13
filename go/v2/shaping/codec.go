@@ -10,15 +10,9 @@ import (
 	"time"
 )
 
-// TODO: higher-performance buffer discipline for encode/decode?
-// TODO: RecordPacketSent?
-
 // Encoder applies to the sending side of a Dust half-connection.  It outputs timing and length parameters for
 // outgoing packets, as well as stateful shaping of the byte stream.
 type Encoder interface {
-	// WholeStreamDuration returns the length of time the connection should be kept open.
-	WholeStreamDuration() time.Duration
-
 	// MaxPacketLength returns any uint16 greater than or equal to any length that will ever be returned
 	// by NextPacketLength from this encoder.
 	MaxPacketLength() uint16

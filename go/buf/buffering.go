@@ -137,4 +137,11 @@ func CopyNew(slice []byte) []byte {
 	return out
 }
 
+// Zero sets all bytes of a slice to zero.
+func Zero(slice []byte) {
+	for i, _ := range slice {
+		slice[i] = 0
+	}
+}
+
 // TODO: versions of these funs that don't require addressable bits on the input side
