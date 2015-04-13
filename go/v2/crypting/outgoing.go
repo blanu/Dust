@@ -39,8 +39,8 @@ func (og *outgoing) Init(session *Session, initialData []byte) {
 	og.state = stateHandshakeNoKey
 	og.stateChan = session.stateChan
 	og.cipher.SetRandomKey()
-	og.queued = buf.BeginReassembly(prim.PublicBinaryLen + prim.AuthLen + session.MTU + frameOverhead)
-	buf.CopyReassemble(&og.queued, &initialData)
+	og.queued = buf.BeginReassembly(prim.PublicBinaryLen + 2*prim.AuthLen + session.MTU + frameOverhead)
+	og.queued.CopyIn(initialData)
 
 	nbufs := 3
 	og.frontGrams = make(chan []byte, nbufs)
@@ -80,12 +80,13 @@ func (og *outgoing) pullData(p []byte) {
 		}
 
 		var dgram []byte
+		var any bool
 		select {
-		case dgram = <-og.frontGrams:
+		case dgram, any = <-og.frontGrams:
 		default:
 		}
 
-		if dgram == nil {
+		if !any {
 			log.Debug("    --> padding len %d", len(p))
 			og.pullZeroData(p)
 			return
@@ -116,6 +117,7 @@ func (og *outgoing) pullData(p []byte) {
 
 func (og *outgoing) handleStateChange() {
 	select {
+	default:
 	case newState := <-og.stateChan:
 		switch newState {
 		case stateHandshakeKey:
@@ -191,7 +193,7 @@ func (og *outgoing) Read(p []byte) (n int, err error) {
 func (og *outgoing) Write(p []byte) (n int, err error) {
 	for len(p) > 0 {
 		buf := <-og.frontBufs
-		subn := copy(buf, p)
+		subn := copy(buf[:cap(buf)], p)
 		og.frontGrams <- buf[:subn]
 		p = p[subn:]
 	}

@@ -31,9 +31,9 @@ type incoming struct {
 	mac         prim.VerifyingMAC
 	macPosition uint64
 
-	// Data is reassembled into frames here.  The reassembly capacity is the maximum frame wire size.  The
-	// earliest byte of reassembly is at frameStart of the stream, and this is measured against
-	// macPosition to determine how far the MAC has been advanced.
+	// Data is reassembled into frames here.  The reassembly capacity is the maximum frame wire size.
+	// frameReassembly starts at frameStart of the stream; this is measured against macPosition to
+	// determine how far the MAC has been advanced.
 	frameReassembly buf.Reassembly
 	frameStart      uint64
 
@@ -81,7 +81,7 @@ func (ic *incoming) receivedEphemeralKey() {
 }
 
 // Change to the Established state if we've reassembled a correct confirmation code.  Otherwise, throw away
-// the 32-byte chunk and continue.
+// the chunk and continue.
 func (ic *incoming) checkConfirmation() {
 	if !ic.confirm.Equal(ic.handshakeReassembly.Data()) {
 		ic.handshakeReassembly.Reset()
@@ -103,14 +103,14 @@ func (ic *incoming) fail() {
 	ic.stateChan <- ic.state
 }
 
-// decodeFrames continues decoding frames.  The earliest byte of inStreaming must be in padding or at the
+// decodeFrames continues decoding frames.  The earliest byte of frameReassembly must be in padding or at the
 // start of a frame.
-func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) (n int) {
-	// Invariant: plain starts at absolute position plainStart.  crypt starts at cryptOffset from plain.
+func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) {
+  	// Invariant: plain starts at absolute position plainStart.  crypt starts at cryptOffset from plain.
 	plain := ic.frameReassembly.Data()
 	plainStart := ic.frameStart
 	defer func() {
-		//log.Debug("consuming %d bytes", int(plainStart - ic.frameStart))
+		//log.Debug("finally consuming %d bytes", int(plainStart - ic.frameStart))
 		ic.frameReassembly.Consume(int(plainStart - ic.frameStart))
 		ic.frameStart = plainStart
 	}()
@@ -121,6 +121,7 @@ func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 		absPos := plainStart + uint64(relPos)
 		if ic.macPosition < absPos {
 			needed := int(absPos - ic.macPosition)
+			//log.Debug("thus writing %d bytes to MAC", needed)
 			if relPos - needed - cryptOffset < 0 {
 				panic("Dust/crypting: somehow lost the bytes we needed for the MAC")
 			}
@@ -138,6 +139,7 @@ func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 		if relFrom < cryptOffset {
 			relFrom = cryptOffset
 		}
+		//log.Debug("thus overwriting %d..%d from %d..%d", relFrom, relTo, relFrom-cryptOffset, relTo-cryptOffset)
 		copy(plain[relFrom:relTo], crypt[relFrom-cryptOffset:relTo-cryptOffset])
 	}
 
@@ -145,9 +147,6 @@ func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 	consume := func(n int) {
 		//log.Debug("consume(%d)", n)
 		plain = plain[n:]
-		if len(plain) >= 2 {
-			log.Debug("plain starts with %v", plain[:2])
-		}
 		plainStart += uint64(n)
 		cryptOffset -= n
 		if cryptOffset < 0 {
@@ -160,12 +159,13 @@ func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 	// inPosition has been advanced past all of crypt.
 
 	for len(plain) > 0 {
-		//log.Debug("<-- have %d plains, %d+%d crypts", len(plain), cryptOffset, len(crypt))
+		//log.Debug("have %d plains, %d+%d crypts", len(plain), cryptOffset, len(crypt))
 		if plain[0] == 0 {
 			k := 1
 			for k < len(plain) && plain[k] == 0 {
 				k++
 			}
+			log.Debug("< - padding len %d", k)
 			advanceData(k)
 			consume(k)
 		} else if len(plain) < 2 {
@@ -174,6 +174,7 @@ func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 		} else {
 			tLen := int(uint16(plain[0])<<8 | uint16(plain[1]))
 			dgramLen := tLen - 256
+			//log.Debug("< - possible len %d", dgramLen)
 			if dgramLen > ic.session.MTU {
 				ic.fail()
 				return
@@ -195,7 +196,7 @@ func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) (n int) {
 
 			advanceNoCipher(macPos, endPos)
 			authenticated := ic.mac.Verify(plain[macPos:endPos])
-			ic.macPosition += 32
+			ic.macPosition += prim.AuthLen
 			ic.mac.Reset(ic.macPosition)
 			log.Debug("<-  MAC reset at %d", ic.macPosition)
 			if !authenticated {
@@ -240,9 +241,7 @@ func (ic *incoming) Write(p []byte) (n int, err error) {
 		} else {
 			subn :=	ic.frameReassembly.TransformIn(p, ic.cipher.XORKeyStream)
 			n += subn
-			consumed := ic.decodeFrames(p[:subn], ic.frameReassembly.ValidLen()-subn)
-			ic.frameReassembly.Consume(consumed)
-			ic.frameStart += uint64(consumed)
+			ic.decodeFrames(p[:subn], ic.frameReassembly.ValidLen()-subn)
 			p = p[subn:]
 		}
 	}

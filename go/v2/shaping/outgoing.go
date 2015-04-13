@@ -38,28 +38,34 @@ func (og *outgoing) Init(
 func (og *outgoing) issueOneWrite(desiredLen int) error {
 	// TODO: expand buf API and use it here
 	for len(og.outBuf) < desiredLen {
-		// TODO: encoder expansion guesses?
-		pullDelta := desiredLen - len(og.outBuf) - len(og.pullBuf)
-		if pullDelta < 1 {
-			pullDelta = 1
-		} else if pullDelta > cap(og.pullBuf) - len(og.pullBuf) {
-			pullDelta = cap(og.pullBuf) - len(og.pullBuf)
-		}
+		if len(og.pullBuf) > 0 {
+			dn, sn := og.encoder.ShapeBytes(og.outBuf[len(og.outBuf):desiredLen], og.pullBuf)
+			log.Debug("    --] shaped %d from %d bytes", dn, sn)
+			og.outBuf = og.outBuf[:len(og.outBuf)+dn]
+			og.pullBuf = og.pullBuf[:copy(og.pullBuf, og.pullBuf[sn:])]
+		} else {
+			// TODO: encoder expansion guesses?
+			pullDelta := desiredLen - len(og.outBuf) - len(og.pullBuf)
+			if pullDelta < 1 {
+				pullDelta = 1
+			} else if pullDelta > cap(og.pullBuf) - len(og.pullBuf) {
+				pullDelta = cap(og.pullBuf) - len(og.pullBuf)
+			}
 
-		rn, err := og.uniform.Read(og.pullBuf[len(og.pullBuf):len(og.pullBuf)+pullDelta])
-		if err != nil {
-			return err
+			log.Debug("    - ] pulling up to %d bytes", pullDelta)
+			rn, err := og.uniform.Read(og.pullBuf[len(og.pullBuf):len(og.pullBuf)+pullDelta])
+			if err != nil {
+				return err
+			}
+			log.Debug("     -] pulled %d bytes", rn)
+			og.pullBuf = og.pullBuf[:len(og.pullBuf)+rn]
 		}
-		og.pullBuf = og.pullBuf[:len(og.pullBuf)+rn]
-
-		dn, sn := og.encoder.ShapeBytes(og.outBuf[len(og.outBuf):desiredLen], og.pullBuf)
-		og.outBuf = og.outBuf[:len(og.outBuf)+dn]
-		og.pullBuf = og.pullBuf[:copy(og.pullBuf, og.pullBuf[sn:])]
 	}
 
+	log.Debug("      ] visible: %d bytes", desiredLen)
 	wn, err := og.visible.Write(og.outBuf[:desiredLen])
 	if err != nil {
-		log.Debug("    >>> write: %d/%d, %v", wn, desiredLen, err)
+		log.Debug("      ] write: %d/%d, %v", wn, desiredLen, err)
 	}
 	og.outBuf = og.outBuf[:copy(og.outBuf, og.outBuf[wn:])]
 	return err

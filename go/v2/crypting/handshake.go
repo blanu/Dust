@@ -80,5 +80,5 @@ func (hs *handshake) completeWith(received []byte) {
 	hs.in.cipherKey = secret.DeriveCipherKey(inKdfPrefix + kdfCipherData)
 	hs.in.authKey = secret.DeriveAuthKey(inKdfPrefix + kdfMACData)
 	hs.out.cipherKey = secret.DeriveCipherKey(outKdfPrefix + kdfCipherData)
-	hs.out.authKey = secret.DeriveAuthKey(outKdfPrefix + kdfCipherData)
+	hs.out.authKey = secret.DeriveAuthKey(outKdfPrefix + kdfMACData)
 }

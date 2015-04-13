@@ -50,7 +50,6 @@ func RegisterModel(name string, constructor ShapingModelConstructor) {
 		panic("Dust: registering model '" + name + "' twice")
 	}
 
-	log.Debug("registering model %s", name)
 	registeredModels[name] = constructor
 }
 

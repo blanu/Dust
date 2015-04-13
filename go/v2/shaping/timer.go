@@ -20,7 +20,7 @@ func (t *timer) Init(parent *proc.Env) {
 func (t *timer) runTimer(env *proc.Env) (err error) {
 	for req, any := env.GetRequest(); any; req, any = env.GetRequest() {
 		dur := req.(time.Duration)
-		log.Debug("sleeping for %v", dur)
+		log.Debug("            .. sleep %v ..", dur)
 		time.Sleep(dur)
 		afterSleep := time.Now()
 		env.PutReply(afterSleep)
@@ -30,6 +30,5 @@ func (t *timer) runTimer(env *proc.Env) (err error) {
 }
 
 func (t *timer) cycle(dur time.Duration) {
-	log.Debug("requesting %v", dur)
 	t.PutRequest(dur)
 }
