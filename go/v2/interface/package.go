@@ -33,3 +33,9 @@ import (
 )
 
 var log = logging.MustGetLogger("Dust")
+
+var LogModules = []string{
+	"Dust",
+	"Dust/crypting",
+	"Dust/shaping",
+}
