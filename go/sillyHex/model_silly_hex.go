@@ -32,9 +32,9 @@ func newSillyHexCodec() Dust.ShapingCodec {
 		inTopNybble:  -1,
 		outBotNybble: -1,
 
-		lenNext:   200,
-		lenMin:    200,
-		lenStep:   200,
+		lenNext:   800,
+		lenMin:    800,
+		lenStep:   50,
 		lenMax:    1000,
 		sleepNext: 20 * time.Millisecond,
 		sleepMin:  20 * time.Millisecond,
