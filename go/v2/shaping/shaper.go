@@ -12,7 +12,7 @@ import (
 	"github.com/blanu/Dust/go/proc"
 )
 
-var log = logging.MustGetLogger("Dust/shaper")
+var log = logging.MustGetLogger("Dust/shaping")
 
 // Shaper represents a process mediating between a shaped channel and a Dust crypting session.  It can be
 // managed through its proc.Link structure.
