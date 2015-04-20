@@ -4,6 +4,9 @@
 package crypting
 
 import (
+	"sync"
+	"time"
+
 	"github.com/blanu/Dust/go/buf"
 	"github.com/blanu/Dust/go/prim1"
 )
@@ -31,6 +34,10 @@ type outgoing struct {
 	// TODO: interrupt support
 	frontGrams  chan []byte
 	frontBufs   chan []byte
+
+	writeMutex     sync.Mutex
+	writeInterrupt <-chan struct{}
+	writeDeadline  time.Time
 }
 
 func (og *outgoing) Init(session *Session, initialData []byte) {
@@ -190,13 +197,49 @@ func (og *outgoing) Read(p []byte) (n int, err error) {
 	return
 }
 
+func (og *outgoing) SetReadInterrupt(ch <-chan struct{}) error {
+	// Reads never block anyway.
+	return nil
+}
+
 func (og *outgoing) Write(p []byte) (n int, err error) {
+	og.writeMutex.Lock()
+	defer og.writeMutex.Unlock()
+
+	var timerChan <-chan time.Time
+	if !og.writeDeadline.IsZero() {
+		timer := time.NewTimer(og.writeDeadline.Sub(time.Now()))
+		defer timer.Stop()
+		timerChan = timer.C
+	}
+
 	for len(p) > 0 {
-		buf := <-og.frontBufs
+		var buf []byte
+		select {
+		case buf = <-og.frontBufs:
+		case _ = <-timerChan:
+			err = ErrTimeout
+			return
+		case _ = <-og.writeInterrupt:
+			err = ErrInterrupted
+			return
+		}
+
 		subn := copy(buf[:cap(buf)], p)
 		og.frontGrams <- buf[:subn]
 		p = p[subn:]
+		n += subn
 	}
 
 	return
+}
+
+func (og *outgoing) SetWriteDeadline(t time.Time) error {
+	og.writeDeadline = t
+	return nil
+}
+
+func (og *outgoing) SetWriteInterrupt(ch <-chan struct{}) error {
+	og.writeInterrupt = ch
+	return nil
 }

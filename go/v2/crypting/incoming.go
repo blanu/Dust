@@ -5,6 +5,8 @@ package crypting
 
 import (
 	"io"
+	"sync"
+	"time"
 
 	"github.com/blanu/Dust/go/buf"
 	"github.com/blanu/Dust/go/prim1"
@@ -41,6 +43,12 @@ type incoming struct {
 	frontBufs      chan []byte
 	frontHeldBuf   []byte
 	frontHeldTail  []byte
+
+	readMutex     sync.Mutex
+	readInterrupt <-chan struct{}
+	readDeadline  time.Time
+
+	writeInterrupt <-chan struct{}
 }
 
 func (ic *incoming) Init(session *Session) {
@@ -105,7 +113,7 @@ func (ic *incoming) fail() {
 
 // decodeFrames continues decoding frames.  The earliest byte of frameReassembly must be in padding or at the
 // start of a frame.
-func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) {
+func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) (err error) {
   	// Invariant: plain starts at absolute position plainStart.  crypt starts at cryptOffset from plain.
 	plain := ic.frameReassembly.Data()
 	plainStart := ic.frameStart
@@ -114,6 +122,8 @@ func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) {
 		ic.frameReassembly.Consume(int(plainStart - ic.frameStart))
 		ic.frameStart = plainStart
 	}()
+
+	// TODO: these subfunction names are kind of confusing.
 
 	// Ensure the MAC is advanced to at least plainStart+relPos.
 	advanceData := func(relPos int) {
@@ -195,18 +205,34 @@ func (ic *incoming) decodeFrames(crypt []byte, cryptOffset int) {
 			}
 
 			advanceNoCipher(macPos, endPos)
+
+			// We have to pick up the buffer first so that if we get interrupted, we haven't
+			// already reset the MAC.
+			var frontBuf []byte
+			select {
+			case frontBuf = <-ic.frontBufs:
+			case _ = <-ic.writeInterrupt:
+				// FUTURE: make _resuming_ from interruption work.  At the moment we don't
+				// keep enough state to resume; we need to remember how many encrypted bytes
+				// will be returned unwritten but have actually already been processed into
+				// the reassembly buffer, so that we don't append them again.
+				log.Debug("<-  write interrupted!")
+				ic.fail()
+				err = ErrCrashInterrupted
+				return
+			}
+
 			authenticated := ic.mac.Verify(plain[macPos:endPos])
 			ic.macPosition += prim.AuthLen
 			ic.mac.Reset(ic.macPosition)
 			log.Debug("<-  MAC reset at %d", ic.macPosition)
 			if !authenticated {
+				ic.frontBufs <- frontBuf
 				ic.fail()
 				return
 			}
 
-			// TODO: interrupt support
 			log.Debug("<-- DATA len %d", len(dgramPlain))
-			frontBuf := <-ic.frontBufs
 			dgramCopy := frontBuf[:copy(frontBuf[:cap(frontBuf)], dgramPlain)]
 			ic.frontGrams <- dgramCopy
 			consume(endPos)
@@ -240,8 +266,8 @@ func (ic *incoming) Write(p []byte) (n int, err error) {
 			}
 		} else {
 			subn :=	ic.frameReassembly.TransformIn(p, ic.cipher.XORKeyStream)
+			err = ic.decodeFrames(p[:subn], ic.frameReassembly.ValidLen()-subn)
 			n += subn
-			ic.decodeFrames(p[:subn], ic.frameReassembly.ValidLen()-subn)
 			p = p[subn:]
 		}
 	}
@@ -249,7 +275,22 @@ func (ic *incoming) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
+func (ic *incoming) SetWriteInterrupt(ch <-chan struct{}) error {
+	ic.writeInterrupt = ch
+	return nil
+}
+
 func (ic *incoming) Read(p []byte) (n int, err error) {
+	ic.readMutex.Lock()
+	defer ic.readMutex.Unlock()
+
+	var timerChan <-chan time.Time
+	if !ic.readDeadline.IsZero() {
+		timer := time.NewTimer(ic.readDeadline.Sub(time.Now()))
+		defer timer.Stop()
+		timerChan = timer.C
+	}
+
 	for len(p) > 0 {
 		if ic.frontHeldTail != nil {
 			subn := copy(p, ic.frontHeldTail)
@@ -265,7 +306,15 @@ func (ic *incoming) Read(p []byte) (n int, err error) {
 		} else {
 			var dgram []byte
 			if n == 0 {
-				dgram = <-ic.frontGrams
+				select {
+				case dgram = <-ic.frontGrams:
+				case _ = <-timerChan:
+					err = ErrTimeout
+					return
+				case _ = <-ic.readInterrupt:
+					err = ErrInterrupted
+					return
+				}
 			} else {
 				select {
 				case dgram = <-ic.frontGrams:
@@ -292,4 +341,14 @@ func (ic *incoming) Read(p []byte) (n int, err error) {
 	}
 
 	return
+}
+
+func (ic *incoming) SetReadDeadline(t time.Time) error {
+	ic.readDeadline = t
+	return nil
+}
+
+func (ic *incoming) SetReadInterrupt(ch <-chan struct{}) error {
+	ic.readInterrupt = ch
+	return nil
 }

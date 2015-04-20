@@ -6,10 +6,15 @@ import (
 	"github.com/blanu/Dust/go/proc"
 )
 
+type interruptibleReader interface {
+	io.Reader
+	SetReadInterrupt(ch <-chan struct{}) error
+}
+
 type outgoing struct {
 	encoder Encoder
 	visible io.Writer
-	uniform io.Reader
+	uniform interruptibleReader
 	timer   timer
 
 	pullBuf []byte
@@ -19,7 +24,7 @@ type outgoing struct {
 func (og *outgoing) Init(
 	parent *proc.Env,
 	visible io.Writer,
-	uniform io.Reader,
+	uniform interruptibleReader,
 	encoder Encoder,
 ) {
 	maxLen := encoder.MaxPacketLength()
@@ -73,6 +78,10 @@ func (og *outgoing) issueOneWrite(desiredLen int) error {
 
 func (og *outgoing) runOutgoing(env *proc.Env) (err error) {
 	og.timer.cycle(og.encoder.NextPacketSleep())
+	err = og.uniform.SetReadInterrupt(env.Cancel)
+	if err != nil {
+		return
+	}
 	
 	for {
 		select {

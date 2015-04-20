@@ -10,9 +10,14 @@ const (
 	incomingBufSize = 2048
 )
 
+type interruptibleWriter interface {
+	io.Writer
+	SetWriteInterrupt(ch <-chan struct{}) error
+}
+
 type incoming struct {
 	decoder Decoder
-	uniform io.Writer
+	uniform interruptibleWriter
 	visible io.Reader
 
 	inBuf   []byte
@@ -21,7 +26,7 @@ type incoming struct {
 
 func (ic *incoming) Init(
 	parent *proc.Env,
-	uniform io.Writer,
+	uniform interruptibleWriter,
 	visible io.Reader,
 	decoder Decoder,
 ) {
@@ -38,6 +43,11 @@ func (ic *incoming) Init(
 }
 
 func (ic *incoming) runIncoming(env *proc.Env) error {
+	ierr := ic.uniform.SetWriteInterrupt(env.Cancel)
+	if ierr != nil {
+		return ierr
+	}
+
 	// TODO: expand buf API and use it here
 	for {
 		env.CancellationPoint()

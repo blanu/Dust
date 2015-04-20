@@ -4,8 +4,8 @@
 package crypting
 
 import (
-	"errors"
 	"io"
+	"time"
 
 	"github.com/op/go-logging"
 
@@ -13,12 +13,6 @@ import (
 )
 
 var log = logging.MustGetLogger("Dust/crypting")
-
-var (
-	ErrBadHandshake     = errors.New("Dust/crypting: bad handshake")
-	ErrBadDecode        = errors.New("Dust/crypting: bad decode")
-	ErrDatagramTooLarge = errors.New("Dust/crypting: datagram too large")
-)
 
 const (
 	frameOverhead = 2 + prim.AuthLen
@@ -40,6 +34,18 @@ const (
 	stateEstablished
 )
 
+type InterruptibleReadWriter interface {
+	io.ReadWriter
+	SetReadInterrupt(ch <-chan struct{}) error
+	SetWriteInterrupt(ch <-chan struct{}) error
+}
+
+type DeadlineReadWriter interface {
+	io.ReadWriter
+	SetReadDeadline(t time.Time) error
+	SetWriteDeadline(t time.Time) error
+}
+
 // A Session holds state for a single secure channel.  There are two "sides" to a session: the outward-facing
 // side and the inward-facing side.  The outward-facing side transceives arbitrary-rate streams of uniform
 // bytes; the inward-facing side transceives a plaintext application protocol to be run over the secure
@@ -49,8 +55,8 @@ const (
 type Session struct {
 	Params
 
-	Front io.ReadWriter
-	Back  io.ReadWriter
+	Front DeadlineReadWriter
+	Back  InterruptibleReadWriter
 
 	// Shared handshake state.  The incoming side manipulates this as it receives handshake data, and
 	// sends messages to the outgoing side about what to output.
