@@ -41,15 +41,15 @@ func (rconn *RawStreamConn) Close() error {
 }
 
 func (rconn *RawStreamConn) SetDeadline(t time.Time) error {
-	return ErrDeadlineNotSupported
+	return rconn.crypter.Front.SetDeadline(t)
 }
 
 func (rconn *RawStreamConn) SetReadDeadline(t time.Time) error {
-	return ErrDeadlineNotSupported
+	return rconn.crypter.Front.SetReadDeadline(t)
 }
 
 func (rconn *RawStreamConn) SetWriteDeadline(t time.Time) error {
-	return ErrDeadlineNotSupported
+	return rconn.crypter.Front.SetWriteDeadline(t)
 }
 
 func BeginRawStreamClient(socket Socket, spub *ServerPublic) (rconn *RawStreamConn, err error) {

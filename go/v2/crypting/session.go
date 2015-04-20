@@ -36,12 +36,14 @@ const (
 
 type InterruptibleReadWriter interface {
 	io.ReadWriter
+	SetInterrupt(ch <-chan struct{}) error
 	SetReadInterrupt(ch <-chan struct{}) error
 	SetWriteInterrupt(ch <-chan struct{}) error
 }
 
 type DeadlineReadWriter interface {
 	io.ReadWriter
+	SetDeadline(t time.Time) error
 	SetReadDeadline(t time.Time) error
 	SetWriteDeadline(t time.Time) error
 }
