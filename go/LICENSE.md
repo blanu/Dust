@@ -2,7 +2,7 @@
 
 ## Main Dust packages and first-party support packages
 
-The directories 'v2' and 'sillyHex' compose the main Dust packages for Go.  The directories 'buf', 'huffman', 'prim1', and 'proc' compose the first-party support packages.  These are all subject to the following terms:
+The directories 'v2' and 'sillyHex' compose the main Dust packages for Go.  The directories 'buf', 'huffman', 'model1', 'prim1', and 'proc' compose the first-party support packages.  These are all subject to the following terms:
 
 * Copyright © 2015 Drake Wilson &lt;drake@dasyatidae.com&gt;
 
