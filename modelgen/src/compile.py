@@ -45,8 +45,8 @@ def convertModel(name, data, lang):
 
 def genSequence(data, data2):
   return {
-    'incoming': "encoding_sequence: []byte{%s}" % (makeByteArray(data)),
-    'outgoing': "decoding_sequence: []byte{%s}" % (makeByteArray(data2)),
+    'incoming': "Prefix: []byte{%s}" % (makeByteArray(data)),
+    'outgoing': "Prefix: []byte{%s}" % (makeByteArray(data2)),
   }
 
 def makeByteArray(data):
@@ -62,9 +62,8 @@ def genDuration(dist, params, lang):
 def genExponential(varname, param1, param2, lang):
   if lang=='go':
     return {
-      'decl': "%s dist.Exponential" % (varname),
-      'incoming': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param1),
-      'outgoing': "%s: dist.Exponential{Rate: float64(%s), Source: prng}," % (varname, param2),
+      'incoming': "enc1.%s = dist.Exponential{Rate: float64(%s), Source: model.prng}" % (varname, param1),
+      'outgoing': "enc1.%s = dist.Exponential{Rate: float64(%s), Source: model.prng}" % (varname, param2),
       'expr': "clampUint16(self.%s.Rand())" % (varname)
     }
   elif lang=='js':
@@ -78,9 +77,9 @@ def genExponential(varname, param1, param2, lang):
 
 def genLength(dist, params1, params2, lang):
   if dist=='normal':
-    return genNormal("lengthDist", params1[0], params1[1], params2[0], params2[1], lang)
+    return genNormal("LengthDist", params1[0], params1[1], params2[0], params2[1], lang)
   elif dist=='multinomial':
-    return genMultinomial("lengthDist", params1, params2, lang)
+    return genMultinomial("LengthDist", params1, params2, lang)
   else:
     print('Unknown length dist %s' % dist)
     return None
@@ -88,9 +87,8 @@ def genLength(dist, params1, params2, lang):
 def genNormal(varname, mu1, sigma1, mu2, sigma2, lang):
   if lang=='go':
     return {
-      'decl': "%s dist.Normal" % (varname),
-      'incoming': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu1, sigma1),
-      'outgoing': "%s: dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: prng}," % (varname, mu2, sigma2),
+      'incoming': "enc1.%s = dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: model.prng}" % (varname, mu1, sigma1),
+      'outgoing': "enc1.%s = dist.Normal{Mu: float64(%f), Sigma: float64(%f), Source: model.prng}" % (varname, mu2, sigma2),
       'expr': "clampUint16(self.%s.Rand())" % (varname)
     }
   elif lang=='js':
@@ -103,15 +101,15 @@ def genNormal(varname, mu1, sigma1, mu2, sigma2, lang):
 
 def genIAT(dist, params1, params2, lang):
   if dist=='poisson':
-    return genExponential("sleepDist", params1[0], params2[0], lang)
+    return genExponential("SleepDist", params1[0], params2[0], lang)
   else:
     print('Unknown flow dist %s' % dist)
     return None
 
 def genHuffman(params1, params2):
   return {
-    'incoming': genBitstringArrays(params1),
-    'outgoing': genBitstringArrays(params2)
+    'incoming': 'HuffTable: []huffman.BitString' + genBitstringArrays(params1),
+    'outgoing': 'HuffTable: []huffman.BitString' + genBitstringArrays(params2)
   }
 
 def genEncoder():

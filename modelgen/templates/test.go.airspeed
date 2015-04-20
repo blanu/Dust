@@ -1,13 +1,9 @@
 package $packagename
 
 import (
-  "testing"
+        "testing"
 )
 
-func Test${name}Duration(t *testing.T) {
-  var instance=&${name}{}
-  var result=instance.WholeStreamDuration()
-  if result<0 {
-    t.Errorf("Negative duration %d", result)
-  }
+func Test${name}(t *testing.T) {
+	// Nothing right now; the duration test from before is now irrelevant.
 }

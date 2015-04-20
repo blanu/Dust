@@ -1,59 +1,25 @@
-#+TITLE: Notes on Dust Go implementation
-Updated: [2015-02-08 Sun]
-
-* State
-** Packaging
-Copyright/licensing information:
-
-  - Most of the code currently in go/ is by (and copyrighted by) Drake Wilson and is expected to
-    wind up MIT-licensed as this section resolves.
-
-  - DustModel/dist was moved from a fork of another Go package by blanu earlier, and it refers to
-    its own LICENSE file which may not have been copied; it claims to be BSD-style.
-
-** Crypto primitives
-The prim package now has a reasonable interface, but the choice of the non-asymmetric primitives has yet to be
-locked down (in particular there is a probable conversation to be had re "native" Skein MAC/KDF versus
-HMAC/HKDF).
-
-** Crypto/framing layer
-A revised crypting protocol is in the works in the docs directory.  The ensemble part still isn't implemented,
-but crypting sessions now operate on datagrams with revised framing.
-
-The encrypt-then-MAC-then-encrypt currently in play is ambiguous and should possibly be replaced with
-encrypt-then-MAC-then-nothing at the expense of complicating the implementation.
-
-** Shaping layer
-The interface for models is mostly stable now.  A silly pseudo-model is available which has loopback
-communication verified functional.  The model generator generates models which half-work with encode/decode,
-but they have bad interaction with flow control and weird parameters.
-
-Connection durations are handled in the most basic way possible; the model generator is currently generating
-models with such low durations that no data can make it without ensemble capability.
-
-** Test proxy
-This now works as a TCP/TCP proxy.  It does not do anything too fancy.  Error reporting should be better
-(using managed processes).  Doing statistical tests would be useful here.
-
-** Key tool
-Basically works, and the CLI is now reasonable.  It would be nice to be able to password-protect the private
-keys in identity files, and it's an open question whether the current textual format(s) have any other bad
-environmental characteristics; possibly need to ask the Tor people about this.
+#+TITLE: Working notes on Dust Go implementation
+Updated: [2015-04-13 Mon]
 
 * Tasks
-** Protocol: hash out re-ensembling, including MTU situation
-** Minor/specific cleanups
-*** Use more generic network address types
-*** Consider whether to use Google's "contexts" mechanism instead of current procman.Link
-** Documentation
-*** Top-level type/function passes
-*** As-built protocol documentation
-*** Consistent 'byte' versus 'octet' terminology
-This isn't a _terribly_ big deal maybe, but Go likes to say 'byte' and so does the original Dust
-spec, but dsy1 likes using 'octet' along the lines of how the IETF etc. do things, so there's
-probably some inconsistent usage here.
-** Stashed
-*** Consider allowing a PBKDF for private identity files
+** Dust2 juggling
+*** Reimplement close/interrupt support for newly juggled crypting layer API
+** General
+*** Adjust Huffman coder to be able to use restricted symbol set
+*** Implementation documentation pass started [2015-04-11 Sat]
+- [ ] buf
+- [ ] huffman
+- [ ] prim1
+- [ ] proc
+- [ ] skein
+- [ ] v2/crypting
+- [ ] v2/shaping
+- [ ] v2/engine
+*** Use 'byte' terminology consistently
+*** Use consistent error terminology
+*** Pull license for 'dist' package
+** Mostly optional
+*** Refactor CLI parts
 
 * (metadata)
 

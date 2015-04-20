@@ -1,207 +1,63 @@
 package $packagename
 
 import (
-  "time"
-  "git.torproject.org/pluggable-transports/obfs4.git/common/csrand"
-  "github.com/blanu/Dust/go/Dust"
-  "github.com/blanu/Dust/go/DustModel/dist"
-  "github.com/blanu/Dust/go/DustModel/huffman"
+	"math/rand"
+
+	"git.torproject.org/pluggable-transports/obfs4.git/common/csrand"
+	"github.com/blanu/Dust/go/v2/interface"
+	"github.com/blanu/Dust/go/dist"
+	"github.com/blanu/Dust/go/huffman"
+	"github.com/blanu/Dust/go/model1"
 )
 
 type $model_type struct {
-  incoming_coding *huffman.Coding
-  outgoing_coding *huffman.Coding
+	c2sHalf, s2cHalf *model1.HalfModel
+
+	prng *rand.Rand
 }
 
-type $codec_type struct {
-  *$model_type
-  $packet_sleep.decl
-  $packet_length.decl
+var (
+	c2sStatic = model1.HalfStatic{
+		$sequence.incoming,
+		$huffman.incoming,
+	}
 
-  encoder *huffman.Encoder
-  decoder *huffman.Decoder
+	s2cStatic = model1.HalfStatic{
+		$sequence.outgoing,
+		$huffman.outgoing,
+	}
+)
 
-  encoding_sequence []byte
-  decoding_sequence []byte
+var theModel $model_type
 
-  encoding_position int
-  decoding_position int
+func (model *$model_type) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+	enc1 := model.c2sHalf.NewEncoderIsh()
+	$packet_sleep.incoming
+	$packet_length.incoming
+	dec1 := model.s2cHalf.NewDecoderIsh()
+	return enc1, dec1, nil
 }
 
-func computeModel() (result *$model_type) {
-  var err error
-  result = &$model_type{}
-
-  result.incoming_coding, err = huffman.NewCoding([]huffman.BitString $huffman.incoming)
-  if err != nil {
-    panic(err)
-  }
-
-  result.outgoing_coding, err = huffman.NewCoding([]huffman.BitString $huffman.outgoing)
-  if err != nil {
-    panic(err)
-  }
-
-  return
-}
-
-func newCodec(direction bool) (result *$codec_type, err error) {
-  // TODO: is this the best choice of source to use?
-  prng := csrand.Rand
-
-  model := computeModel()
-
-  if direction {
-    result = &$codec_type{
-      $packet_sleep.incoming
-      $packet_length.incoming
-      $encode.incoming
-      $decode.outgoing,
-      $sequence.incoming}
-  } else {
-    result = &$codec_type{
-      $packet_sleep.outgoing
-      $packet_length.outgoing
-      $encode.outgoing
-      $decode.incoming,
-      $sequence.outgoing}
-  }
-  return
-}
-
-func (self $model_type) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
-  incomingCodec, err1 := newCodec(true)
-  if err1 != nil {
-    return nil, nil, err1
-  } else {
-    outgoingCodec, err2 := newCodec(false)
-    if err2 != nil {
-      return nil, nil, err2
-    } else {
-      return incomingCodec, outgoingCodec, nil
-    }
-  }
-}
-
-func (self $model_type) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
-  incomingCodec, err1 := newCodec(true)
-  if err1 != nil {
-    return nil, nil, err1
-  } else {
-    outgoingCodec, err2 := newCodec(false)
-    if err2 != nil {
-      return nil, nil, err2
-    } else {
-      return outgoingCodec, incomingCodec, nil
-    }
-  }
+func (model *$model_type) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDecoder, error) {
+	enc1 := model.s2cHalf.NewEncoderIsh()
+	$packet_sleep.outgoing
+	$packet_length.outgoing
+	dec1 := model.c2sHalf.NewDecoderIsh()
+	return enc1, dec1, nil
 }
 
 func init() {
-  model := computeModel()
-  constructor := func(params map[string]string) (Dust.ShapingModel, error) {
-    if err := Dust.CheckUnackedParams(params, nil); err != nil {
-      return nil, err
-    }
+	panicPrefix := "$name: bad Dust model data!  "
+	theModel.c2sHalf, theModel.s2cHalf = model1.CompileTwoHalvesOrPanic(&c2sStatic, &s2cStatic, panicPrefix)
+	theModel.prng = csrand.Rand
 
-    return model, nil
-  }
+	constructor := func(params map[string]string) (Dust.ShapingModel, error) {
+		if err := Dust.CheckUnackedParams(params, nil); err != nil {
+			return nil, err
+		}
 
-  Dust.RegisterModel("$name", constructor)
-}
+		return &theModel, nil
+	}
 
-func clampUint16(n float64) uint16 {
-  // Use positive test for in-range to handle NaN properly, just in case.
-  switch {
-  case 0.0 <= n && n <= 65535.0:
-    return uint16(n)
-  case 65535.0 < n:
-    return 65535
-  default:
-    return 0
-  }
-}
-
-func (self $codec_type) WholeStreamDuration() time.Duration {
-//  return time.Duration($duration.exp) * time.Millisecond
-  return time.Duration(0) * time.Millisecond
-}
-
-func (self $codec_type) MaxPacketLength() uint16 {
-  return 65535
-}
-
-func (self $codec_type) NextPacketLength() uint16 {
-  return $packet_length.expr
-}
-
-func (self $codec_type) NextPacketSleep() time.Duration {
-  return time.Duration($packet_sleep.expr) * time.Millisecond
-}
-
-// dst is a fixed length empty buffer to write results
-// src is a fixed length full buffer
-// dn is the number of bytes written to dst
-// sn is the number of bytes consumed from the src buffer
-func (codec $codec_type) ShapeBytes(dst []byte, src []byte) (dn int, sn int) {
-  var produced int = 0
-  var consumed int = 0
-
-  // First, add as many bytes from the encoding sequence to the buffer as possible
-  // Either all bytes of the sequence will be added, or the buffer will run out of space
-  for (codec.encoding_position < len(codec.encoding_sequence)) && (produced < len(dst)) {
-    dst[produced]=codec.encoding_sequence[codec.encoding_position]
-    produced++
-    codec.encoding_position++
-  }
-
-  // Either all bytes of the sequence will be added, or the buffer will run out of space
-  // If the buffer has run out of space, we must exit without consuming any input bytes
-  // If there is still space in the buffer, we can encode some input bytes.
-  if produced < len(dst) {
-    buffer := make([]byte, len(dst)-produced)
-    encode_produced, encode_consumed := codec.encoder.Encode(buffer, src)
-
-    for index := produced; index < len(dst); index++ {
-      dst[index] = buffer[index-produced]
-    }
-
-    produced += encode_produced
-    consumed += encode_consumed
-  }
-
-  return produced, consumed
-}
-
-// dst is a fixed length empty buffer to write results
-// src is a fixed length full buffer
-// dn is the number of bytes written to dst
-// sn is the number of bytes consumed from the src buffer
-func (codec $codec_type) UnshapeBytes(dst []byte, src []byte) (dn int, sn int) {
-  var produced int = 0
-  var consumed int = 0
-
-  // First, remove as many bytes from the encoding sequence to the buffer as possible up to the length of the sequence
-  // Either all bytes of the sequence will be removed, or the buffer will run out of space
-  for (codec.decoding_position < len(codec.decoding_sequence)) && (consumed < len(src)) {
-    consumed++
-    codec.decoding_position++
-  }
-
-  // Either all bytes of the sequence will be removed, or the buffer will run out of space
-  // If the buffer has run out of space, we must exit without producing any output bytes
-  // If there is still space in the buffer, we can decode some input bytes.
-  if consumed < len(src) {
-    buffer := make([]byte, len(src)-consumed)
-    for index := consumed; index < len(src); index++ {
-      buffer[index-consumed] = src[index]
-    }
-
-    decode_produced, decode_consumed := codec.decoder.Decode(dst, buffer)
-
-    produced += decode_produced
-    consumed += decode_consumed
-  }
-
-  return produced, consumed
+	Dust.RegisterModel("$name", constructor)
 }
