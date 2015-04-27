@@ -24,11 +24,16 @@ func (half *HalfModel) NewEncoderIsh() *Encoder {
 }
 
 func (enc *Encoder) MaxPacketLength() uint16 {
-	return 65535
+	return 1440
 }
 
 func (enc *Encoder) NextPacketLength() uint16 {
-	return clampUint16(enc.LengthDist.Rand())
+	var result = 0
+	while(result <= 0 || result > 1440)
+	{
+		clampUint16(enc.LengthDist.Rand())
+	}
+	return result
 }
 
 func (enc *Encoder) NextPacketSleep() time.Duration {
