@@ -99,6 +99,16 @@ def genNormal(varname, mu1, sigma1, mu2, sigma2, lang):
   else:
     return {}
 
+def genMultinomial(varname, params1, params2, lang):
+  if lang=='go':
+    return {
+      'incoming': "enc1.%s = dist.Multinomial{Weights: %s, Source: model.prng}" % (varname, genArray(params1)),
+      'outgoing': "enc1.%s = dist.Multinomial{Weights: %s, Source: model.prng}" % (varname, genArray(params2)),
+      'expr': "clampUint16(self.%s.Rand())" % (varname)
+    }
+  else:
+    return {}
+
 def genIAT(dist, params1, params2, lang):
   if dist=='poisson':
     return genExponential("SleepDist", params1[0], params2[0], lang)
