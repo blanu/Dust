@@ -15,7 +15,7 @@ type Multinomial struct {
 }
 
 // Rand returns a random sample drawn from the distribution.
-func (e Multinomial) Rand() uint64 {
+func (e Multinomial) Rand() float64 {
 	var rnd float64
 	if e.Source == nil {
 		rnd = rand.Float64()
@@ -29,10 +29,10 @@ func (e Multinomial) Rand() uint64 {
 	for index, weight := range e.Weights {
 		next = next + weight
 		if rnd > last && rnd < next {
-			return uint64(index)
+			return float64(uint64(index))
 		}
 		last = next
 	}
 
-	return uint64(len(e.Weights))
+	return float64(uint64(len(e.Weights)))
 }

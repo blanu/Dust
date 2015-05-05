@@ -28,10 +28,9 @@ func (enc *Encoder) MaxPacketLength() uint16 {
 }
 
 func (enc *Encoder) NextPacketLength() uint16 {
-	var result = 0
-	while(result <= 0 || result > 1440)
-	{
-		clampUint16(enc.LengthDist.Rand())
+	var result = clampUint16(enc.LengthDist.Rand())
+	for result <= 0 || result > 1440 {
+		result = clampUint16(enc.LengthDist.Rand())
 	}
 	return result
 }
