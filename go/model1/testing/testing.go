@@ -48,9 +48,10 @@ func TestExpectedPerformance(t *testing.T, enc Encoder) {
 		totalDuration += sleep
 	}
 
-	bytesPerSecond := float64(totalBytes) / totalDuration.Seconds()
+	totalSeconds := totalDuration.Seconds()
+	bytesPerSecond := float64(totalBytes) / totalSeconds
 	bitsPerSecond := 8.0 * bytesPerSecond
-	t.Logf("simulated average shaped transfer rate: %0.2e B/s, %0.2e b/s", bytesPerSecond, bitsPerSecond)
+	t.Logf("simulated average shaped transfer rate: %0.2e B/s = %0.2e b/s (%d B / %0.2f s; granularity %0.3f s)", bytesPerSecond, bitsPerSecond, totalBytes, totalSeconds, totalSeconds / float64(packetIterations))
 
 	uniformSource := make([]byte, uniformChunkLen)
 	_, err := cryptoRand.Read(uniformSource)
@@ -92,7 +93,7 @@ func TestExpectedPerformance(t *testing.T, enc Encoder) {
 	expansionRatio := float64(shapedProduced) / float64(sourceConsumed)
 	expansionPercent := 100.0 * (expansionRatio - 1.0)
 	t.Logf("simulated average shaped/uniform expansion: %+2.f%% (%d / %d)", expansionPercent, shapedProduced, sourceConsumed)
-	t.Logf("expected uniform transfer rate: %0.2e B/s, %0.2e b/s", bytesPerSecond / expansionRatio, bitsPerSecond / expansionRatio)
+	t.Logf("expected uniform transfer rate: %0.2e B/s = %0.2e b/s", bytesPerSecond / expansionRatio, bitsPerSecond / expansionRatio)
 }
 
 func TestOneDirection(t *testing.T, enc Encoder, dec Decoder) {
