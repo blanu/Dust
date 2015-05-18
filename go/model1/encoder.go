@@ -37,7 +37,7 @@ func (enc *Encoder) NextPacketLength() uint16 {
 
 func (enc *Encoder) NextPacketSleep() time.Duration {
 	// TODO: really clampUint16 here?
-	return time.Duration(clampUint16(enc.LengthDist.Rand())) * time.Millisecond
+	return time.Duration(clampUint16(enc.SleepDist.Rand())) * time.Millisecond
 }
 
 func (enc *Encoder) ShapeBytes(dst, src []byte) (dn, sn int) {
