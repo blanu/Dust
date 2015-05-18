@@ -2,6 +2,7 @@ package shaping
 
 import (
 	"io"
+	"runtime"
 
 	"github.com/blanu/Dust/go/proc"
 )
@@ -50,6 +51,10 @@ func (ic *incoming) runIncoming(env *proc.Env) error {
 
 	// TODO: expand buf API and use it here
 	for {
+		// This is a kludge to try to avoid starving other goroutines in the event that we constantly
+		// have something to read.  In particular, we might starve the outgoing goroutine in that case.
+		runtime.Gosched()
+
 		env.CancellationPoint()
 		log.Debug("[ - reading up to %d bytes", cap(ic.inBuf) - len(ic.inBuf))
 		rn, err := ic.visible.Read(ic.inBuf[len(ic.inBuf):cap(ic.inBuf)])
