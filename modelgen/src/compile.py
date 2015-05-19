@@ -34,12 +34,19 @@ def convertModel(name, data, lang):
   model['name']=name
   model['model_type']=name+'Model'
   model['codec_type']=name+'Codec'
-  model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], data['outgoingModel']['length']['params'], lang)
-  model['packet_sleep']=genIAT(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], data['outgoingModel']['flow']['params'], lang)
+  if 'length' in data['incomingModel']:
+    model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], data['outgoingModel']['length']['params'], lang)
+  else:
+    model['packet_length']=genEmptyLength()
+  if 'flow' in data['incomingModel']:
+    model['packet_sleep']=genIAT(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], data['outgoingModel']['flow']['params'], lang)
+  else:
+    model['packet_sleep']=genEmptyIAT()
   model['huffman']=genHuffman(data['incomingModel']['huffman'], data['outgoingModel']['huffman'])
   model['sequence']=genSequence(data['incomingModel']['sequence'], data['outgoingModel']['sequence'])
   model['encode']=genEncoder()
   model['decode']=genDecoder()
+  model['max_sleep']='enc1.MaxSleep = 60000 * time.Millisecond' # 1 minute
 
   return model
 
@@ -84,6 +91,16 @@ def genLength(dist, params1, params2, lang):
     print('Unknown length dist %s' % dist)
     return None
 
+def genEmptyLength():
+  if lang=='go':
+    return {
+      'incoming': "",
+      'outgoing': "",
+      'expr': "1440"
+    }
+  else:
+    return {}
+
 def genNormal(varname, mu1, sigma1, mu2, sigma2, lang):
   if lang=='go':
     return {
@@ -115,6 +132,16 @@ def genIAT(dist, params1, params2, lang):
   else:
     print('Unknown flow dist %s' % dist)
     return None
+
+def genEmptyIAT():
+  if lang=='go':
+    return {
+      'incoming': "",
+      'outgoing': "",
+      'expr': "20"
+    }
+  else:
+    return {}
 
 def genHuffman(params1, params2):
   return {
