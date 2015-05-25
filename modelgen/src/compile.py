@@ -109,7 +109,8 @@ def clampRate(param, avgLength):
     print("Lowering %f" % (ratio))
     param=param/ratio
   print("Final Poisson: %f" % (param))
-  return param
+#  return param
+  return 0.5
 
 def genLength(dist, params1, params2, lang):
   if dist=='normal':

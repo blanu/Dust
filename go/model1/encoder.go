@@ -38,7 +38,11 @@ func (enc *Encoder) NextPacketLength() uint16 {
 }
 
 func (enc *Encoder) NextPacketSleep() time.Duration {
-	return time.Duration(enc.SleepDist.Rand() * float64(time.Millisecond))
+	var r = enc.SleepDist.Rand()
+	for r <= 0 || r > 5000 {
+		r = enc.SleepDist.Rand()
+	}
+	return time.Duration(r * float64(time.Millisecond))
 }
 
 func (enc *Encoder) ShapeBytes(dst, src []byte) (dn, sn int) {
