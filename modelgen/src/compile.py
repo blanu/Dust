@@ -101,12 +101,12 @@ def clampRate(param, avgLength):
   if kbps < 56: # 56kbps minimum
     ratio=math.ceil(56/kbps)
     print("Raising %f" % (ratio))
+    ratio=ratio*1.5
+    print('Increading 50%')
     param=param*ratio
   elif kbps > 560: # 560kbps maximum
     ratio=math.floor(kbps/560)
     print("Lowering %f" % (ratio))
-    ratio=ratio*1.5
-    print('Increading 50%')
     param=param/ratio
   print("Final Poisson: %f" % (param))
   return param
