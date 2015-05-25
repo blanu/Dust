@@ -2,6 +2,7 @@ package shaping
 
 import (
 	"io"
+	"runtime"
 
 	"github.com/blanu/Dust/go/proc"
 )
@@ -97,6 +98,13 @@ func (og *outgoing) runOutgoing(env *proc.Env) (err error) {
 			if err != nil {
 				return
 			}
+
+			// This is a kludge to try to avoid starving other goroutines in the event that our
+			// model schedules a large number of writes within a short period of time.  In
+			// particular, we seem to potentially starve the incoming goroutine in that case,
+			// yielding significant performance degradation and stuffing the output stream full of
+			// expensive padding.
+			runtime.Gosched()
 		}
 	}
 }

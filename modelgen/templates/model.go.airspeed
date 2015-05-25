@@ -34,6 +34,7 @@ func (model *$model_type) MakeClientPair() (Dust.ShapingEncoder, Dust.ShapingDec
 	enc1 := model.c2sHalf.NewEncoderIsh()
 	$packet_sleep.incoming
 	$packet_length.incoming
+	$max_sleep
 	dec1 := model.s2cHalf.NewDecoderIsh()
 	return enc1, dec1, nil
 }
@@ -42,6 +43,7 @@ func (model *$model_type) MakeServerPair() (Dust.ShapingEncoder, Dust.ShapingDec
 	enc1 := model.s2cHalf.NewEncoderIsh()
 	$packet_sleep.outgoing
 	$packet_length.outgoing
+	$max_sleep
 	dec1 := model.c2sHalf.NewDecoderIsh()
 	return enc1, dec1, nil
 }

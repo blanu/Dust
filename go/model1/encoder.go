@@ -9,6 +9,7 @@ import (
 type Encoder struct {
 	SleepDist  Rand
 	LengthDist Rand
+	MaxSleep   time.Duration
 	Prefix     []byte
 	Unhuffer   *huffman.Decoder
 
@@ -33,11 +34,11 @@ func (enc *Encoder) NextPacketLength() uint16 {
 		result = clampUint16(enc.LengthDist.Rand())
 	}
 	return result
+	//	return 1440
 }
 
 func (enc *Encoder) NextPacketSleep() time.Duration {
-	// TODO: really clampUint16 here?
-	return time.Duration(clampUint16(enc.LengthDist.Rand())) * time.Millisecond
+	return time.Duration(enc.SleepDist.Rand() * float64(time.Millisecond))
 }
 
 func (enc *Encoder) ShapeBytes(dst, src []byte) (dn, sn int) {

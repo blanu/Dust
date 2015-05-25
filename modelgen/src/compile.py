@@ -5,6 +5,9 @@ import json
 import subprocess
 import re
 from airspeed import CachingFileLoader
+from numpy import mean
+from numpy.random import multinomial
+import math
 
 def parse(filename):
   print('Parsing '+filename)
@@ -34,14 +37,27 @@ def convertModel(name, data, lang):
   model['name']=name
   model['model_type']=name+'Model'
   model['codec_type']=name+'Codec'
-  model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], data['outgoingModel']['length']['params'], lang)
-  model['packet_sleep']=genIAT(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], data['outgoingModel']['flow']['params'], lang)
+  if 'length' in data['incomingModel']:
+    model['packet_length']=genLength(data['incomingModel']['length']['dist'], data['incomingModel']['length']['params'], data['outgoingModel']['length']['params'], lang)
+  else:
+    model['packet_length']=genEmptyLength()
+  if 'flow' in data['incomingModel']:
+    avgLength1=averageLength(data['incomingModel']['length']['params'])
+    avgLength2=averageLength(data['outgoingModel']['length']['params'])
+    model['packet_sleep']=genIAT(data['incomingModel']['flow']['dist'], data['incomingModel']['flow']['params'], data['outgoingModel']['flow']['params'], avgLength1, avgLength2, lang)
+  else:
+    model['packet_sleep']=genEmptyIAT()
   model['huffman']=genHuffman(data['incomingModel']['huffman'], data['outgoingModel']['huffman'])
   model['sequence']=genSequence(data['incomingModel']['sequence'], data['outgoingModel']['sequence'])
   model['encode']=genEncoder()
   model['decode']=genDecoder()
+  model['max_sleep']='enc1.MaxSleep = 60000 * time.Millisecond' # 1 minute
 
   return model
+
+def averageLength(probs):
+  samples=multinomial(100000, probs)
+  return mean(samples)
 
 def genSequence(data, data2):
   return {
@@ -59,7 +75,9 @@ def genDuration(dist, params, lang):
     print('Unknown duration dist %s' % dist)
     return None
 
-def genExponential(varname, param1, param2, lang):
+def genExponential(varname, param1, param2, avgLength1, avgLength2, lang):
+  param1=clampRate(param1, avgLength1)
+  param2=clampRate(param2, avgLength2)
   if lang=='go':
     return {
       'incoming': "enc1.%s = dist.Exponential{Rate: float64(%s), Source: model.prng}" % (varname, param1),
@@ -75,6 +93,22 @@ def genExponential(varname, param1, param2, lang):
   else:
     return {}
 
+def clampRate(param, avgLength):
+  print("Poisson params: %f %f" % (param, avgLength))
+  bpms=float(param*avgLength) # bytes per millisecond
+  kbps=(bpms*8)/1000 # kilobits per second
+  print("%f kpbs" % (kbps))
+  if kbps < 56: # 56kbps minimum
+    ratio=math.ceil(56/kbps)
+    print("Raising %f" % (ratio))
+    param=param*ratio
+  elif kbps > 560: # 560kbps maximum
+    ratio=math.floor(kbps/560)
+    print("Lowering %f" % (ratio))
+    param=param/ratio
+  print("Final Poisson: %f" % (param))
+  return param
+
 def genLength(dist, params1, params2, lang):
   if dist=='normal':
     return genNormal("LengthDist", params1[0], params1[1], params2[0], params2[1], lang)
@@ -83,6 +117,16 @@ def genLength(dist, params1, params2, lang):
   else:
     print('Unknown length dist %s' % dist)
     return None
+
+def genEmptyLength():
+  if lang=='go':
+    return {
+      'incoming': "",
+      'outgoing': "",
+      'expr': "1440"
+    }
+  else:
+    return {}
 
 def genNormal(varname, mu1, sigma1, mu2, sigma2, lang):
   if lang=='go':
@@ -109,12 +153,22 @@ def genMultinomial(varname, params1, params2, lang):
   else:
     return {}
 
-def genIAT(dist, params1, params2, lang):
+def genIAT(dist, params1, params2, avgLength1, avgLength2, lang):
   if dist=='poisson':
-    return genExponential("SleepDist", params1[0], params2[0], lang)
+    return genExponential("SleepDist", params1[0], params2[0], avgLength1, avgLength2, lang)
   else:
     print('Unknown flow dist %s' % dist)
     return None
+
+def genEmptyIAT():
+  if lang=='go':
+    return {
+      'incoming': "",
+      'outgoing': "",
+      'expr': "20"
+    }
+  else:
+    return {}
 
 def genHuffman(params1, params2):
   return {
