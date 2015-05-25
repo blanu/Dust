@@ -102,8 +102,8 @@ def genNormal(varname, mu1, sigma1, mu2, sigma2, lang):
 def genMultinomial(varname, params1, params2, lang):
   if lang=='go':
     return {
-      'incoming': "enc1.%s = dist.Multinomial{Weights: %s, Source: model.prng}" % (varname, genArray(params1)),
-      'outgoing': "enc1.%s = dist.Multinomial{Weights: %s, Source: model.prng}" % (varname, genArray(params2)),
+      'incoming': "enc1.%s = dist.Multinomial{Weights: []float64 %s, Source: model.prng}" % (varname, genArray(params1)),
+      'outgoing': "enc1.%s = dist.Multinomial{Weights: []float64 %s, Source: model.prng}" % (varname, genArray(params2)),
       'expr': "clampUint16(self.%s.Rand())" % (varname)
     }
   else:
