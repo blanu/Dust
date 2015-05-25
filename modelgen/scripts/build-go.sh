@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 # compile.py [language] [modelDir] [packageName] [packageDir]
-python src/compile.py go ../go/models Dust_privmodels ~/go/src/caolta3iaejox3z4madc5wmp4z.uuid/Dust_privmodels
+python src/compile.py go ../go/models "git.torproject.org/pluggable-transports/obfs4.git/transports/Dust2/models" ~/go/src/git.torproject.org/pluggable-transports/obfs4.git/transports/Dust2/models

@@ -1,6 +1,7 @@
 package $packagename
 
 import (
+        "time"
 	"math/rand"
 
 	"git.torproject.org/pluggable-transports/obfs4.git/common/csrand"
