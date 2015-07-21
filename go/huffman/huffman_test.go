@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blanu/Dust/go/DustModel/huffman"
+	"github.com/blanu/Dust/go/huffman"
 )
 
 var _ = huffman.NewCoding

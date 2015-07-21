@@ -6,7 +6,7 @@ package prim
 import (
 	"errors"
 
-	"code.google.com/p/go.crypto/curve25519"
+	"golang.org/x/crypto/curve25519"
 	"github.com/agl/ed25519/extra25519"
 )
 
