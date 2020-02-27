@@ -1,7 +1,5 @@
 github.com/OperatorFoundation/ed25519 v0.0.0-20200225224545-b22b4bd3ddef h1:1xEtDEuNE9/yybZaHS94OIjx5FUo4e8M3UwcK9bFC9s=
 github.com/OperatorFoundation/ed25519 v0.0.0-20200225224545-b22b4bd3ddef/go.mod h1:gQNGvsyT4Zmps9H/yzCqdc+RQzt8ZxCndRNtGTYnBzQ=
-github.com/blanu/Dust v0.0.0-20200226210513-631e1ccb9de5 h1:LKQ49TLxCDvXj/9LQMOp7JLQTtwb8u3ilZss6ttWgWY=
-github.com/blanu/Dust v0.0.0-20200226210513-631e1ccb9de5/go.mod h1:jLFQI2Ufz4kBnGiTzh8O9+/p4U/9MLbouXkaympnTI0=
 github.com/blanu/Dust v1.0.0 h1:HZ2AwB0aygLjBsOFhEc36HQyIOltZkTo+shYhEfoenE=
 github.com/blanu/Dust v1.0.0/go.mod h1:jLFQI2Ufz4kBnGiTzh8O9+/p4U/9MLbouXkaympnTI0=
 github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 h1:lDH9UUVJtmYCjyT0CI4q8xvlXPxeZ0gYCVvWbmPlp88=

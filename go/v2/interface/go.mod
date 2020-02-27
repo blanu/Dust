@@ -1,4 +1,4 @@
-module github.com/blanu/Dust/master/go/v2/interface
+module github.com/blanu/Dust/go/v2/interface
 
 go 1.14
 
